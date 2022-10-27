@@ -27,3 +27,5 @@ def test_notes_val_different_not_equal():
     n1 = ml.Note("su", 2, 0, 1)
     n2 = ml.Note("su", 1, 0, 1)
     assert n1 != n2
+
+

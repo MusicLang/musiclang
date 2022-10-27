@@ -75,5 +75,20 @@ def test_tonality_to_scale_pitches():
     assert scale_pitches == [13, 15, 16, 18, 20, 21, 24]
 
 
+def test_abs_degree_of_mode():
+    T = Tonality(1, mode="locrian", octave=0)
+    assert T.abs_degree == 1
+
+def test_abs_degree_of_sum_of_mode():
+    T = Tonality(1, mode="locrian", octave=0)
+    assert (T + T).abs_degree == 2
+
+def test_tonality_to_scale_pitches_mode():
+    t1 = Tonality(0, accident="", mode="dorian", octave=0)
+    scale_pitches = t1.scale_pitches
+
+    assert scale_pitches == [0, 2, 3, 5, 7, 9, 10]
+
+
 # "", b, n, s : b force to be minor interval, n : major interval, "" normal mode interval
 # 3s.M = E

@@ -1,5 +1,6 @@
 from .constants import *
-from .score import Element, Note, Silence, Continuation, Chord, Score
+from .element import Element
+from .note import Note, Silence, Continuation
 from typing import List
 
 I = i = Element(0)

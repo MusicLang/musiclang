@@ -124,6 +124,8 @@ class Note:
 
         if self.octave != 0:
             result += f".o({self.octave})"
+        if self.mode is not None:
+            result += f".{self.mode}"
 
         return result
 
@@ -137,11 +139,12 @@ class Note:
         return ""
 
     def __repr__(self):
-        try:
-            return f"{self.type}{self.val}.o{self.octave}.{self.duration_to_str()}{self.repr_mode()}"
-        except KeyError:
-            notes = self.fix_continuation()
-            return notes.__repr__()
+        return self.to_code()
+        # try:
+        #     return f"{self.type}{self.val}.o{self.octave}.{self.duration_to_str()}{self.repr_mode()}"
+        # except KeyError:
+        #     notes = self.fix_continuation()
+        #     return notes.__repr__()
 
     def __len__(self):
         return 1

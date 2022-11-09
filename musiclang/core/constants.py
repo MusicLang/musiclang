@@ -8,6 +8,46 @@ ELEMENT_TO_STR = {
     6: "VII"
 }
 
+DEGREE_TO_STR =  {
+    0: "I",
+    1: "II.b",
+    2: "II",
+    3: "III.b",
+    4: "III",
+    5: "IV",
+    6: "IV.s",
+    7: "V",
+    8: "VI.b",
+    9: "VI",
+    10: "VII.b",
+    11: "VII"
+}
+
+DEGREE_TO_SCALE_DEGREE =  {
+    0: 0,
+    1: 1,
+    2: 1,
+    3: 2,
+    4: 2,
+    5: 3,
+    6: 3,
+    7: 4,
+    8: 5,
+    9: 5,
+    10: 6,
+    11: 6
+}
+
+SCALE_DEGREE = {
+    0: 0,
+    1: 2,
+    2: 4,
+    3: 5,
+    4: 7,
+    5: 9,
+    6: 11
+}
+
 from fractions import Fraction as frac
 W = frac(4)
 H = frac(2)

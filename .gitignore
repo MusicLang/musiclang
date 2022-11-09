@@ -16,3 +16,4 @@ venv/
 notebooks/data
 data
 locals/
+*.pyc

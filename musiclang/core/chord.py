@@ -10,6 +10,25 @@ class Chord:
         self.octave = octave
         self.score = {} if score is None else score
 
+
+    def change_mode(self, mode):
+        new_chord = self.copy()
+        new_chord.tonality = new_chord.tonality.change_mode(mode)
+        return new_chord
+
+
+    @property
+    def scale_degree(self):
+        tonic = self.scale_pitches[0]
+        return DEGREE_TO_SCALE_DEGREE[tonic % 12] + tonic // 12
+
+    @property
+    def chord_pitches(self):
+        scale_pitches = self.scale_pitches
+        max_res = [scale_pitches[i] for i in [0, 2, 4, 6, 1, 3, 5]]
+        id = [5, 7, 9, 11, 13].index(self.extension)
+        return max_res[:id+3]
+
     @property
     def scale_pitches(self):
         from .tonality import Tonality
@@ -150,10 +169,9 @@ class Chord:
         if self.extension == 5:
             return ''
         else:
-            return '.' + str(self.extension)
+            return f'[{self.extension}]'
 
-    def melody_to_str(self):
-        return ','.join([f"<{k}> " + str(melody) for k, melody in self.score.items()])
+
 
     def tonality_to_str(self, sep="/"):
         if self.tonality is None:
@@ -205,23 +223,31 @@ class Chord:
 
         return named_melodies_result
 
+
     def __getattr__(self, item):
-        try:
-            return self(**{part: getattr(self.score[part], item) for part in self.parts})
-        except:
+        if len(self.parts) == 0:
             raise AttributeError()
+        try:
+            res = self(**{part: getattr(self.score[part], item) for part in self.parts})
+            return res
+        except Exception:
+            raise AttributeError("Not existing attribute")
 
     def __call__(self, *melodies, **named_melodies):
         chord = self.copy()
         named_melodies_preparsed = self.preparse_named_melodies(named_melodies)
         chord.score = {**{i: melody for i, melody in enumerate(melodies)}, **named_melodies_preparsed}
         return chord
+    #
+    def melody_to_str(self):
+        return ', '.join([f"{k}=" + str(melody) for k, melody in self.score.items()])
 
     def __repr__(self):
-        if self.score:
-            return f"{self.element_to_str()}{self.extension_to_str()}{self.tonality_to_str()}({self.melody_to_str()})"
-        else:
-            return f"{self.element_to_str()}{self.extension_to_str()}{self.tonality_to_str()}"
+        # if self.score:
+        #     return f"{self.element_to_str()}{self.extension_to_str()}{self.tonality_to_str()}({self.melody_to_str()})"
+        # else:
+        #     return f"{self.element_to_str()}{self.extension_to_str()}{self.tonality_to_str()}"
+        return f"{self.to_code()}({self.melody_to_str()})"
 
     def to_code(self):
         """
@@ -229,7 +255,7 @@ class Chord:
         It ignores the score
         :return:
         """
-        chord_str = f"({self.element_to_str()}{self.tonality_to_code()})"
+        chord_str = f"({self.element_to_str()}{self.extension_to_str()}{self.tonality_to_code()})"
         if self.octave != 0:
             chord_str = f"{chord_str}.o({self.octave})"
 

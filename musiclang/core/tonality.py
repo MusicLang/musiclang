@@ -6,22 +6,32 @@ class Tonality:
     It is represented by a degree, an accident, a mode, and an octave
 
     """
-    def __init__(self, degree, accident="", mode="M", octave=0):
+    def __init__(self, degree, mode="M", octave=0):
+        """
+        Degree is absolute degree (between 0 and 12)
+        :param degree:
+        :param accident:
+        :param mode:
+        :param octave:
+        """
         self.degree = degree
-        self.accident = accident
         self.mode = mode
         self.octave = octave
+
+    def change_mode(self, mode):
+        new_tonality = self.copy()
+        new_tonality.mode = mode
+        return new_tonality
 
     @property
     def scale_pitches(self):
         abs_degree = self.abs_degree
         mode = self.mode
-        octave = self.octave
-        pitch_scale = [n + abs_degree + 12 * octave for n in SCALES[mode]]
+        pitch_scale = [n + abs_degree for n in SCALES[mode]]
         return pitch_scale
 
     def _eq(self, other):
-        return self.degree == other.degree and self.accident == other.accident and self.mode == other.mode and self.octave == other.octave
+        return self.degree == other.degree and self.mode == other.mode and self.octave == other.octave
 
     def __eq__(self, other):
         if not isinstance(other, Tonality):
@@ -36,7 +46,7 @@ class Tonality:
         self.__dict__.update(d)
 
     def copy(self):
-        return Tonality(self.degree, self.accident, self.mode, self.octave)
+        return Tonality(self.degree, self.mode, self.octave)
 
     def __radd__(self, other):
         if other is None:
@@ -45,15 +55,16 @@ class Tonality:
             raise Exception('Not valid addition of tonality')
 
     def add(self, other):
-        new_abs_degree = (self.abs_degree + other.abs_degree) % 12
+        new_abs_degree = self.degree + other.degree
+        new_octave = self.octave + other.octave
+        delta_octave = new_abs_degree // 12
+        new_degree = new_abs_degree % 12
         new_mode = other.mode
-        degree, accident = INDEX_TONALITY[new_mode][new_abs_degree]
-        octave = (self.abs_degree + other.abs_degree) // 12
-        return Tonality(degree=degree, accident=accident, mode=new_mode, octave=octave)
+        return Tonality(degree=new_degree, mode=new_mode, octave=new_octave + delta_octave)
 
     @property
     def abs_degree(self):
-        return INDEX_MODE[self.mode][(self.degree, self.accident)]
+        return self.degree + + 12 * self.octave
 
     def __add__(self, other):
         """
@@ -69,13 +80,13 @@ class Tonality:
     @property
     def b(self):
         tone = self.copy()
-        tone.accident = "b"
+        tone.degree -= 1
         return tone
 
     @property
     def s(self):
         tone = self.copy()
-        tone.accident = "s"
+        tone.degree += 1
         return tone
 
     @property
@@ -143,17 +154,14 @@ class Tonality:
         return tonality
 
     def degree_to_str(self):
-        return ELEMENT_TO_STR[self.degree]
+        return DEGREE_TO_STR[self.degree]
 
     def __repr__(self):
-        return f'{self.degree_to_str()}{self.accident}.{self.mode}.o{self.octave}'
+        return self.to_code()
 
     def to_code(self):
-        sep_accident = ""
-        if self.accident != "":
-            sep_accident = "." + self.accident
-        octave_str = ""
+        result = f"{self.degree_to_str()}.{self.mode}"
         if self.octave != 0:
-            octave_str = f".o({self.octave})"
+            result += f".o({self.octave})"
 
-        return f'{self.degree_to_str()}{sep_accident}.{self.mode}{octave_str}'
+        return result

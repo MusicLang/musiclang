@@ -127,3 +127,25 @@ INSTRUMENTS_DICT = {
     "applause": 126,
     "gunshot": 127
 }
+
+
+OCTAVES = {
+    INSTRUMENTS_DICT['piccolo']: 1,
+    INSTRUMENTS_DICT['flute']: 1,
+    INSTRUMENTS_DICT['oboe']: 0,
+    INSTRUMENTS_DICT['english_horn']: 0,
+    INSTRUMENTS_DICT['clarinet']: 0,
+    INSTRUMENTS_DICT['bassoon']: -1,
+    INSTRUMENTS_DICT['french_horn']: -1,
+    INSTRUMENTS_DICT['trumpet']: -1,
+    INSTRUMENTS_DICT['trombone']: -2,
+    INSTRUMENTS_DICT['tuba']: -2,
+    INSTRUMENTS_DICT['piano']: -1,
+    INSTRUMENTS_DICT['violin']: 0,
+    INSTRUMENTS_DICT['viola']: 0,
+    INSTRUMENTS_DICT['cello']: -2,
+    INSTRUMENTS_DICT['contrabass']: -2,
+    INSTRUMENTS_DICT['harp']: -1,
+    INSTRUMENTS_DICT['acoustic_guitar']: -1,
+    INSTRUMENTS_DICT['timpani']: -2
+}

@@ -1,4 +1,5 @@
 from ..note_pitch import NotePitch
+from ..pitches.pitches_utils import note_to_pitch_result
 
 import numpy as np
 
@@ -17,73 +18,18 @@ def get_or_default_last_pitch(chord, track_idx, time, last_pitch):
     return NotePitch(chord.scale_pitches[0], offset=time - 1, duration=1, track=track_idx).to_midi_note()
 
 
-def relative_scale_up_value(delta, last_pitch, scale_pitches):
-    scale_mod = list(sorted([i % 12 for i in scale_pitches]))
-    # Get scale index
-    if delta == 0:
-        new_pitch = last_pitch
-    else:
-        whole_scale = [s + octave * 12 for octave in range(-5, 5) for s in scale_mod]
-        dists = np.asarray(whole_scale) - last_pitch
-        dists = dists[dists >= 0] + last_pitch
-        new_pitch = dists[delta - 1 * (last_pitch not in whole_scale)]
-
-    return new_pitch
-
-
-def relative_scale_down_value(delta, last_pitch, scale_pitches):
-    scale_mod = list(sorted([i % 12 for i in scale_pitches]))
-    # Get scale index
-    if delta == 0:
-        new_pitch = last_pitch
-    else:
-        whole_scale = [s + octave * 12 for octave in range(-5, 5) for s in scale_mod]
-        dists = np.asarray(whole_scale) - last_pitch
-        dists = dists[dists <= 0] + last_pitch
-        new_pitch = dists[-(delta + 1) + 1 * (last_pitch not in whole_scale)]
-    return new_pitch
-
-
-def get_relative_scale_value(note, last_pitch, scale_pitches):
-    if note.is_up:
-        return relative_scale_up_value(note.val + 7 * note.octave, last_pitch, scale_pitches)
-    elif note.is_down:
-        return relative_scale_down_value(note.val + 7 * note.octave, last_pitch, scale_pitches)
-    else:
-        pass
-
-
-def get_value_to_scale_note(value, scale_pitches):
-    return scale_pitches[value % len(scale_pitches)] + 12 * (value // len(scale_pitches))
-
-
 def note_to_pitch(note, chord, track_idx, time, last_pitch):
 
     # Get real scale pitches
-    real_chord = note.real_chord(chord)
-    scale_pitches = real_chord.scale_pitches
-    last_pitch_pitch = last_pitch[0]
+    if last_pitch is not None:
+        last_pitch_pitch = last_pitch[0]
+    else:
+        last_pitch_pitch = 0
 
-    pitch_result = 0
-    if not note.is_relative:
-        if note.is_scale_note:
-            pitch_result = get_value_to_scale_note(note.val + 7 * note.octave, scale_pitches)
-        elif note.is_chord_note:
-            raise Exception('Chord notes parsing are not implemented yet')
-            pass
-        elif note.is_chromatic_note:
-            raise Exception('Chromatic notes parsing are not implemented yet')
+    pitch_result = note_to_pitch_result(note, chord, last_pitch=last_pitch_pitch)
 
-    elif note.is_relative:
-        if note.is_scale_note:
-            pitch_result = get_relative_scale_value(note, last_pitch_pitch, scale_pitches)
-            pass
-        elif note.is_chord_note:
-            raise Exception('Relative chord notes parsing are not implemented yet')
-            pass
-        elif note.is_chromatic_note:
-            raise Exception('Relative chromatic notes parsing are not implemented yet')
-            pass
+    if pitch_result is None:
+        pitch_result = 0
 
     pitch = NotePitch(pitch_result, offset=time, duration=note.duration, track=track_idx,
                       velocity=note.amp, silence=1 * note.is_silence, continuation=1 * note.is_continuation)
@@ -152,5 +98,5 @@ def score_to_midi(score, filepath, **kwargs):
         notes += melody
 
     instruments = tracks_to_instruments(tracks)
-    res = to_midi(notes, output_file=filepath, instruments=instruments)
+    res = to_midi(notes, output_file=filepath, instruments=instruments, **kwargs)
     return res

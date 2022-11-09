@@ -19,7 +19,7 @@ class Note:
         if self.mode is None:
             return new_chord
         else:
-            new_chord.tonality.mode = self.mode
+            new_chord = new_chord.change_mode(self.mode)
             return new_chord
 
 
@@ -186,7 +186,8 @@ class Note:
             return False
         else:
             return (self.type == other.type) and (self.val == other.val) and (self.duration == other.duration) and \
-                   (self.octave == other.octave) and (self.accident == other.accident)
+                   (self.octave == other.octave) and (self.mode == other.mode)
+
 
     def __getattr__(self, item):
         try:
@@ -197,7 +198,7 @@ class Note:
             if hasattr(self.properties, item):
                 return getattr(self.properties, item)
             else:
-                raise Exception('Not existing properties of attribute')
+                raise AttributeError('Not existing properties of attribute {}'.format(item))
 
     def __mul__(self, other):
         """

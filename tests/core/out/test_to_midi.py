@@ -3,62 +3,6 @@ from musiclang.core.out.to_midi import *
 
 
 
-def test_relative_scale_up_value():
-
-    new_pitch = relative_scale_up_value(1, 12, [0, 2, 4, 5, 7, 9, 11])
-
-    assert new_pitch == 14
-
-def test_relative_scale_up_value_negative():
-    new_pitch = relative_scale_up_value(1, -2, [0, 2, 4, 5, 7, 9, 11])
-
-    assert new_pitch == -1
-
-
-def test_relative_scale_up_value_octave():
-
-    new_pitch = relative_scale_up_value(8, 12, [0, 2, 4, 5, 7, 9, 11])
-    assert new_pitch == 26
-
-def test_relative_scale_up_value_not_in_scale():
-
-    new_pitch = relative_scale_up_value(1, 13, [0, 2, 4, 5, 7, 9, 11])
-
-    assert new_pitch == 14
-
-
-
-def test_relative_scale_down_value():
-    new_pitch = relative_scale_down_value(1, 12, [0, 2, 4, 5, 7, 9, 11])
-
-    assert new_pitch == 11
-
-
-
-def test_relative_scale_down_value_not_in_scale():
-
-    new_pitch = relative_scale_down_value(1, 13, [0, 2, 4, 5, 7, 9, 11])
-
-    assert new_pitch == 12
-
-
-def test_get_relative_scale_value():
-
-    note = Note("su", 1, 1, 1)
-    last_pitch = -2
-    scale_pitches = [0, 2, 4, 5, 7, 9, 11]
-    result = get_relative_scale_value(note, last_pitch, scale_pitches)
-
-    assert result == 11
-
-def test_get_relative_scale_value_down():
-
-    note = Note("sd", 1, 0, 1)
-    last_pitch = -1
-    scale_pitches = [0, 2, 4, 5, 7, 9, 11]
-    result = get_relative_scale_value(note, last_pitch, scale_pitches)
-
-    assert result == -3
 
 
 def test_note_to_pitch_down():
@@ -66,7 +10,7 @@ def test_note_to_pitch_down():
 
     note = Note("sd", 1, 0, 1)
     last_pitch = [12]
-    chord = Element(3) % Tonality(1, mode="m", octave=-1)
+    chord = Element(3) % Tonality(2, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
     res = [10, 12, 1, 120, 0, 0, 0]
     assert result == (res, res)
@@ -85,9 +29,9 @@ def test_note_to_pitch_abs():
 
     note = Note("s", 1, -1, 1)
     last_pitch = [12]
-    chord = Element(3) % Tonality(1, mode="m", octave=-1)
+    chord = Element(3) % Tonality(2, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [-3, 12, 1, 120, 0, 0, 0]
+    res = [-15, 12, 1, 120, 0, 0, 0]
     assert result == (res, res)
 
 def test_note_to_pitch_abs_octave_tonality():
@@ -95,9 +39,9 @@ def test_note_to_pitch_abs_octave_tonality():
 
     note = Note("s", 1, -1, 1)
     last_pitch = [12]
-    chord = Element(3).o(1) % Tonality(1, mode="m", octave=-1)
+    chord = Element(3).o(1) % Tonality(2, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [9, 12, 1, 120, 0, 0, 0]
+    res = [-3, 12, 1, 120, 0, 0, 0]
     assert result == (res, res)
 
 
@@ -120,7 +64,7 @@ def test_note_to_pitch_continuation():
 
 
 def test_to_midi():
-    notes = [[0, 12, 1, 120, 0, 0, 1], [0, 12, 1, 120, 0, 0, 1]]
+    notes = [[0, 12, 1, 120, 0, 0, 0], [0, 12, 1, 120, 0, 0, 0]]
     res = to_midi(notes, output_file=None)
     assert res is not None
 

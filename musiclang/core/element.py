@@ -1,3 +1,4 @@
+from .constants import SCALE_DEGREE
 
 class Element:
     """
@@ -63,56 +64,56 @@ class Element:
     @property
     def b(self):
         from .tonality import Tonality
-        return Tonality(self.val).b
+        return Tonality(SCALE_DEGREE[self.val]).b
 
     @property
     def s(self):
         from .tonality import Tonality
-        return Tonality(self.val).s
+        return Tonality(SCALE_DEGREE[self.val]).s
 
     @property
     def m(self):
         from .tonality import Tonality
-        return Tonality(self.val).m
+        return Tonality(SCALE_DEGREE[self.val]).m
 
     @property
     def M(self):
         from .tonality import Tonality
-        return Tonality(self.val).M
+        return Tonality(SCALE_DEGREE[self.val]).M
 
     @property
     def mm(self):
         from .tonality import Tonality
-        return Tonality(self.val).mm
+        return Tonality(SCALE_DEGREE[self.val]).mm
 
 
     @property
     def dorian(self):
         from .tonality import Tonality
-        return Tonality(self.val).dorian
+        return Tonality(SCALE_DEGREE[self.val]).dorian
 
     @property
     def phrygian(self):
         from .tonality import Tonality
-        return Tonality(self.val).phrygian
+        return Tonality(SCALE_DEGREE[self.val]).phrygian
 
     @property
     def lydian(self):
         from .tonality import Tonality
-        return Tonality(self.val).lydian
+        return Tonality(SCALE_DEGREE[self.val]).lydian
 
     @property
     def mixolydian(self):
         from .tonality import Tonality
-        return Tonality(self.val).mixolydian
+        return Tonality(SCALE_DEGREE[self.val]).mixolydian
 
     @property
     def aeolian(self):
         from .tonality import Tonality
-        return Tonality(self.val).aeolian
+        return Tonality(SCALE_DEGREE[self.val]).aeolian
 
     @property
     def locrian(self):
         from .tonality import Tonality
-        return Tonality(self.val).locrian
+        return Tonality(SCALE_DEGREE[self.val]).locrian
 

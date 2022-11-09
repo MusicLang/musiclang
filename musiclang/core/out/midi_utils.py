@@ -5,6 +5,7 @@ import numpy as np
 def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instruments={}, **kwargs):
     from mido import MidiFile, MidiTrack, Message, MetaMessage
     from ..constants import SILENCE, CONTINUATION, PITCH, TRACK, OFFSET, VELOCITY, DURATION
+    from .constants import OCTAVES
     import os
 
     matrix = np.asarray(matrix)
@@ -19,8 +20,6 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instru
     mid.ticks_per_beat = ticks_per_beat
     mid.type = 1
 
-
-
     # Take care of continuation
     # matrix = matrix[(matrix['pitch'] > 0) | (matrix['continuation'] > 0)]
     # Remove all continuations that follows a silence
@@ -28,7 +27,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instru
     for i in range(nb_tracks + 1):
         track = MidiTrack()
         if i in instruments.keys():
-            track.append(Message('program_change', program=instruments[i], time=0, channel=number_to_channel(i)))
+            track.append(Message('program_change', program=instruments.get(i, 0), time=0, channel=number_to_channel(i)))
         elif i != 9:
             track.append(Message('program_change', program=0, time=0, channel=number_to_channel(i)))
         mid.tracks.append(track)
@@ -41,15 +40,17 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instru
     sort_events = []
     last_silence = True
     for row in matrix:
+        pitch = row[PITCH] + 60 + 12 * OCTAVES.get(instruments.get(row[TRACK], 0), 0)
         row = row.tolist()
         if row[SILENCE]:
             last_silence = True
             continue
         if row[CONTINUATION] == 0:
-            sort_events.append([row[PITCH] + 60, 1, row[OFFSET], row[VELOCITY], row[TRACK]])
+            sort_events.append([pitch,
+                                1, row[OFFSET], row[VELOCITY], row[TRACK]])
 
         if not (row[CONTINUATION] and last_silence):
-            sort_events.append([row[PITCH] + 60, 0, (row[OFFSET] + row[DURATION]), row[TRACK], row[CONTINUATION]])
+            sort_events.append([pitch, 0, (row[OFFSET] + row[DURATION]), row[TRACK], row[CONTINUATION]])
             last_silence = False
 
     sort_events.sort(key=lambda tup: tup[2])

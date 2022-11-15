@@ -39,8 +39,6 @@ def get_relative_scale_value(note, last_pitch, scale_pitches):
 def get_value_to_scale_note(value, scale_pitches):
     return scale_pitches[value % len(scale_pitches)] + 12 * (value // len(scale_pitches))
 
-
-
 def note_to_pitch_result(note, chord, last_pitch=None):
     real_chord = note.real_chord(chord)
     scale_pitches = real_chord.scale_pitches
@@ -53,7 +51,8 @@ def note_to_pitch_result(note, chord, last_pitch=None):
             raise Exception('Chord notes parsing are not implemented yet')
             pass
         elif note.is_chromatic_note:
-            raise Exception('Chromatic notes parsing are not implemented yet')
+            chromatic_pitches = [scale_pitches[0] + i for i in range(12)]
+            pitch_result = get_value_to_scale_note(note.val + 12 * note.octave, chromatic_pitches)
 
     elif note.is_relative:
         if note.is_scale_note:

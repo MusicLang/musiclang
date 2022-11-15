@@ -70,6 +70,25 @@ class NoteProperties:
         return note
 
     @property
+    def amp_figure(self):
+        note = self.note.copy()
+        if note.amp <= 20:
+            return 'ppp'
+        elif note.amp <= 40:
+            return 'pp'
+        elif note.amp <= 60:
+            return 'p'
+        elif note.amp <= 80:
+            return 'mf'
+        elif note.amp <= 100:
+            return 'f'
+        elif note.amp <= 110:
+            return 'ff'
+        else:
+            return 'fff'
+
+
+    @property
     def is_up(self):
         return "u" in self.note.type
 

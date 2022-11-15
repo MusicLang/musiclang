@@ -23,6 +23,8 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instru
     # Take care of continuation
     # matrix = matrix[(matrix['pitch'] > 0) | (matrix['continuation'] > 0)]
     # Remove all continuations that follows a silence
+
+
     nb_tracks = matrix[:, TRACK].max()
     for i in range(nb_tracks + 1):
         track = MidiTrack()

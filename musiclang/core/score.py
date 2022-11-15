@@ -42,6 +42,13 @@ class Score:
     def __repr__(self):
         return ' \n'.join([str(chord) for chord in self.chords])
 
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
+
     @property
     def duration(self):
         return sum([c.duration for c in self.chords])

@@ -11,6 +11,20 @@ class Chord:
         self.score = {} if score is None else score
 
 
+    def parse(self, pitch):
+        from .note import Note
+        if pitch % 12 in self.scale_set:
+            scale = self.scale_pitches
+            type = 's'
+        else:
+            scale = self.chromatic_scale_pitches
+            type = 'h'
+
+        scale_mod = [s % 12 for s in scale]
+        idx = scale_mod.index(pitch % 12)
+        oct = (pitch - scale[0]) // 12
+        return Note(type, idx, oct, 1)
+
     def change_mode(self, mode):
         new_chord = self.copy()
         new_chord.tonality = new_chord.tonality.change_mode(mode)
@@ -21,6 +35,14 @@ class Chord:
     def scale_degree(self):
         tonic = self.scale_pitches[0]
         return DEGREE_TO_SCALE_DEGREE[tonic % 12] + tonic // 12
+
+    @property
+    def pitch_set(self):
+        return frozenset({s % 12 for s in self.chord_pitches})
+
+    @property
+    def scale_set(self):
+        return frozenset({s % 12 for s in self.scale_pitches})
 
     @property
     def chord_pitches(self):
@@ -40,6 +62,9 @@ class Chord:
         scale_pitches = [n + 12 * self.octave for n in scale_pitches]
         return scale_pitches
 
+    @property
+    def chromatic_scale_pitches(self):
+        return [self.scale_pitches[0] + i for i in range(12)]
 
 
     @property
@@ -223,6 +248,11 @@ class Chord:
 
         return named_melodies_result
 
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
 
     def __getattr__(self, item):
         if len(self.parts) == 0:

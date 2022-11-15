@@ -44,6 +44,21 @@ class Element:
         from .chord import Chord
         return Chord(element=self.val, extension=5).o(octave)
 
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
+    @property
+    def pitch_set(self):
+        return self.o(0).pitch_set
+
+    @property
+    def scale_set(self):
+        return self.o(0).scale_set
+
     @property
     def scale_pitches(self):
         return self.o(0).scale_pitches

@@ -23,6 +23,11 @@ class Tonality:
         new_tonality.mode = mode
         return new_tonality
 
+
+    @property
+    def scale_set(self):
+        return frozenset({s % 12 for s in self.scale_pitches})
+
     @property
     def scale_pitches(self):
         abs_degree = self.abs_degree

@@ -75,7 +75,7 @@ def get_part_variables(part, chord_idx, part_name):
 
 
 def get_end_result():
-    result = ["MusicLang(score).play().to_midi(FILENAME, tempo=TEMPO)"]
+    result = ["score.to_midi(FILENAME, tempo=TEMPO)"]
     return result
 
 def get_initial_variable_declaration(tempo=120, filename="", **kwargs):
@@ -90,9 +90,9 @@ def get_initial_variable_declaration(tempo=120, filename="", **kwargs):
     return result
 
 def get_import_lines():
-    result =["from musiclang.script import *",
-             "from musiclang.lang import MusicLang",
-             "from fractions import Fraction as frac"
+    result =[
+            "from musiclang.core.library import *",
+            "from fractions import Fraction as frac"
              ]
 
     return result

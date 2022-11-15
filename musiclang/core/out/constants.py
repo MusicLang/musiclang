@@ -128,6 +128,9 @@ INSTRUMENTS_DICT = {
     "gunshot": 127
 }
 
+REVERSE_INSTRUMENT_DICT = {
+    val: key for key, val in INSTRUMENTS_DICT.items()
+}
 
 OCTAVES = {
     INSTRUMENTS_DICT['piccolo']: 1,

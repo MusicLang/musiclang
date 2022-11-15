@@ -120,12 +120,17 @@ class Note:
                 duration = DURATION_TO_STR[self.duration]
                 result += f".{duration}"
             else:
-                result += f".augment({self.duration})"
+                if isinstance(self.duration, int):
+                    result += f".augment({self.duration}))"
+                else:
+                    result += f".augment(frac({self.duration.numerator}, {self.duration.denominator}))"
 
         if self.octave != 0:
             result += f".o({self.octave})"
         if self.mode is not None:
             result += f".{self.mode}"
+        if self.amp <= 110:
+            result += f".{self.amp_figure}"
 
         return result
 
@@ -188,6 +193,11 @@ class Note:
             return (self.type == other.type) and (self.val == other.val) and (self.duration == other.duration) and \
                    (self.octave == other.octave) and (self.mode == other.mode)
 
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
 
     def __getattr__(self, item):
         try:

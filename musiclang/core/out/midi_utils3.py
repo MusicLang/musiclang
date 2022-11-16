@@ -1,7 +1,7 @@
 
 import numpy as np
 
-def voice_to_track(instrument_list, voice, instruments):
+def voice_to_channel(instrument_list, voice, instruments):
     instrument_of_voice = instruments.get(voice, 0)
     return instrument_list.index(instrument_of_voice)
 
@@ -28,20 +28,22 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instru
     # matrix = matrix[(matrix['pitch'] > 0) | (matrix['continuation'] > 0)]
     # Remove all continuations that follows a silence
     # Put all instruments with same name in same track
-
-
+    # For each voice assign right track
+    instrument_list = list(sorted(list(set([0] + list(instruments.values())))))
+    # Replace with track in matrix
     # For each voice assign right track
     instrument_list = list(set(list(instruments.values())))
 
     # Replace with track in matrix
-
     nb_tracks = matrix[:, TRACK].max()
+    channels = [number_to_channel(voice_to_channel(instrument_list, i, instruments)) for i in range(nb_tracks + 1)]
+
     for i in range(nb_tracks + 1):
         track = MidiTrack()
         if i in instruments.keys():
-            track.append(Message('program_change', program=instruments.get(i, 0), time=0, channel=number_to_channel(i)))
+            track.append(Message('program_change', program=instruments.get(i, 0), time=0, channel=channels[i]))
         elif i != 9:
-            track.append(Message('program_change', program=0, time=0, channel=number_to_channel(i)))
+            track.append(Message('program_change', program=0, time=0, channel=channels[i]))
         mid.tracks.append(track)
 
     if output_file is not None:
@@ -75,7 +77,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instru
             vel = int(evt[3])
             track_nb = int(evt[4])
             track = mid.tracks[track_nb]
-            track.append(Message('note_on', note=int(evt[0]), channel=number_to_channel(track_nb),
+            track.append(Message('note_on', note=int(evt[0]), channel=channels[track_nb],
                                  velocity=vel, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat)))
 
             lapso[track_nb] = evt[2]
@@ -83,14 +85,13 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=96, tempo=120, instru
         elif evt[1] == 0:
             track_nb = int(evt[3])
             track = mid.tracks[track_nb]
-
             if evt[4] == 1 and prev_pitch[track_nb] > 0:
-                track[-1] = Message('note_off', note=prev_pitch[track_nb], channel=number_to_channel(track_nb),
+                track[-1] = Message('note_off', note=prev_pitch[track_nb], channel=channels[track_nb],
                                     velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat + track[-1].time))
 
 
             else:
-                track.append(Message('note_off', note=int(evt[0]), channel=number_to_channel(track_nb),
+                track.append(Message('note_off', note=int(evt[0]), channel=channels[track_nb],
                                      velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat)))
             lapso[track_nb] = evt[2]
 

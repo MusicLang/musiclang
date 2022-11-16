@@ -18,6 +18,7 @@ def find_bar_duration(notes):
                 M_arg = bar_duration, offset
 
     bar_duration, offset = M_arg
+    print(f'Bar duration : {bar_duration}, Offset : {offset}')
     return bar_duration, offset
 
 
@@ -40,14 +41,21 @@ def find_min_max_beat(notes):
     return min_beat, max_beat
 
 
-def get_mean_pitches_every_beat(notes, duration, offset):
+def get_mean_pitches_every_beat(notes, duration, offset, tol=1e-1):
     """
     Return the mean number of pitches that are played ON specified beat period and offset
     """
+    def weight(n):
+        result = (120 - np.mean(n)) / 120
+        if np.isnan(result):
+            return 0
+        return result
     min_beat, max_beat = find_min_max_beat(notes)
-    pitches_per_beats = [notes[notes[:, 0] == beat][:, 1].tolist()
+    pitches_per_beats = [notes[abs(notes[:, 0] - beat) < tol][:, 1].tolist()
                          for beat in np.arange(min_beat + offset, max_beat, duration)]
-    nb_pitches_per_beats = [len(n) for n in pitches_per_beats]
+    nb_pitches_per_beats = np.asarray([len(n) for n in pitches_per_beats])
+    weights = np.asarray([weight(n) for n in pitches_per_beats])
+    sumweights = np.sum(weights)
     return np.mean(nb_pitches_per_beats)
 
 
@@ -104,6 +112,7 @@ def convert_notes_to_items(notes, bar_duration, offset):
 def convert_notes(notes):
     notes = np.asarray(notes)
     bar_duration, offset = find_bar_duration(notes)
+
     sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value = convert_notes_to_items(notes, bar_duration, offset)
 
     return sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value

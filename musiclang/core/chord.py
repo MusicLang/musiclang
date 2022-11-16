@@ -127,6 +127,8 @@ class Chord:
 
     @property
     def duration(self):
+        if len(self.score.keys()) == 0:
+            return 0
         return max([self.score[key].duration for key in self.score.keys()])
 
     def set_part(self, item, part):
@@ -138,7 +140,7 @@ class Chord:
 
     def to_chord(self):
         result = self.copy()
-        result.score = None
+        result.score = {}
         return result
 
 

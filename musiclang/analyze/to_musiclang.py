@@ -11,11 +11,12 @@ from .voice_separation import separate_voices
 from musiclang.core.out.constants import REVERSE_INSTRUMENT_DICT
 from musiclang.core.note import Silence, Continuation
 from musiclang.core.constants import OCTAVES
-
+from mido import tempo2bpm
 import time
 def read_midi_as_musiclang(filepath):
 
     mf = MIDIFile(filepath, unit="beats")
+    tempo = int(tempo2bpm(mf.tempi[0][1]))
     instruments = _infer_instruments(mf)
     sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value = convert_notes(mf.notes)
     t1 = time.time()
@@ -23,7 +24,7 @@ def read_midi_as_musiclang(filepath):
     print(time.time() - t1)
     chords = _infer_chords(sequence, bar_duration_in_ticks, offset_in_ticks, max_chords)
     score = _infer_score(sequence, chords, instruments, bar_duration_in_ticks, offset_in_ticks, tick_value)
-    return score
+    return score, tempo
 
 
 
@@ -34,15 +35,29 @@ def _infer_score(sequence, chords, instruments, bar_duration_in_ticks, offset_in
     time_end = bar_duration_in_ticks
     score = None
     continuations = {}
+
+    # Get all track, voices
+    offsets_voices = {}
+    offsets_voices_raw = {}
+    for track, instrument in instruments.items():
+        track_notes = [n for n in sequence if n.track == track]
+        voices = {n.voice for n in track_notes}
+        if instrument not in offsets_voices_raw.keys():
+            offsets_voices_raw[instrument] = max(voices) + 1
+        else:
+            offsets_voices_raw[instrument] += max(voices) + 1
+        offsets_voices[track] = offsets_voices_raw[instrument]
+
     for chord in chords:
         chord_notes = [n for n in sequence if time_start<= n.start< time_end]
         chord_dict = {}
+        # FIXME : Make sure no overlapping instruments between tracks
         for track, instrument in instruments.items():
             track_notes = [n for n in chord_notes if n.track == track]
             voices = {n.voice for n in track_notes}
             for voice in voices:
                 voice_notes = [n for n in track_notes if n.voice == voice]
-                voice_name = instrument + '__' + str(int(voice))
+                voice_name = instrument + '__' + str(offsets_voices[track] + int(voice))
                 cont = continuations.get(voice_name, None)
                 chord_dict[voice_name], cont = _parse_voice(voice_notes, chord,
                                                             time_start, time_end, tick_value, cont)

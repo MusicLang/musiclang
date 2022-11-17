@@ -14,9 +14,6 @@
 
 """Chord inference for NoteSequences."""
 import bisect
-import itertools
-import math
-import numbers
 from .constants import *
 import numpy as np
 

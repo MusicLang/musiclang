@@ -80,3 +80,17 @@ PROFILES_DEGREE = {
     'm': PROFILE_m,
     'mm':  PROFILE_mm
 }
+
+
+TYPE = "type"
+TIME = "time"
+NOTE = "note"
+VEL = "vel"
+CHANNEL = "channel"
+DURATION = "duration"
+END_TIME = "end_time"
+START_TIME = "start_time"
+TRACK = "track"
+VOICE = "voice"
+ON = 1
+OFF = 0

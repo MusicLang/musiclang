@@ -46,7 +46,6 @@ def infer_score(sequence, chords, instruments, bar_duration_in_ticks, offset_in_
     for chord in chords:
         chord_notes = [n for n in sequence if time_start <= n.start < time_end]
         chord_dict = {}
-        # FIXME : Make sure no overlapping instruments between tracks
         for track in tracks:
             track_notes = [n for n in chord_notes if n.track == track]
             voices = {n.voice for n in track_notes}
@@ -138,15 +137,19 @@ def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, c
         overlap = local_time_end - note.start
         if overlap > 0:
             melody.notes[-1].duration -= overlap * tick_value
+            if melody.notes[-1].duration == 0:
+                melody.notes.pop()
             duration = note.end - note.start
             melody += _parse_note(note, duration, chord, tick_value)
         elif overlap < 0:
             melody += Silence(- overlap * tick_value)
             duration = note.end - note.start
-            melody += _parse_note(note, duration, chord, tick_value)
+            if duration > 0:
+                melody += _parse_note(note, duration, chord, tick_value)
         else:
             duration = note.end - note.start
-            melody += _parse_note(note, duration, chord, tick_value)
+            if duration > 0:
+                melody += _parse_note(note, duration, chord, tick_value)
 
         local_time_end = note.end
         # Find scale note
@@ -155,6 +158,8 @@ def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, c
     if local_time_end > bar_time_end:
         return_cont = Continuation((local_time_end - bar_time_end) * tick_value)
         melody.notes[-1].duration -= (local_time_end - bar_time_end) * tick_value
+        if melody.notes[-1].duration == 0:
+            melody.notes.pop()
 
     assert melody.duration == (bar_time_end - bar_time_start) * tick_value
 

@@ -23,6 +23,62 @@ class Score:
         else:
             raise Exception('Cannot add to Score if not Chord or Score')
 
+    def __iter__(self):
+        return self.chords.__iter__()
+
+    @property
+    def instruments(self):
+        """
+        Return the list of all voices used in the score
+        :return:
+        """
+        result = []
+        for chord in self:
+            insts = list(chord.score.keys())
+            result += insts
+            result = list(set(result))
+
+        return list(sorted(result, key=lambda x: (x.split('__')[0], int(x.split('__')[1]))))
+
+
+    def __getitem__(self, item):
+        """
+        If str return a score with only this voice
+        Else returns item getter of the list of chords and convert it back to a score
+        """
+        from .note import Silence
+        from .chord import Chord
+        if isinstance(item, str):
+            new_score = None
+            for chord in self:
+                if item in chord.score.keys():
+                    new_score += chord(**{item: chord.score[item]})
+                else:
+                    new_score += chord(**{item: Silence(chord.duration)})
+            return new_score
+        else:
+            chords = self.chords.__getitem__(item)
+            if isinstance(chords, Chord):
+                return (None + chords)
+            return sum(chords, None)
+
+
+    def get_time_measures(self, start=None, end=None):
+        time = 0
+        start = start if start is not None else 0
+        end = end if end is not None else self.duration
+
+        new_score = None
+        for chord in self:
+            if time >= start:
+                new_score += chord.copy()
+            if time > end:
+                break
+            time += chord.duration
+
+        return new_score
+
+
     def __getattr__(self, item):
         chords = self.copy()
         chords.chords = [getattr(s, item) for s in self.chords]

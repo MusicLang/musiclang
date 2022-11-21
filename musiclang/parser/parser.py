@@ -15,16 +15,17 @@ class MidiToMusicLang:
     """
     def __init__(self, filename):
         self.score = MidiNotes.from_midi(filename)
+        self.notes = np.asarray(self.score.notes_in_beats()[[START_TIME, NOTE, DURATION, VEL, TRACK, CHANNEL, VOICE]])
+        self.metric_infos = {}
 
     def get_score(self):
         """
         Return musiclang score
         :return: musiclang.Score
         """
-        beats = np.asarray(self.score.notes_in_beats()[[START_TIME, NOTE, DURATION, VEL, TRACK, CHANNEL, VOICE]])
         sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value = \
-            convert_notes(beats, self.score.beat_value)
-        metric_infos = {'bar_duration_in_ticks': bar_duration_in_ticks,
+            convert_notes(self.notes)
+        self.metric_infos = {'bar_duration_in_ticks': bar_duration_in_ticks,
                         'offset_in_ticks': offset_in_ticks ,'max_chords': max_chords,
                         'tick_value': tick_value}
 
@@ -34,11 +35,17 @@ class MidiToMusicLang:
         return score, self.score.tempo
 
 
+class MusicLangIgnoreException(Exception):
+    pass
+
 class MidiNotes:
     """
     Class to store midi notes and information about a midi file
     """
-    def __init__(self, notes, ticks_per_beats=480, instruments=None, tempo=120, beat_value=1, **kwargs):
+    def __init__(self, notes, ticks_per_beats=480, instruments=None,
+                 tempo=120, beat_value=1, bar_duration=None,
+                 tempos=None,
+                 **kwargs):
         self.events = pd.DataFrame(notes, columns=[TYPE, TIME, NOTE, VEL, CHANNEL, TRACK])
         self.ticks_per_beats = ticks_per_beats
         self.notes = self.get_duration_dataframe()
@@ -46,6 +53,8 @@ class MidiNotes:
         self.tempo = tempo
         self.beat_value = beat_value
         self.kwargs = kwargs
+        self.bar_duration = bar_duration
+        self.tempos = tempos
 
     @classmethod
     def from_midi(cls, filename):
@@ -56,6 +65,12 @@ class MidiNotes:
         """
         parser = MidiParser(filename)
         notes, config = parser.parse()
+        if len(config['bar_durations']) > 1:
+            raise MusicLangIgnoreException('Bar duration change events in midifile, MusicLang cannot parse that')
+        elif len(config['bar_durations']) == 1:
+            config['bar_duration'] = config['bar_durations'][0]
+        else:
+            config['bar_duration'] = None
         return cls(notes, **config)
 
     def notes_in_beats(self):
@@ -72,7 +87,8 @@ class MidiNotes:
     @property
     def config(self):
         return {'ticks_per_beats': self.ticks_per_beats, 'instruments': self.instruments,
-                'tempo': self.tempo, 'beat_value': self.beat_value
+                'tempo': self.tempo, 'beat_value': self.beat_value,
+                'bar_duration': self.bar_duration, 'tempos': self.tempos
                 }
 
     def get_duration_dataframe(self):
@@ -107,6 +123,8 @@ class MidiParser:
 
     def __init__(self, filename):
         self.filename = filename
+        self.bar_durations = []
+        self.tempos = []
 
     def parse(self, **kwargs):
         mf = MIDIFile(self.filename, unit="beats")
@@ -115,7 +133,7 @@ class MidiParser:
         beat_value = self._get_beat_value(mf)
         config ={'ticks_per_beats': mf.ticks_per_beat,
                  'instruments': instruments,
-                 'tempo': tempo, 'beat_value': beat_value}
+                 'tempo': tempo, 'tempos': self.tempos, 'beat_value': beat_value, 'bar_durations': self.bar_durations}
         return notes, config
 
 
@@ -133,6 +151,7 @@ class MidiParser:
         return channel_inst
 
     def _parse_midi(self, mf):
+        from fractions import Fraction as frac
         instruments = self._infer_instruments(mf)
         notes = []
         for track_idx, track in enumerate(mf.tracks):
@@ -141,7 +160,11 @@ class MidiParser:
                 if note.type == 'note_on':
                     notes.append([1, time + note.time, note.note, note.velocity, note.channel, track_idx])
                 elif note.type == 'note_off':
-                    notes.append([0, time  + note.time, note.note, note.velocity, note.channel, track_idx])
+                    notes.append([0, time + note.time, note.note, note.velocity, note.channel, track_idx])
+                elif note.type == 'time_signature':
+                    self.bar_durations.append(note.numerator * frac(4, note.denominator))
+                elif note.type == 'set_tempo':
+                    self.tempos.append((time, note.tempo))
                 time = time + note.time
         notes = np.asarray(notes)
 

@@ -1,6 +1,7 @@
 import numpy as np
+
+from .bar_duration import BarDurationEstimator
 from .item import Item
-from .utils import find_bar_duration
 
 
 def quantize_notes(notes, bar_duration, offset):
@@ -62,9 +63,9 @@ def convert_notes_to_items(notes, bar_duration, offset):
 
 
 
-def convert_notes(notes, beat_value):
+def convert_notes(notes):
     notes = np.asarray(notes)
-    bar_duration, offset = find_bar_duration(notes)
+    bar_duration, offset = BarDurationEstimator().estimate(notes)
     sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value = convert_notes_to_items(notes, bar_duration, offset)
     return sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value
 

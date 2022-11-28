@@ -138,7 +138,7 @@ def on(n):
     :param n: note
     :return:
     """
-    return n[0]
+    return float(n[0])
 
 def off(n):
     """
@@ -146,7 +146,7 @@ def off(n):
     :param n: note
     :return:
     """
-    return n[1]
+    return float(n[1])
 
 def duration(n):
     """

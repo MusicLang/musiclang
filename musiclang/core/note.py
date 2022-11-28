@@ -14,6 +14,9 @@ class Note:
         self.properties = self.init_properties()
 
 
+    def __iter__(self):
+        return [self].__iter__()
+
     def real_chord(self, chord):
         new_chord = chord.copy()
         if self.mode is None:

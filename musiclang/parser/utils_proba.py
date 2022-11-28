@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 
-from .constants import PROFILES
+from .constants import PROFILES, PROFILES_RAW
 from .utils import softmax
 
 
@@ -44,10 +44,11 @@ def loglikelihood_chords_vs_tonality(distribution, index, temperature=1):
 
 
 def loglikelihood_tonality_with_distribution(distribution, index, temperature=1):
-    corr = [np.roll(PROFILES[mode], i) for i, mode in index]
+    corr = [np.roll(PROFILES_RAW[mode], i) for i, mode in index]
     corrs_coeff = np.asarray([np.corrcoef(c, distribution)[1, 0] for c in corr])
     # Normalize with softmax
     density = np.log(softmax(corrs_coeff, temperature=temperature))
+
     return density, index
 
 
@@ -58,7 +59,7 @@ def get_scale_prior_matrix():
 def get_scale_transition_matrix(temperature=1):
     index = get_scale_index()
     # CORRELATE ALL PROFILES
-    corr = [np.roll(PROFILES[mode], i) for i, mode in index]
+    corr = [np.roll(PROFILES_RAW[mode], i) for i, mode in index]
     corrs_coeff = np.asarray([[np.corrcoef(ci, cj)[1, 0] for ci in corr] for cj in corr])
     # Normalize with softmax
     density = np.log(np.asarray([softmax(c, temperature=temperature) for c in corrs_coeff]))
@@ -77,6 +78,8 @@ def get_scale_emission_matrix(distributions):
     likelihoods = [loglikelihood_tonality_with_distribution(dist, row_index)[0] for dist in distributions]
     likelihoods = np.asarray(likelihoods)
     return likelihoods
+
+
 
 
 

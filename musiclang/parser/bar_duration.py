@@ -5,7 +5,7 @@ from fractions import Fraction as frac
 class BarDurationEstimator:
 
     def __init__(self, **kwargs):
-        pass
+        self.kwargs = kwargs
 
     def estimate(self, notes):
         feel = self._get_binary_or_ternary(notes)
@@ -19,7 +19,6 @@ class BarDurationEstimator:
         Otherwise returns 3
         """
         As = notes[:, 0]
-        p = 0.5
         Ts = np.asarray([1.5, 2, 3, 4, 4.5])
         fs = 1 / Ts
         dots = np.dot(fs[:, np.newaxis], As[np.newaxis, :])
@@ -59,7 +58,7 @@ class BarDurationEstimator:
         for candidate in candidates:
             means.append(self._get_mean_number_different_notes_over_threshold(notes, *candidate))
         # Get max candidate that is true
-        new_candidates = [c for c, m in zip(candidates, means) if m > 0.6]
+        new_candidates = [c for c, m in zip(candidates, means) if m > 0.8]
         # Else returns first
         if len(new_candidates) > 0:
             best_candidate = new_candidates[-1]

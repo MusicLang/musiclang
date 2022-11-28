@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Nápoles López"
+  given-names: "Néstor"
+  orcid: "https://orcid.org/0000-0001-7347-2613"
+- family-names: "Gotham"
+  given-names: "Mark"
+  orcid: "https://orcid.org/0000-0003-0722-3074"
+- family-names: "Fujinaga"
+  given-names: "Ichiro"
+  orcid: "https://orcid.org/0000-0003-2524-8582"
+title: "AugmentedNet (source code)"
+version: 1.0.0
+doi: ""
+date-released: 2021-08-05
+url: "https://github.com/napulen/AugmentedNet"

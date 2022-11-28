@@ -358,7 +358,7 @@ def infer_chords_for_sequence(sequence,
         else:
             root, kind = chord
             figure = set([(root + pitch) % 12 for pitch in CHORD_KIND_PITCHES[kind]])
-        chords.append(figure)
+        chords.append((key, figure))
     return chords
     # if figure != current_chord_name:
     #     ta = sequence.text_annotations.add()

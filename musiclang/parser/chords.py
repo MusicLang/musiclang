@@ -31,6 +31,17 @@ def quantize_notes(notes, bar_duration, offset):
 
     return new_notes, bar_duration_in_ticks, offset_in_ticks, tick_value
 
+def quantize_notes_raw(notes):
+    from fractions import Fraction as frac
+    new_notes = []
+    for note in notes:
+        note.start = note.start
+        note.end = note.end
+        note.start = frac(note.start).limit_denominator(8)
+        note.end = frac(note.end).limit_denominator(8)
+        new_notes.append(note)
+
+    return new_notes
 
 def convert_notes_to_items(notes, bar_duration, offset):
     """
@@ -61,11 +72,35 @@ def convert_notes_to_items(notes, bar_duration, offset):
     max_chords = (new_notes[-1].end // bar_duration_in_ticks) + 1
     return new_notes, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value
 
+def convert_to_items(notes):
+    """
+    Convert an array of notes into an array of Item objects that represents notes
+    and quantize them
+    :param notes:
+    :param bar_duration:
+    :param offset:
+    :return:
+    """
+    # Quantize
+    items = []
+    for note in notes:
+        start = note[0]
+        end = start + note[2]
+        vel = int(note[3])
+        pitch = int(note[1])
+        track = int(note[4])
+        channel = int(note[5])
+        items.append(Item("name", start, end, vel=vel, pitch=pitch, track=track, channel=channel, voice=0))
+
+    # Quantize notes in integer
+    items = quantize_notes_raw(items)
+    return items
 
 
-def convert_notes(notes):
+
+def convert_notes(notes, **kwargs):
     notes = np.asarray(notes)
-    bar_duration, offset = BarDurationEstimator().estimate(notes)
+    bar_duration, offset = BarDurationEstimator(**kwargs).estimate(notes)
     sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value = convert_notes_to_items(notes, bar_duration, offset)
     return sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value
 

@@ -19,6 +19,8 @@ def _chord_inference(pitch_set, tonality):
     else:
         return None
 
+
+
 def infer_chords_degrees(chords, scales):
     """
     Infer a chord (with degrees) sequence for absolute chord and scales sequence
@@ -26,6 +28,7 @@ def infer_chords_degrees(chords, scales):
     :param scales: List of scale for each chord (root_scale in mod 12 algebra, mode in ['m', 'M', 'mm'])
     :return: List of musiclang chords
     """
+    from .constants import PATTERNS_DICT
     chord_degrees = []
     for chord, scale in zip(chords, scales):
         root_scale, mode_scale = scale
@@ -34,9 +37,7 @@ def infer_chords_degrees(chords, scales):
         if chord_candidate is not None:
             chord_degrees.append(chord_candidate)
         else:
-            roots = [(root_scale + 7 * i) % 12 for i in range(0, 12)]
-            modes = ['M', 'm', 'mm']
-            candidates = [(root, mode) for root in roots for mode in modes]
+            candidates = [((t + root_scale) % 12 , m) for t, m in PATTERNS_DICT[tonality.mode]]
             for troot, tmode in candidates:
                 new_tone = Tonality(troot, mode=tmode)
                 if new_tone.scale_set.issuperset(chord):
@@ -44,7 +45,6 @@ def infer_chords_degrees(chords, scales):
                     if result is not None:
                         chord_degrees.append(result)
                         break
-
             else:
                 raise Exception(' Could not match a scale and a chord for {}'.format(chord))
 

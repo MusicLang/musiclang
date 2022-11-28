@@ -4,7 +4,7 @@ from madmom.io.midi import MIDIFile
 from mido import tempo2bpm
 
 from .chords import convert_notes
-from .to_musiclang import infer_chords, infer_voices_per_instruments, infer_score
+from .to_musiclang import infer_chords, infer_chords_direct_method, infer_voices_per_instruments, infer_score
 from .constants import *
 
 
@@ -13,10 +13,11 @@ class MidiToMusicLang:
     """
     Class to load midi into a musiclang score
     """
-    def __init__(self, filename):
-        self.score = MidiNotes.from_midi(filename)
+    def __init__(self, filename, **kwargs):
+        self.score = MidiNotes.from_midi(filename, **kwargs)
         self.notes = np.asarray(self.score.notes_in_beats()[[START_TIME, NOTE, DURATION, VEL, TRACK, CHANNEL, VOICE]])
         self.metric_infos = {}
+        self.kwargs = kwargs
 
     def get_score(self):
         """
@@ -24,14 +25,16 @@ class MidiToMusicLang:
         :return: musiclang.Score
         """
         sequence, bar_duration_in_ticks, offset_in_ticks, max_chords, tick_value = \
-            convert_notes(self.notes)
+            convert_notes(self.notes, **self.kwargs)
+        chords = infer_chords(sequence, bar_duration_in_ticks, max_chords, **self.kwargs)
+        sequence = infer_voices_per_instruments(sequence)
+        score = infer_score(sequence, chords, self.score.instruments, bar_duration_in_ticks, offset_in_ticks, tick_value)
+
         self.metric_infos = {'bar_duration_in_ticks': bar_duration_in_ticks,
                         'offset_in_ticks': offset_in_ticks ,'max_chords': max_chords,
                         'tick_value': tick_value}
 
-        sequence = infer_voices_per_instruments(sequence)
-        chords = infer_chords(sequence, bar_duration_in_ticks, offset_in_ticks, max_chords)
-        score = infer_score(sequence, chords, self.score.instruments, bar_duration_in_ticks, offset_in_ticks, tick_value)
+
         return score, self.score.tempo
 
 
@@ -57,7 +60,7 @@ class MidiNotes:
         self.tempos = tempos
 
     @classmethod
-    def from_midi(cls, filename):
+    def from_midi(cls, filename, ignore_file_with_bar_change=False, **kwargs):
         """
         Factory function to create a MidiNotes object from a midi file
         :param filename:
@@ -65,7 +68,7 @@ class MidiNotes:
         """
         parser = MidiParser(filename)
         notes, config = parser.parse()
-        if len(config['bar_durations']) > 1:
+        if len(config['bar_durations']) > 1 and ignore_file_with_bar_change:
             raise MusicLangIgnoreException('Bar duration change events in midifile, MusicLang cannot parse that')
         elif len(config['bar_durations']) == 1:
             config['bar_duration'] = config['bar_durations'][0]

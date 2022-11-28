@@ -71,6 +71,9 @@ class Chord:
     def parts(self):
         return list(self.score.keys())
 
+    @property
+    def instruments(self):
+        return list(self.score.keys())
 
     def get_part(self, item):
         if isinstance(item, int):
@@ -79,10 +82,23 @@ class Chord:
             return self.score[item]
 
 
-    def __eq__(self, other):
+    def score_equals(self, other):
+        if not isinstance(other, Chord):
+            return False
+        return self.score == other.score
+
+    def chord_equals(self, other):
         if not isinstance(other, Chord):
             return False
         return self.element == other.element and self.extension == other.extension and self.tonality == other.tonality and self.octave == other.octave
+
+    def __eq__(self, other):
+        from .score import Score
+        if isinstance(other, Score):
+            return Score([self]) == other
+        if not isinstance(other, Chord):
+            return False
+        return self.chord_equals(other) and self.score_equals(other)
 
     def __hash__(self):
         return hash( self.__repr__())
@@ -111,6 +127,8 @@ class Chord:
     def scale_dissonances(self):
         consonances = {(note.val % 7) for note in self.possible_notes}
         return [note for note in self.scale_notes if note.val not in consonances]
+
+
 
     def __getitem__(self, item):
 
@@ -185,9 +203,11 @@ class Chord:
             return Score([self.copy()] + other.copy().chords)
 
 
+
     def __radd__(self, other):
+        from .score import Score
         if other is None:
-            return self.copy()
+            return Score([self.copy()])
 
     def element_to_str(self):
         return ELEMENT_TO_STR[self.element]

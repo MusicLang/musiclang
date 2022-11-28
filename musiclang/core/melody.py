@@ -21,6 +21,9 @@ class Melody:
         return hash(self.__repr__())
 
     def __eq__(self, other):
+        from .note import Note
+        if isinstance(other, Note):
+            return self.__eq__(Melody([other]))
         return isinstance(other, Melody) and str(other) == str(self)
 
     def get_pitches(self, chord, track_idx, time, last_note_array=None):
@@ -74,6 +77,9 @@ class Melody:
     def duration(self):
         return sum([n.duration for n in self.notes])
 
+    def __iter__(self):
+        return self.notes.__iter__()
+
     def __radd__(self, other):
         if other is None:
             return self.copy()
@@ -111,7 +117,7 @@ class Melody:
     def __getattr__(self, item):
         try:
             res = Melody([getattr(n, item) for n in self.notes])
-            print('coucou', res, item)
+            return res
         except:
             raise AttributeError("")
 

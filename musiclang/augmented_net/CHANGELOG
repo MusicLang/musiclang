@@ -1,0 +1,21 @@
+v1.0.0
+    - Version published in ISMIR paper
+v1.1.0
+    - Adding four-note output representation to multitask learning
+    - Now the network is capable of predicting 14 tonal tasks
+v1.2.0
+    - Making the four-note output the default method for reconstructing Roman numerals
+    - By default, 8 tasks will be computed
+v1.2.1
+    - Providing pre-trained model (14 outputs)
+v1.2.2
+    - Updating pre-processed dataset that works with v1.2.1 network
+v1.2.3
+    - Introducing the keydistance metric for forcing tonicizations
+v1.2.4
+    - Extending the vocabulary of PitchClassSets to 121 classes, a more robust vocabulary than PitchClassSets94
+    - This means that v1.2.4 is backwards-incompatible with models trained on previous versions
+v1.3.0
+    - Replacing romanNumeralFromChord with custom chord vocabulary
+    - Using this chord vocabulary not only at inference, but for standardizing the input training data
+

@@ -569,6 +569,10 @@ OCTAVES = {
     INST_ACOUSTIC_GUITAR: -1,
     INST_TIMPANI: -2
 }
+OCTAVES = {
+    key: 0 for key in OCTAVES.keys()
+}
+
 
 ALL_INST = list(OCTAVES.keys())
 

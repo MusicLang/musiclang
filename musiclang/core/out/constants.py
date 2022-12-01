@@ -152,3 +152,5 @@ OCTAVES = {
     INSTRUMENTS_DICT['acoustic_guitar']: -1,
     INSTRUMENTS_DICT['timpani']: -2
 }
+
+OCTAVES = {key: 0 for key in OCTAVES.keys()}

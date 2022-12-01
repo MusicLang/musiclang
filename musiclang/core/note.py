@@ -137,6 +137,13 @@ class Note:
 
         return result
 
+    def to_sequence(self, chord, inst):
+        """
+        Transform in a list of [(start_time, end_time, pitch, self)]
+        :return:
+        """
+        from .melody import Melody
+        return Melody([self]).to_sequence(chord, inst)
 
     ### OPERATORS
 

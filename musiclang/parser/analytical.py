@@ -1,10 +1,3 @@
-from .chords import convert_to_items
-from .to_musiclang import infer_voices_per_instruments, infer_score_with_chords_durations
-from .constants import *
-
-
-
-# TODO : Call AugmentedNet
 
 def parse_to_musiclang(input_file):
     """
@@ -58,7 +51,9 @@ def parse_directory_to_musiclang(di):
     midi_file = os.path.join(di, 'data.mid')
     mxl_file = os.path.join(di, 'data.mxl')
     batch(midi_file)
-    return parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+    score, tempo = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+    annotation = open(annotation_file, 'r').read()
+    return score, {'annotation': annotation, 'tempo': tempo}
 
 def parse_midi_to_musiclang_with_annotation(midi_file, annotation_file):
     from musiclang.parser import MidiToMusicLang
@@ -89,13 +84,23 @@ def get_duration(roman):
 
 
 def parse_musiclang_sequence(midi, chords):
+    from .chords import convert_to_items
+    from .to_musiclang import infer_voices_per_instruments, infer_score_with_chords_durations
     notes = midi.notes
     score = midi.score
     sequence = convert_to_items(notes)
-    sequence = infer_voices_per_instruments(sequence)
+    sequence = infer_voices_per_instruments(sequence, score.instruments)
     score = infer_score_with_chords_durations(sequence, chords, score.instruments)
     return score
 
+
+
+def analysis_to_musiclang_score(analysis):
+    import music21
+    analysis = music21.converter.parse(analysis, format="romanText")
+    chords = music21_roman_analysis_to_chords(analysis)
+    ml = chords_to_musiclang(chords)
+    return ml
 
 def analysis_file_to_musiclang_score(file):
     import music21

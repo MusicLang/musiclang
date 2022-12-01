@@ -31,7 +31,6 @@ def separate_voices(notes):
 
     # Split notes in groups that are playing simultaneously
     splitted_notes = split_notes(notes)
-
     voices = voice_separation_algorithm(splitted_notes)
     print('NB VOICES FOR TRACK : ', len(voices))
     new_notes = []
@@ -119,11 +118,18 @@ def generate_probas_for_one(S, n):
     existing_voices = np.arange(1, nb_voices+1).tolist()
     # Filter new_voices and existing voices
     W = new_voices + existing_voices
+
+    # Filter possible movements
+    W = [w for w in W if w < 0 or can_be_same_voice(S[w-1][-1], n)]
+    # Filter only max orders
+
+    # If can be assigned to existing voice, then bypass
+    # FIXME : BYPASS CREATION OF NEW VOICE IF POSSIBLE
+    if len([w for w in W if w > 0]) > 0:
+        W = [w for w in W if w > 0]
     orders = [order(S, n, w) for w in W]
     max_order = max(orders)
-    # Filter only max orders
-    #W = [w for w, ord in zip(W, orders) if ord == max_order]
-    W = [w for w in W if w < 0 or can_be_same_voice(S[w-1][-1], n)]
+    W = [w for w, ord in zip(W, orders) if ord == max_order]
     # if all([w < 0 for w in W]):
     #     print('Must create a new voice')
     #     from pdb import set_trace; set_trace()
@@ -206,8 +212,8 @@ def gap(S, n, w, gmin=9e-5):
     """
     return max(g(S, n, w), gmin)
 
-
-def pitch(S, n, w, sigp=4):
+# sigp = 4 before
+def pitch(S, n, w, sigp=20):
     """
     Return the deviation of note pitch with average pitch of the state voice with gaussian density
     :param S: State
@@ -252,7 +258,7 @@ def order(S, n, w):
     case3 = (-len(S) <= w < 0) and (average_pitch(S[abs(w)-1]) < num(n))
     return 2 ** -(case1 + case2 + case3)
 
-def P(S, n, w, s_new=2e-11):
+def P(S, n, w, s_new=0):
     """
     Probability
     :param S: State

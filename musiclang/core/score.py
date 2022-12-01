@@ -14,6 +14,9 @@ class Score:
     def copy(self):
         return Score([c.copy() for c in self.chords])
 
+    def o(self, val):
+        return Score([c.o_melody(val) for c in self])
+
     def __add__(self, other):
         from .chord import Chord
         if isinstance(other, Chord):
@@ -80,17 +83,8 @@ class Score:
         Put everything into this chord (It will of course change the harmony)
         :return:
         """
-        from musiclang import Silence
-        first_chord = self[0]
-        instruments = self.instruments
-        score = {ins: None for ins in instruments}
-
-        for chord in self.chords:
-            duration = chord.duration
-            for instrument in instruments:
-                score[instrument] += chord.score.get(instrument, Silence(duration))
-
-        return first_chord(**score)
+        from .time_utils import put_on_same_chord
+        return put_on_same_chord(self)
 
     def project_on_score(self, score2, keep_score=False):
         """
@@ -100,126 +94,42 @@ class Score:
         :return:
         """
         # Algo : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
-
-        start_time = 0
-        new_score = None
-        #
-        instruments1 = [(ins.split('__')[0], int(ins.split('__')[1])) for ins in self.instruments]
-        instruments2 = [(ins.split('__')[0], int(ins.split('__')[1])) for ins in score2.instruments]
-        # Rename all instruments to avoid collisions
-        offsets1 = {}
-        for ins in instruments1:
-            pass
-
-        for idx, chord2 in enumerate(score2):
-            # Get all segments of chord
-            end_time = start_time + chord2.duration
-
-            subscore1 = self.get_score_between(start_time, end_time)
-            if subscore1 is None:
-                break
-
-            subscore = subscore1.put_on_same_chord()
-            assert subscore.duration == chord2.duration, "Wrong duration when projecting"
-
-
-            if keep_score:
-                chord_score = chord2.score
-                chord_score.update(subscore.score)
-            else:
-                chord_score = subscore.score
-            new_score += chord2(**chord_score)
-
-            start_time = end_time
-
-        return new_score
-
+        from .time_utils import project_on_score
+        return project_on_score(self.copy(), score2.copy(), keep_score=keep_score)
 
 
     def get_chord_between(self, chord, start, end):
-        new_parts = {ins: None for ins in chord.instruments}
-        for part in chord.score.keys():
-            time = 0
-            voice = chord.score[part]
-            new_voice = None
-            to_break = False
-            for note in voice:
-                add_continuation = False
-                note_duration = note.duration
-                new_note = note.copy()
-                if time >= end:
-                    break
-                if (time < start) and (time + note_duration <= start):
-                    time += new_note.duration
-                    continue
-                if time + note_duration >= end:
-                    new_note.duration = end - time
-                    to_break = True
-                if time < start:
-                    new_note.duration = new_note.duration - (start - time)
-                    time += start - time
-                    add_continuation = True
+        from .time_utils import get_chord_between
+        return get_chord_between(chord, start, end)
 
-                if add_continuation:
-                    from .note import Continuation
-                    new_voice += Continuation(new_note.duration)
-                else:
-                    new_voice += new_note
-
-
-                if new_note.duration < 0:
-                    raise Exception('Get a negative duration in get_chord_between')
-                if new_voice.duration > end - start:
-                    raise Exception('New voice duration should never be more than boundaries')
-
-                time += new_note.duration
-
-                if to_break:
-                    break
-
-            new_parts[part] = new_voice
-
-        if len(new_parts.keys()) == 0:
-            from .note import Silence
-            return chord(**{'piano__0': Silence(end - start)})
-            #if new_voice.duration != chord.duration:
-            #    from pdb import set_trace; set_trace()
-        return chord(**new_parts)
 
     def get_score_between(self, start=None, end=None):
-        start = start if start is not None else 0
-        end = end if end is not None else self.duration
-        new_score = None
-        time = 0
-        for chord in self.chords:
-            chord_start = time
-            chord_end = time + chord.duration
-            if chord_end <= start:
-                time += chord.duration
-                continue
-            elif chord_start >= end:
-                # We are already arrived at the end of time
-                break
-            elif chord_end < end and chord_start >= start:
-                # Perfect case we just copy the full chord
-                new_score += chord.copy()
-            else:
-                # In all other cases we have to cut the chord
-                new_start = start - time
-                new_end = end - time
-                new_chord = self.get_chord_between(chord, new_start, new_end)
-                new_score += new_chord
+        from .time_utils import get_score_between
+        return get_score_between(self, start, end)
 
-            time += chord.duration
-
-        return new_score
-
-
+    def reduce(self, n_voices=4, start_low=False, instruments=None):
+        from .arrange_utils import reduce
+        return reduce(self, n_voices=n_voices, start_low=start_low, instruments=instruments)
 
     def to_pickle(self, filepath):
         import pickle
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
+
+
+    @classmethod
+    def from_sequence(cls, sequence):
+        from .sequence.sequence import sequence_to_score
+        return sequence_to_score(sequence)
+
+    def to_sequence(self):
+        from .sequence.sequence import score_to_sequence
+        return score_to_sequence(self)
+
+    def optimize_voices(self):
+        from .arrange_utils.arrange_utils import optimize_voices
+        return optimize_voices(self)
+
 
     @classmethod
     def read_pickle(cls, filepath):

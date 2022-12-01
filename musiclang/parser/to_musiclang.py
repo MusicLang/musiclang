@@ -250,17 +250,21 @@ def infer_chords_direct_method(sequence, bar_duration_in_ticks, max_chords, **kw
     return chords
 
 
-def infer_voices_per_instruments(sequence):
+def infer_voices_per_instruments(sequence, instruments):
     # Get all tracks
     tracks = list(set([int(s.track) for s in sequence]))
     # Separate voices for each tracks
     sequence_result = []
+    # Merge tracks with same instruments together
     for track in tracks:
         # Get notes
         notes = [s.array() for s in sequence if s.track == track]
         new_notes = separate_voices(notes)
         sequence_result += new_notes
 
+    # Remove tracks information
+    for idx, s in enumerate(sequence_result):
+        sequence_result[idx].track = sequence_result[idx].channel
     # Resort notes by onset
     sequence_result = list(sorted(sequence_result, key=lambda x: x.start))
     return sequence_result

@@ -37,6 +37,21 @@ class Melody:
         return pitches
 
 
+    def to_sequence(self, chord, inst):
+        """
+        Transform in a list of [(start_time, end_time, pitch, self)]
+        :return:
+        """
+        time = 0
+        sequence = []
+        for note in self.notes:
+            pitch = chord.to_pitch(note)
+            start = time
+            end = time + note.duration
+            sequence.append([start, end, pitch, chord.to_chord(), inst, note])
+            time += note.duration
+        return sequence
+
 
     def to_code(self):
         return " + ".join([n.to_code() for n in self.notes])

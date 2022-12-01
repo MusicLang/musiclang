@@ -30,6 +30,18 @@ class Chord:
         new_chord.tonality = new_chord.tonality.change_mode(mode)
         return new_chord
 
+    def to_pitch(self, note, last_pitch=None):
+        from .out.to_midi import note_to_pitch_result
+        if not note.is_note:
+            return None
+        return note_to_pitch_result(note, self, last_pitch=last_pitch)
+
+    def to_sequence(self):
+        sequence_dict = []
+        for inst in self.instruments:
+            sequence_dict += self.score[inst].to_sequence(self, inst)
+
+        return sequence_dict
 
     @property
     def scale_degree(self):
@@ -238,10 +250,21 @@ class Chord:
     def u(self):
         return self.o(1)
 
+    def o_melody(self, octave):
+        new_parts = {}
+        for part in self.score:
+            new_parts[part] = self.score[part].o(octave)
+
+        return self(**new_parts)
+
     def o(self, octave):
         c = self.copy()
         c.octave += octave
         return c
+
+    def get_chord_between(self, start, end):
+        from .time_utils import get_chord_between
+        return get_chord_between(self, start, end)
 
     def copy(self):
         return Chord(element=self.element,

@@ -1,5 +1,5 @@
 import pandas as pd
-from mido import MidiFile
+from mido import MidiFile, tick2second
 from .constants import *
 
 
@@ -63,7 +63,7 @@ def _parse(filename, **kwargs):
     notes = np.asarray(notes)
     config = {'ticks_per_beats': mf.ticks_per_beat,
              'instruments': instruments,
-             'tempo': tempos[0], 'tempos': tempos, 'bar_durations': bar_durations}
+             'tempo': tempos[0][1], 'tempos': tempos, 'bar_durations': bar_durations}
 
     notes = _get_notes_dataframe(notes)
     notes = _get_notes_in_beats(notes, mf.ticks_per_beat)

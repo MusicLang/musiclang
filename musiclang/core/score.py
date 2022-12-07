@@ -116,6 +116,20 @@ class Score:
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
 
+    @classmethod
+    def from_midi(cls, filename):
+        from musiclang.parser.analytical import parse_to_musiclang
+        score, config = parse_to_musiclang(filename)
+        score.config = config
+        return score
+
+    @classmethod
+    def from_xml(cls, filename):
+        from musiclang.parser.analytical import parse_to_musiclang
+        score, config = parse_to_musiclang(filename)
+        score.config = config
+        return score
+
 
     @classmethod
     def from_sequence(cls, sequence, **kwargs):

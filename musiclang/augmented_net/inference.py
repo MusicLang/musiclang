@@ -118,7 +118,7 @@ Title: {title}
 Analyst: AugmentedNet v{__version__} - https://github.com/napulen/AugmentedNet
 """
     currentMeasure = -1
-    for n in h.flat.notes:
+    for n in h.stream().flat.notes:
         if not n.lyric:
             continue
         rn = n.lyric.split()[0]
@@ -156,7 +156,6 @@ def predict(model, inputPath):
     predictions = [p.reshape(1, -1, p.shape[2]) for p in predictions]
     dfdict = {}
     for outputRepr, pred in zip(outputLayers, predictions):
-        print(outputRepr, pred.shape)
         predOnehot = np.argmax(pred[0], axis=1).reshape(-1, 1)
         decoded = availableOutputs[outputRepr].decode(predOnehot)
         dfdict[outputRepr] = decoded
@@ -218,7 +217,7 @@ def predict(model, inputPath):
     annotatedScore = f"{filename}_annotated.musicxml"
     annotationCSV = f"{filename}_annotated.csv"
     annotatedRomanText = f"{filename}_annotated.rntxt"
-    schord.write(fp=annotatedScore)
+    schord.stream().write(fp=annotatedScore)
     dfout.to_csv(annotationCSV)
     with open(annotatedRomanText, "w") as fd:
         fd.write(rntxt)
@@ -242,7 +241,6 @@ def batch(inputPath, useGpu=False):
                 # do not recursively annotate an annotated_file
                 continue
             filepath = os.path.join(root, f)
-            print(filepath)
             predict(model, inputPath=filepath)
 
 

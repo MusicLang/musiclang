@@ -17,3 +17,5 @@ notebooks/data
 data
 locals/
 *.pyc
+build/
+musiclang.egg-info/

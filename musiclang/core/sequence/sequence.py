@@ -37,7 +37,7 @@ def sequence_to_score(sequence, sort_by_time=True, **kwargs):
     return score
 
 
-def score_to_sequence(score):
+def score_to_sequence(score, **kwargs):
     sequence = []
     time = 0
     for idx, chord in enumerate(score):

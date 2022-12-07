@@ -58,7 +58,6 @@ def parse_directory_to_musiclang(di):
 def parse_midi_to_musiclang_with_annotation(midi_file, annotation_file):
 
     chords = analysis_file_to_musiclang_score(annotation_file)
-
     score, tempo = parse_musiclang_sequence(midi_file, chords)
     return score, tempo
 

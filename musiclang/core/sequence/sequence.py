@@ -3,11 +3,12 @@ from ..note import Silence, Continuation
 from fractions import Fraction as frac
 
 
-def sequence_to_score(sequence):
+def sequence_to_score(sequence, sort_by_time=True, **kwargs):
     from ..chord import Chord
     from ..tonality import Tonality
     from ..note import Note, Silence, Continuation
-    sequence = sequence.sort_values(by='start', ascending=True)
+    if sort_by_time:
+        sequence = sequence.sort_values(by='start', ascending=True)
     groups_chord = sequence.groupby('chord_idx')
     score = None
     for chord_idx, group_chord in groups_chord:

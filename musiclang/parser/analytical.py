@@ -56,11 +56,11 @@ def parse_directory_to_musiclang(di):
     return score, {'annotation': annotation, 'tempo': tempo}
 
 def parse_midi_to_musiclang_with_annotation(midi_file, annotation_file):
-    from musiclang.parser import MidiToMusicLang
+
     chords = analysis_file_to_musiclang_score(annotation_file)
-    midi = MidiToMusicLang(midi_file)
-    score = parse_musiclang_sequence(midi, chords)
-    return score, midi.score.tempo
+
+    score, tempo = parse_musiclang_sequence(midi_file, chords)
+    return score, tempo
 
 
 """
@@ -83,15 +83,15 @@ def get_duration(roman):
     return frac(roman.duration.quarterLength).limit_denominator(8)
 
 
-def parse_musiclang_sequence(midi, chords):
+def parse_musiclang_sequence(midi_file, chords):
+    from musiclang.parser import parse_midi
     from .chords import convert_to_items
     from .to_musiclang import infer_voices_per_instruments, infer_score_with_chords_durations
-    notes = midi.notes
-    score = midi.score
+    notes, instruments, tempo = parse_midi(midi_file)
     sequence = convert_to_items(notes)
-    sequence = infer_voices_per_instruments(sequence, score.instruments)
-    score = infer_score_with_chords_durations(sequence, chords, score.instruments)
-    return score
+    sequence = infer_voices_per_instruments(sequence, instruments)
+    score = infer_score_with_chords_durations(sequence, chords, instruments)
+    return score, tempo
 
 
 

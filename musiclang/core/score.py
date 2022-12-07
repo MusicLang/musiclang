@@ -118,17 +118,13 @@ class Score:
 
 
     @classmethod
-    def from_sequence(cls, sequence):
+    def from_sequence(cls, sequence, **kwargs):
         from .sequence.sequence import sequence_to_score
-        return sequence_to_score(sequence)
+        return sequence_to_score(sequence, **kwargs)
 
-    def to_sequence(self):
+    def to_sequence(self, **kwargs):
         from .sequence.sequence import score_to_sequence
-        return score_to_sequence(self)
-
-    def optimize_voices(self):
-        from .arrange_utils.arrange_utils import optimize_voices
-        return optimize_voices(self)
+        return score_to_sequence(self, **kwargs)
 
 
     @classmethod

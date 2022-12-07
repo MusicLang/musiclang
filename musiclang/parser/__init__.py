@@ -1,4 +1,4 @@
-from .parser import MidiToMusicLang
+from .parser import parse_midi
 
 from .parser import MusicLangIgnoreException
 

@@ -2,27 +2,31 @@ from .constants import *
 
 
 class Score:
-    def __init__(self, chords=None):
+    def __init__(self, chords=None, config=None):
         self.chords = chords
+        self.config = config
         if self.chords is None:
             self.chords = []
+        if self.config is None:
+            self.config = {'annotation': "", "tempo": 120}
+
 
     def to_chords(self):
         res = [chord.to_chord() for chord in self.chords]
         return res
 
     def copy(self):
-        return Score([c.copy() for c in self.chords])
+        return Score([c.copy() for c in self.chords], config=self.config.copy())
 
     def o(self, val):
-        return Score([c.o_melody(val) for c in self])
+        return Score([c.o_melody(val) for c in self], config=self.config.copy())
 
     def __add__(self, other):
         from .chord import Chord
         if isinstance(other, Chord):
-            return Score(self.copy().chords + [other])
+            return Score(self.copy().chords + [other], config=self.config.copy())
         if isinstance(other, Score):
-            return Score(self.copy().chords + other.copy().chords)
+            return Score(self.copy().chords + other.copy().chords, config=self.config.copy())
         else:
             raise Exception('Cannot add to Score if not Chord or Score')
 
@@ -42,6 +46,21 @@ class Score:
             result = list(set(result))
 
         return list(sorted(result, key=lambda x: (x.split('__')[0], int(x.split('__')[1]))))
+
+
+    def show(self, *args, **kwargs):
+        """
+        Wrapper to the music21 show method
+        :return:
+        """
+        import music21
+        import tempfile
+        import os
+        with tempfile.TemporaryDirectory() as di:
+            midi_file = os.path.join(di, 'data.mid')
+            self.to_midi(midi_file, **kwargs)
+            score = music21.converter.parse(midi_file)
+            return score.show(*args, **kwargs)
 
 
     def __getitem__(self, item):
@@ -142,7 +161,7 @@ class Score:
 
 
     @classmethod
-    def read_pickle(cls, filepath):
+    def from_pickle(cls, filepath):
         import pickle
         with open(filepath, 'rb') as f:
             data = pickle.load(f)
@@ -151,7 +170,7 @@ class Score:
     def __eq__(self, other):
         from .chord import Chord
         if isinstance(other, Chord):
-            return self == Score([other])
+            return self == Score([other], config=self.config.copy())
         if not isinstance(other, Score):
             return False
         elif len(other.chords) != len(self.chords):
@@ -167,7 +186,7 @@ class Score:
     def __mod__(self, other):
         from .tonality import Tonality
         if isinstance(other, Tonality):
-            return Score([c % other for c in self.chords])
+            return Score([c % other for c in self.chords], config=self.config.copy())
         else:
             raise Exception('Following % should be a Tonality')
 

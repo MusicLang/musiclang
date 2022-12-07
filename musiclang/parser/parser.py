@@ -61,9 +61,10 @@ def _parse(filename, **kwargs):
                 tempos.append((time, note.tempo))
             time = time + note.time
     notes = np.asarray(notes)
+    first_tempo = int(60/(tempos[0][1]/1e6))
     config = {'ticks_per_beats': mf.ticks_per_beat,
              'instruments': instruments,
-             'tempo': tempos[0][1], 'tempos': tempos, 'bar_durations': bar_durations}
+             'tempo': first_tempo, 'tempos': tempos, 'bar_durations': bar_durations}
 
     notes = _get_notes_dataframe(notes)
     notes = _get_notes_in_beats(notes, mf.ticks_per_beat)

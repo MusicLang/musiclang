@@ -17,16 +17,19 @@ def merge_and_update(left, right, on):
     :param on: str or list, on which columns to perform the left join
     :return:
     """
-    if not hasattr(on, '__iter__'):
+    if isinstance(on, str) or isinstance(on, int):
         on = [on]
     new_columns = list(set(right.columns) - set(on))
     final = left.merge(right, on=on, how='left')
+    print(final.columns)
+    print(new_columns)
     colsx = [col + '_x' for col in new_columns]
     colsy = [col + '_y' for col in new_columns]
     for col in new_columns:
         final[col] = final[col + '_y'].fillna(final[col + '_x'])
     final = final.drop(colsx + colsy, axis=1)
     return final
+
 
 
 # Find markov path of chords

@@ -1,58 +1,7 @@
 import numpy as np
 import pandas as pd
 
-
-class Solution:
-    def get_skyline(self, notes):
-        """
-        :type notes: List[List[int]]
-        :rtype: List[List[int]]
-        """
-        if not notes:
-            return []
-        if len(notes) == 1:
-            return [[notes[0][0], notes[0][2]] + notes[0][3:], [notes[0][1], 0] + notes[0][3:]]
-
-        mid = len(notes) // 2
-        left = self.get_skyline(notes[:mid])
-        right = self.get_skyline(notes[mid:])
-        return self.merge(left, right)
-
-    def merge(self, left, right):
-        h1, h2 = 0, 0
-        i, j = 0, 0
-        note1, note2 = [], []
-        result = []
-
-        while i < len(left) and j < len(right):
-            if left[i][0] < right[j][0]:
-                h1 = left[i][1]
-                note1 = left[i][2:]
-                corner = left[i][0]
-                i += 1
-            elif right[j][0] < left[i][0]:
-                h2 = right[j][1]
-                note2 = right[j][2:]
-                corner = right[j][0]
-                j += 1
-            else:
-                h1 = left[i][1]
-                note1 = left[i][2:]
-                h2 = right[j][1]
-                note2 = right[j][2:]
-                corner = right[j][0]
-                i += 1
-                j += 1
-            if self.is_valid(result, max(h1, h2)):
-                max_note = [note1, note2][np.argmax([h1, h2])]
-                result.append([corner, max(h1, h2)] + max_note)
-        result.extend(right[j:])
-        result.extend(left[i:])
-        return result
-
-    def is_valid(self, result, new_height):
-        return not result or result[-1][1] != new_height
-
+from .skyline_algorithm import SkylineSolution
 
 
 def reduce_one(sequence, high=True):
@@ -73,7 +22,7 @@ def reduce_one(sequence, high=True):
     random_noise = np.random.random(len(notes)) / 3
     notes['pitch'] += random_noise
     notes = notes.values.tolist()
-    solution = pd.DataFrame(Solution().get_skyline(notes),
+    solution = pd.DataFrame(SkylineSolution().get_skyline(notes),
                             columns=['start', 'pitch', 'note_type', 'note_val', 'note_octave', 'note_duration',
                       'note_amp', 'chord_degree', 'chord_extension', 'chord_octave', 'tonality_degree',
                       'tonality_mode', 'tonality_octave', 'chord_idx', 'instrument', 'note_idx'])
@@ -144,26 +93,5 @@ def reduce(score, n_voices=4, start_low=False, instruments=None):
     score_result = Score.from_sequence(solution)
 
     return score_result
-
-
-def optimize_voices(score):
-    """
-    Reduce the number of voices if possible, maximize number of notes in already big voices
-    :param score:
-    :param n_voices:
-    :param start_low:
-    :param instruments:
-    :return:
-    """
-    from ..note import Silence
-    sequence = score.to_sequence()
-
-    # Find path
-    nb_parts = [len(chord.parts) for chord in score]
-
-
-
-
-    from pdb import set_trace; set_trace()
 
 

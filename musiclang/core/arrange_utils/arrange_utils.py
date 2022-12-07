@@ -60,7 +60,9 @@ def reduce_one(sequence, high=True):
     SILENCE_ABS_VAL = 2000
     silence_value = -SILENCE_ABS_VAL if high else SILENCE_ABS_VAL
     # Use skyline algorithm to find height map
-    notes = sequence[['start', 'end', 'pitch', 'note', 'chord', 'chord_idx', 'instrument', 'note_idx']].fillna(
+    notes = sequence[['start', 'end', 'pitch', 'note_type', 'note_val', 'note_octave', 'note_duration',
+                      'note_amp', 'chord_degree', 'chord_extension', 'chord_octave', 'tonality_degree',
+                      'tonality_mode', 'tonality_octave', 'chord_idx', 'instrument', 'note_idx']].fillna(
         silence_value)
 
     if not high:
@@ -72,7 +74,9 @@ def reduce_one(sequence, high=True):
     notes['pitch'] += random_noise
     notes = notes.values.tolist()
     solution = pd.DataFrame(Solution().get_skyline(notes),
-                            columns=['start', 'pitch', 'note', 'chord', 'chord_idx', 'instrument', 'note_idx'])
+                            columns=['start', 'pitch', 'note_type', 'note_val', 'note_octave', 'note_duration',
+                      'note_amp', 'chord_degree', 'chord_extension', 'chord_octave', 'tonality_degree',
+                      'tonality_mode', 'tonality_octave', 'chord_idx', 'instrument', 'note_idx'])
     solution['end'] = solution['start'] + solution['start'].diff(1).shift(-1)
     solution['pitch'] -= SILENCE_ABS_VAL
     if not high:
@@ -80,6 +84,16 @@ def reduce_one(sequence, high=True):
     solution.loc[solution['pitch'] == silence_value, 'pitch'] = np.nan
     solution = solution.iloc[:-1]
     return solution
+
+
+def recalculate_pitch(row):
+    from musiclang.core.chord import Chord
+    from musiclang.core.tonality import Tonality
+    from musiclang.core.note import Note
+    tonality = Tonality(row['tonality_degree'], mode=row['tonality_mode'], octave=row['tonality_octave'])
+    chord = Chord(row['chord_degree'], octave=row['chord_octave'], tonality=tonality)
+    note = Note(row['note_type'], row['note_val'], row['note_octave'], row['note_duration'], amp=row['note_amp'])
+    return chord.to_pitch(note)
 
 def reduce(score, n_voices=4, start_low=False, instruments=None):
     """
@@ -107,18 +121,15 @@ def reduce(score, n_voices=4, start_low=False, instruments=None):
         replace_silence = set(solution['note_idx'].unique())
         indexer = sequence['note_idx'].isin(replace_silence)
         len_indexer = indexer.sum()
-        sequence.loc[indexer, 'note'] = [Silence(1) for i in range(len_indexer)]
+        sequence.loc[indexer, 'note_type'] = ['r' for i in range(len_indexer)]
         sequence.loc[indexer, 'pitch'] = np.nan
 
     solution = pd.concat(solutions, axis=0).sort_values('start')
 
     # For each voice reassign to most probable pitch average
     # Recalculate pitch
-    solution['pitch'] = solution.apply(lambda x: x['chord'].to_pitch(x['note']), axis=1)
+    solution['pitch'] = solution.apply(recalculate_pitch, axis=1)
     # Recalculate is_silence
-    solution['is_silence'] = solution['note'].apply(lambda x: x.is_silence)
-    solution['is_continuation'] = solution['note'].apply(lambda x: x.is_continuation)
-    solution['is_note'] = solution['note'].apply(lambda x: x.is_note)
     # For each chord remove voices with only silences
     # For each chord each voice calculate average pitch
     # Then starting with first chord reassign each voice with closenessness of average pitch
@@ -127,7 +138,11 @@ def reduce(score, n_voices=4, start_low=False, instruments=None):
 
     # Parse solution to new sequence
     from ..score import Score
+    solution['silence'] = solution['note_type'] == 'r'
+    solution['continuation'] = solution['note_type'] == 'l'
+    solution['note_duration'] = solution['end'] - solution['start']
     score_result = Score.from_sequence(solution)
+
     return score_result
 
 

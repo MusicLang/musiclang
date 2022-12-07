@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 COLUMNS_CHORDS = ['chord_degree', 'tonality_degree', 'tonality_mode']
 COLUMNS_MELODY = ['note_type', 'note_val', 'note_octave']
@@ -200,14 +201,22 @@ def find_harmonic_rythm_distribution(df):
     return words_result, transitions_result
 
 
-def sample_score(Pc, Tc, Pr, Tr, Pm, Tm, Ph, Th, duration=10):
+def find_distributions(df):
+    Pc, Tc = find_chords_distribution(df)
+    Pr, Tr = find_rythm_distribution(df)
+    Pm, Tm = find_melody_distribution(df)
+    Ph, Th = find_harmonic_rythm_distribution(df)
+    
+    return Pc, Tc, Pr, Tr, Pm, Tm, Ph, Th
+
+def sample_score(Pc, Tc, Pr, Tr, Pm, Tm, Ph, Th, duration=10, n_c=1, n_h=1, n_r=1, n_m=4):
     import pandas as pd
-    def _sample_with_duration_constraint(P, T, idx_duration, duration):
+    def _sample_with_duration_constraint(P, T, idx_duration, duration, n=1):
         import numpy as np
         # Sample harmonic rythm
         m = 10
         while True:
-            path = sample_markov_path(P, T, first=None, m=m, n=1)
+            path = sample_markov_path(P, T, first=None, m=m, n=n)
             array_duration = np.asarray([p[idx_duration] for p in path])
             sample_duration = np.sum(array_duration)
             if sample_duration > duration:
@@ -225,10 +234,10 @@ def sample_score(Pc, Tc, Pr, Tr, Pm, Tm, Ph, Th, duration=10):
                 m = 2 * m
         return path
 
-    path_h = _sample_with_duration_constraint(Ph, Th, 0, duration)
-    path_c = sample_markov_path(Pc, Tc, first=None, m=len(path_h), n=1)
-    path_r = _sample_with_duration_constraint(Pr, Tr, 0, duration)
-    path_m = sample_markov_path(Pm, Tm, first=None, m=len(path_r), n=4)
+    path_h = _sample_with_duration_constraint(Ph, Th, 0, duration, n=n_h)
+    path_c = sample_markov_path(Pc, Tc, first=None, m=len(path_h), n=n_c)
+    path_r = _sample_with_duration_constraint(Pr, Tr, 0, duration, n=n_r)
+    path_m = sample_markov_path(Pm, Tm, first=None, m=len(path_r), n=n_m)
 
     path_c = path_c[:len(path_h)]
     path_m = path_m[:len(path_r)]
@@ -273,4 +282,5 @@ def sample_score(Pc, Tc, Pr, Tr, Pm, Tm, Ph, Th, duration=10):
     merged['note_amp'] = 100
     merged['note_duration'] = merged['end'] - merged['start']
     merged = merged.sort_values('start')
-    return merged, notes, chords
+
+    return merged

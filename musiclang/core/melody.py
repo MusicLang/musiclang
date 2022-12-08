@@ -37,6 +37,17 @@ class Melody:
         return pitches
 
 
+    def replace_pitch(self, to_replace, new_note):
+
+        new_melody = []
+        for note in self.notes:
+            to_add = note.copy()
+            if note.val == to_replace.val and note.type == to_replace.type:
+                to_add.type = new_note.type
+                to_add.val = new_note.val
+            new_melody.append(to_add)
+        return sum(new_melody, None)
+
     def to_sequence(self, chord, inst):
         """
         Transform in a list of [(start_time, end_time, pitch, self)]

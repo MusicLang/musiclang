@@ -43,6 +43,13 @@ class Chord:
 
         return sequence_dict
 
+    def to_score(self):
+        from .score import Score
+        return Score([self])
+
+    def show(self, *args, **kwargs):
+        return self.to_score().show(*args, **kwargs)
+
     @property
     def scale_degree(self):
         tonic = self.scale_pitches[0]
@@ -141,13 +148,18 @@ class Chord:
         return [note for note in self.scale_notes if note.val not in consonances]
 
 
+    def add(self, addition):
+        pass
+
+    def omit(self, omission):
+        pass
 
     def __getitem__(self, item):
 
         res = self.copy()
         res.extension = item
-        if item not in [5, 7, 9, 11, 13]:
-            raise Exception('Not valid chord extension : {}'.format(item))
+        # if item not in [5, 7, 9, 11, 13]:
+        #     raise Exception('Not valid chord extension : {}'.format(item))
         return res
     #
     # def __getattr__(self, item):

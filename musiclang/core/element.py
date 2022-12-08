@@ -25,7 +25,7 @@ class Element:
 
     def __getitem__(self, extension):
         from .chord import Chord
-        return Chord(element=self.val, extension=extension)
+        return Chord(element=self.val)[extension]
 
     def __call__(self, *melodies, **named_melodies):
         from .chord import Chord

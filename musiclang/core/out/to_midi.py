@@ -75,7 +75,7 @@ def to_midi(notes, output_file=None, **kwargs):
 def tracks_to_instruments(tracks):
     from .constants import INSTRUMENTS_DICT
     names = [t.split('__')[0] for t in tracks]
-    instruments_idx = {i: INSTRUMENTS_DICT[name] for i, name in enumerate(names)}
+    instruments_idx = {i: INSTRUMENTS_DICT.get(name, 0) for i, name in enumerate(names)}
     return instruments_idx
 
 

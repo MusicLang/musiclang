@@ -199,7 +199,7 @@ class Chord:
             # Tonality is always referenced from base tonality which is the most outside tonality
             other = other.copy()
             other.octave += self.octave
-            chord.tonality = other + chord.tonality
+            chord.tonality = chord.tonality + other
             chord.octave = 0
             return chord
         else:
@@ -237,10 +237,10 @@ class Chord:
         return ELEMENT_TO_STR[self.element]
 
     def extension_to_str(self):
-        if self.extension == 5:
+        if str(self.extension) == '5' or str(self.extension) == '':
             return ''
         else:
-            return f'[{self.extension}]'
+            return f"['{self.extension}']"
 
 
 
@@ -327,7 +327,7 @@ class Chord:
         return chord
     #
     def melody_to_str(self):
-        return ', '.join([f"{k}=" + str(melody) for k, melody in self.score.items()])
+        return '\n' + ', \n'.join([f"\t{k}=" + str(melody) for k, melody in self.score.items()])
 
     def __repr__(self):
         # if self.score:

@@ -46,10 +46,12 @@ def parse_mxl_to_musiclang(input_file):
 
 def parse_directory_to_musiclang(di):
     import os
-    from musiclang.augmented_net import batch
     annotation_file = os.path.join(di, 'data_annotated.rntxt')
     midi_file = os.path.join(di, 'data.mid')
     mxl_file = os.path.join(di, 'data.mxl')
+    print('1/2 : Analyze the score (This may takes a while)')
+    from musiclang.augmented_net import batch
+
     batch(midi_file)
     score, tempo = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
     annotation = open(annotation_file, 'r').read()
@@ -66,6 +68,7 @@ def parse_midi_to_musiclang_with_annotation(midi_file, annotation_file):
 Helpers for parser
 """
 
+
 def parse_tonality(element):
     DICT_MODE = {'major': 'M', 'minor': 'm'}
     if element.secondaryRomanNumeralKey is not None:
@@ -74,7 +77,34 @@ def parse_tonality(element):
     else:
         key_tonic = element.key.tonic.pitchClass
         key_mode = DICT_MODE[element.key.mode]
+    if 'N' in element.primaryFigure:
+        key_tonic += 1
+        key_mode = 'M'
+    if 'Ger' in element.primaryFigure:
+        key_tonic += 1  # For musiclang it will be a V % II.b.M
+        key_mode = 'M'
+    elif 'It' in element.primaryFigure:
+        key_tonic += 1  # For musiclang it will be a V % II.b.M
+        key_mode = 'M'
+    elif 'Fr' in element.primaryFigure:
+        key_tonic += 3
+        key_mode = 'mm'
     return key_tonic, key_mode
+
+
+def get_degree(element):
+    degree = element.scaleDegree - 1
+    if 'Ger' in element.primaryFigure:
+        degree = 4
+    if 'It' in element.primaryFigure:
+        degree = 4
+    elif 'N' in element.primaryFigure:
+        degree = 0
+    elif 'Fr' in element.primaryFigure:
+        degree = 3
+
+    return degree
+
 
 
 def get_duration(roman):
@@ -88,7 +118,9 @@ def parse_musiclang_sequence(midi_file, chords):
     from .to_musiclang import infer_voices_per_instruments, infer_score_with_chords_durations
     notes, instruments, tempo = parse_midi(midi_file)
     sequence = convert_to_items(notes)
+    print('2/3 : Performing voice separation (This may takes a while)')
     sequence = infer_voices_per_instruments(sequence, instruments)
+    print('3/3 : Create the score')
     score = infer_score_with_chords_durations(sequence, chords, instruments)
     return score, tempo
 
@@ -115,7 +147,7 @@ def chords_to_musiclang(chords):
     for notes, duration, degree, figure, key in chords:
         key_tonic, key_mode = key
         tonality = Tonality(key_tonic, mode=key_mode)
-        chord = Chord(degree, tonality=tonality)
+        chord = Chord(degree, tonality=tonality, extension=figure)
         scale_notes = []
         for pitch_class, octave in notes:
             # Parse the note in musiclang
@@ -137,7 +169,7 @@ def music21_roman_analysis_to_chords(score):
         key_tonic, key_mode = parse_tonality(roman)
         notes = [(n.pitch.pitchClass, n.pitch.octave - 5) for n in roman.notes]
         duration = get_duration(roman)
-        degree = roman.scaleDegree - 1
+        degree = get_degree(roman)
         figure = roman.figuresWritten
         chords.append([notes, duration, degree, figure, (key_tonic, key_mode)])
 

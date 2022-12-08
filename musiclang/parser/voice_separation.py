@@ -32,7 +32,6 @@ def separate_voices(notes):
     # Split notes in groups that are playing simultaneously
     splitted_notes = split_notes(notes)
     voices = voice_separation_algorithm(splitted_notes)
-    print('NB VOICES FOR TRACK : ', len(voices))
     new_notes = []
     for idx, voice in enumerate(voices):
         for n in voice:
@@ -52,14 +51,12 @@ def voice_separation_algorithm(splitted_notes, beam_size=1, max_states=1):
     """
     S = [([], 1)] # State, logprob of state
     for idx, incoming_notes in enumerate(splitted_notes):
-        print(f'=== Voice separation : Iteration {idx}/{len(splitted_notes)}', end='\r')
         for n in incoming_notes:
             S = sum([evaluate_new_states(s, logprob, n, beam_size) for s, logprob in S], [])
             if len(S) > max_states:
                 S = list(sorted(S, key=lambda x: -x[-1]))[:max_states]
     # Find max
     final_path, logprob = list(sorted(S, key=lambda x: -x[-1]))[0]
-    print()
     return final_path
 
 def evaluate_new_states(S, logprob, n, beam_size):

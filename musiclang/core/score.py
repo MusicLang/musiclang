@@ -60,7 +60,7 @@ class Score:
             midi_file = os.path.join(di, 'data.mid')
             self.to_midi(midi_file, **kwargs)
             score = music21.converter.parse(midi_file)
-            return score.show(*args, **kwargs)
+            return score.show(*args)
 
 
     def __getitem__(self, item):

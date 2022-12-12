@@ -48,6 +48,32 @@ class Score:
         return list(sorted(result, key=lambda x: (x.split('__')[0], int(x.split('__')[1]))))
 
 
+    def to_voicings(self, instruments=None):
+        """
+        Convert score to a four voice voicing using the extensions
+        :return:
+        """
+        from .library import s0, s1, s2, s3, s4, s5, s6
+        extension_dict = {
+            '': [s0, s2, s4, s0.o(1)],
+            '5': [s0, s2, s4, s0.o(1)],
+            '6': [s2, s4, s0.o(1), s2],
+            '64': [s4.o(-1), s0, s2, s4],
+            '7': [s0, s2, s4, s6],
+            '65': [s2, s4, s6, s0.o(1)],
+            '43': [s4.o(-1), s6.o(-1), s0, s2],
+            '2': [s6.o(-1), s0, s2, s4]
+        }
+        if instruments is None:
+            instruments = ['piano__0', 'piano__1', 'piano__2', 'piano__3']
+
+        score = None
+        for chord in self:
+            notes = extension_dict[chord.extension]
+            score += chord(**{ins: notes[i].copy() for i, ins in enumerate(instruments)})
+
+        return score
+
     def show(self, *args, **kwargs):
         """
         Wrapper to the music21 show method
@@ -149,6 +175,8 @@ class Score:
         score.config = config
         return score
 
+    def to_score(self):
+        return self.copy()
 
     @classmethod
     def from_sequence(cls, sequence, **kwargs):

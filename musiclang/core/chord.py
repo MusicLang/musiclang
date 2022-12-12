@@ -3,7 +3,7 @@ from .constants import *
 class Chord:
 
     EXCLUDED_ITEMS = ['__array_struct__']
-    def __init__(self, element, extension=5, tonality=None, score=None, octave=0):
+    def __init__(self, element, extension='5', tonality=None, score=None, octave=0):
         self.element = element
         self.extension = extension
         self.tonality = tonality
@@ -184,6 +184,7 @@ class Chord:
         result = self.copy()
         result.score = {}
         return result
+
 
 
     @property

@@ -1,5 +1,5 @@
 import musiclang
-from .base.predictor import BasePredictor
+from ..base.predictor import BasePredictor
 
 
 class ChordTransformerPredictor(BasePredictor):
@@ -7,17 +7,19 @@ class ChordTransformerPredictor(BasePredictor):
     Create a transformer model to predict chord progression model of a given score
     """
     def init_model(self, *args, **kwargs):
-        from .transformer_model import TransformerModelWrapper
+        from ..models.transformer_model import TransformerModelWrapper
         from .chord_tokenizer import TOKENS
         n_tokens = len(TOKENS)  # size of vocabulary
-        d_model = 50  # embedding dimension
-        d_hid = 50  # dimension of the feedforward network model in nn.TransformerEncoder
-        n_layers = 2  # number of nn.TransformerEncoderLayer in nn.TransformerEncoder
-        n_head = 2  # number of heads in nn.MultiheadAttention
+        d_model = 400 # embedding dimension
+        d_hid = 500  # dimension of the feedforward network model in nn.TransformerEncoder
+        n_layers = 3  # number of nn.TransformerEncoderLayer in nn.TransformerEncoder
+        n_head = 10  # number of heads in nn.MultiheadAttention
         dropout = 0.2  # dropout probability
-        batch_size = 8
-        bptt = 35
-        return TransformerModelWrapper(n_tokens, d_model, n_head,  d_hid, n_layers, bptt, batch_size, dropout=dropout)
+        batch_size = 64
+        bptt = 100
+        lr = 1.5
+        sc = 0.95
+        return TransformerModelWrapper(n_tokens, d_model, n_head,  d_hid, n_layers, bptt, batch_size, lr, sc, dropout=dropout)
 
 
     def save_model(self, filepath):
@@ -25,7 +27,7 @@ class ChordTransformerPredictor(BasePredictor):
 
     @classmethod
     def load_model(cls, filepath, *args, **kwargs):
-        from .transformer_model import TransformerModelWrapper
+        from ..models.transformer_model import TransformerModelWrapper
         predictor = cls(*args, **kwargs)
         predictor.model = TransformerModelWrapper.load_model(filepath)
         return predictor
@@ -42,7 +44,7 @@ class ChordTransformerPredictor(BasePredictor):
         tokens = self.tokenize(start_text)
         prepend_text = '' if not include_start else start_text
         while True:
-            from musiclang.predict.chord_tokenizer import get_candidates_idx, get_is_terminal
+            from .chord_tokenizer import get_candidates_idx, get_is_terminal
             is_terminal = get_is_terminal(start_text)
             if is_terminal and (len(chars) - len(start_text)) >= n_tokens:
                 return prepend_text + chars

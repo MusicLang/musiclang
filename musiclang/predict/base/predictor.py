@@ -12,6 +12,7 @@ class BasePredictor:
 
     def train(self, train_scores, eval_scores, epochs=10, **kwargs):
         # Convert scores
+        # If already scores
         train_data = self.scores_to_tokens(train_scores)
         eval_data = self.scores_to_tokens(eval_scores)
         self.model.train(train_data, eval_data, epochs=epochs, **kwargs)
@@ -19,7 +20,7 @@ class BasePredictor:
     def predict_proba(self, tokens):
         return self.model.predict(tokens).squeeze(1)[-1]
 
-    def predict(self, text, output='score', include_start=True, n_tokens=5, max_tokens=None, **kwargs):
+    def predict(self, text, output='score', temperature=0, include_start=True, n_tokens=5, max_tokens=None, **kwargs):
         """
 
         :param text: Input on which to predict (If it is a score it will be converted to a text first)
@@ -33,7 +34,7 @@ class BasePredictor:
         if not isinstance(text, str):
             text = self.score_to_text(text).replace(';', '')
 
-        result_text = self.predict_from_text(text, include_start=include_start, n_tokens=n_tokens,
+        result_text = self.predict_from_text(text, temperature=temperature, include_start=include_start, n_tokens=n_tokens,
                                         max_tokens=max_tokens, **kwargs)
 
         if output == 'score':
@@ -62,6 +63,9 @@ class BasePredictor:
         return sum([self.score_to_tokens(score) for score in scores], [])
 
     def score_to_tokens(self, score):
+        # If already text do nothing else convert to text and tokenize
+        if isinstance(score, str):
+            return self.tokenize(score)
         return self.tokenize(self.score_to_text(score))
 
     def tokens_to_score(self, tokens):
@@ -71,7 +75,7 @@ class BasePredictor:
     def predict_next_token(self):
         raise NotImplemented
 
-    def predict_from_text(self, start_text, include_start=True, n_tokens=5, max_tokens=None):
+    def predict_from_text(self, start_text, temperature=0, include_start=True, n_tokens=5, max_tokens=None):
         raise NotImplemented
 
     def init_model(self, *args, **kwargs):

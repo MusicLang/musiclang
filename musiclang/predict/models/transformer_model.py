@@ -9,11 +9,11 @@ from torch.utils.data import dataset
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-from .base.model import ModelWrapper
+from ..base.model import ModelWrapper
 
 class TransformerModelWrapper(ModelWrapper):
 
-    def __init__(self, n_tokens, d_model, n_head,  d_hid, n_layers, bptt, batch_size, dropout=0.5, model=None, **kwargs):
+    def __init__(self, n_tokens, d_model, n_head,  d_hid, n_layers, bptt, batch_size, lr, sc, dropout=0.5, model=None, **kwargs):
         self.n_tokens = n_tokens
         self.d_model = d_model
         self.n_head = n_head
@@ -22,6 +22,8 @@ class TransformerModelWrapper(ModelWrapper):
         self.bptt = bptt
         self.dropout = dropout
         self.batch_size = batch_size
+        self.lr = lr
+        self.sc = sc
 
         if model is None:
             self.model = TransformerModel(n_tokens, d_model, n_head, d_hid, n_layers, dropout=dropout)
@@ -37,7 +39,9 @@ class TransformerModelWrapper(ModelWrapper):
                 'n_layers': self.n_layers,
                 'bptt': self.bptt,
                 'dropout': self.dropout,
-                'batch_size': self.batch_size
+                'batch_size': self.batch_size,
+                'lr': self.lr,
+                'sc': self.sc
                 }
 
     def set_params(self, params):
@@ -49,6 +53,8 @@ class TransformerModelWrapper(ModelWrapper):
         self.bptt = params['bptt']
         self.dropout = params['dropout']
         self.batch_size = params['batch_size']
+        self.lr = params['lr']
+        self.sc = params['sc']
 
 
     def batchify(self, data: Tensor, bsz: int) -> Tensor:
@@ -89,10 +95,10 @@ class TransformerModelWrapper(ModelWrapper):
         val_data = torch.tensor(val_data, dtype=torch.long)
         train_data, val_data = batchify(train_data, self.batch_size), batchify(val_data, self.batch_size)
 
-        best_model = train(self.model, train_data, val_data, epochs, self.bptt, self.n_tokens, criterion=criterion)
+        best_model = train(self.model, train_data, val_data, epochs, self.bptt, self.n_tokens, self.lr, self.sc, criterion=criterion)
         self.model = best_model
         return TransformerModelWrapper(self.n_tokens, self.d_model, self.n_head,
-                                       self.d_hid, self.n_layers, self.bptt, self.batch_size,
+                                       self.d_hid, self.n_layers, self.bptt, self.batch_size, self.lr, self.sc,
                                        dropout=self.dropout, model=best_model)
 
     def predict(self, tokens):
@@ -186,7 +192,7 @@ def batchify(data: Tensor, bsz: int) -> Tensor:
     return data.to(device)
 
 
-def get_batch(source: Tensor, i: int, bptt=35) -> Tuple[Tensor, Tensor]:
+def get_batch(source: Tensor, i: int, bptt) -> Tuple[Tensor, Tensor]:
     """
     Args:
         source: Tensor, shape [full_seq_len, batch_size]
@@ -206,10 +212,9 @@ import copy
 import time
 
 
-def train(model, train_data, val_data, epochs, bptt, ntokens, criterion=None):
-    lr = 5.0  # learning rate
+def train(model, train_data, val_data, epochs, bptt, ntokens, lr, sc, criterion=None):
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.99)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=sc)
     criterion = nn.CrossEntropyLoss() if criterion is None else criterion
     best_val_loss = float('inf')
 
@@ -243,7 +248,7 @@ def train_one(train_data, model, ntokens, bptt, criterion, optimizer, scheduler,
 
     num_batches = len(train_data) // bptt
     for batch, i in enumerate(range(0, train_data.size(0) - 1, bptt)):
-        data, targets = get_batch(train_data, i)
+        data, targets = get_batch(train_data, i, bptt)
         seq_len = data.size(0)
         if seq_len != bptt:  # only on last batch
             src_mask = src_mask[:seq_len, :seq_len]
@@ -273,7 +278,7 @@ def evaluate(model: nn.Module, eval_data: Tensor, bptt, ntokens, criterion) -> f
     src_mask = generate_square_subsequent_mask(bptt).to(device)
     with torch.no_grad():
         for i in range(0, eval_data.size(0) - 1, bptt):
-            data, targets = get_batch(eval_data, i)
+            data, targets = get_batch(eval_data, i, bptt)
             seq_len = data.size(0)
             if seq_len != bptt:
                 src_mask = src_mask[:seq_len, :seq_len]

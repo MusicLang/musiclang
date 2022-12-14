@@ -86,6 +86,22 @@ STR_TO_DURATION = {
     "s": frac(1) / frac(4),
     "t": frac(1) / frac(8),
 
+    "w5": frac(8) / frac(5),
+    "h5": frac(4) / frac(5),
+    "q5": frac(2) / frac(5),
+    "e5": frac(2) / frac(10),
+    "s5": frac(2) / frac(20),
+    "t5": frac(2) / frac(40),
+
+    "w7": frac(8) / frac(7),
+    "h7": frac(4) / frac(7),
+    "q7": frac(2) / frac(7),
+    "e7": frac(2) / frac(14),
+    "s7": frac(2) / frac(28),
+    "t7": frac(2) / frac(56),
+
+    "w3": frac(8) / frac(3),
+    "h3": frac(4) / frac(3),
     "q3": frac(2) / frac(3),
     "e3": frac(2) / frac(6),
     "s3": frac(2) / frac(12),

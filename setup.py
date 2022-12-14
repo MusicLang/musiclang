@@ -55,7 +55,10 @@ setuptools.setup(
         "widgetsnbextension==4.0.3",
         "wrapt==1.14.1",
         "xmlschema==2.1.1",
-        "zipp==3.11.0"
+        "zipp==3.11.0",
+        "torch==1.13.0",
+        "torchdata==0.5.0",
+        "torchtext==0.14.0"
                       ],
     packages=setuptools.find_packages(include='*'),
     package_data={'musiclang': ['augmented_net/*.hdf5']},

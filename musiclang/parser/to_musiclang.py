@@ -23,7 +23,8 @@ def _get_beat_value(mf):
 
 
 def infer_score_with_chords_durations(sequence, chords, instruments):
-
+    import time
+    start_time = time.time()
     # Split each chord, instrument, voice
     time_start = 0
     time_end = 0
@@ -43,7 +44,7 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
                 offsets_voices_raw[channel] = max(voices) + 1
             else:
                 offsets_voices_raw[channel] += max(voices) + 1
-
+    print('OFFSET CALC : ', time.time() - start_time)
     for idx, chord in enumerate(chords):
         time_start = 0 if idx == 0 else time_start + chords[idx - 1].duration
         time_end += chord.duration
@@ -65,7 +66,7 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
                     chord_dict[voice_name] = chord_dict[voice_name].o(- OCTAVES.get(instrument, 0))
 
         score += chord(**chord_dict)
-
+    print('OFFSET CHORD : ', time.time() - start_time)
     return score
 
 

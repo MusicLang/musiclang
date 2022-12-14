@@ -76,6 +76,8 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
             vel = int(evt[3])
             track_nb = int(evt[4])
             track = mid.tracks[track_nb]
+            if evt[0] > 100 or evt[0] < 10:
+                evt[0] = 0
             track.append(Message('note_on', note=int(evt[0]), channel=channels[track_nb],
                                  velocity=vel, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat)))
 
@@ -84,6 +86,8 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
         elif evt[1] == 0:
             track_nb = int(evt[3])
             track = mid.tracks[track_nb]
+            if evt[0] > 100 or evt[0] < 10:
+                evt[0] = 0
             if evt[4] == 1 and prev_pitch[track_nb] > 0:
                 track[-1] = Message('note_off', note=prev_pitch[track_nb], channel=channels[track_nb],
                                     velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat + track[-1].time))

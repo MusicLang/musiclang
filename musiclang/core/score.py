@@ -223,7 +223,7 @@ class Score:
             return self.copy()
 
     def __repr__(self):
-        return ' \n'.join([str(chord) + '\n +' for chord in self.chords])
+        return '+ \n'.join([str(chord) for chord in self.chords])
 
     def __getstate__(self):
         return self.__dict__

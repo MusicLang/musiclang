@@ -86,12 +86,18 @@ class Tonality:
     def b(self):
         tone = self.copy()
         tone.degree -= 1
+        if tone.degree == -1:
+            tone.degree = 11
+        tone.octave -= 1
         return tone
 
     @property
     def s(self):
         tone = self.copy()
         tone.degree += 1
+        if tone.degree == 12:
+            tone.degree = 0
+        tone.octave += 1
         return tone
 
     @property

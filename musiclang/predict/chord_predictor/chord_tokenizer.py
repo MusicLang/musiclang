@@ -1,8 +1,7 @@
-from musiclang import Score
-
-
-import lark
 from lark import Lark
+from lark.exceptions import UnexpectedToken, UnexpectedInput, UnexpectedCharacters, UnexpectedEOF
+
+
 
 grammar = """
 %ignore " "
@@ -62,9 +61,6 @@ def _construct_tokens():
 TOKENS_IDXS = _construct_tokens()
 TERMINAL_TYPE = 'SEMICOLON'
 TERMINAL_IDX = TOKENIZER[('SEMICOLON', ';')]
-
-from lark.exceptions import UnexpectedToken, UnexpectedInput, UnexpectedCharacters, UnexpectedEOF
-
 
 def correct_with_grammar(text):
     """

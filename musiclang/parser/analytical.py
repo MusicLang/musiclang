@@ -122,6 +122,7 @@ def parse_musiclang_sequence(midi_file, chords):
     sequence = infer_voices_per_instruments(sequence, instruments)
     print('3/3 : Create the score')
     score = infer_score_with_chords_durations(sequence, chords, instruments)
+    print('Finished creating score')
     return score, tempo
 
 

@@ -61,7 +61,7 @@ class ScoreTransformerPredictor(BasePredictor):
             temperature_vec = temperature * np.random.randn(len(TOKENIZER))
             output = self.predict_proba(tokens)
             valid_candidates = get_candidates_idx(last_chord_text)
-            serie = (output + valid_candidates + temperature_vec).argmax().tolist()
+            serie = (output.cpu() + valid_candidates + temperature_vec).argmax().tolist()
             text = self.untokenize([serie])
             chars += text
             start_text += text

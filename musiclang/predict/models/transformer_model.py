@@ -26,9 +26,9 @@ class TransformerModelWrapper(ModelWrapper):
         self.sc = sc
 
         if model is None:
-            self.model = TransformerModel(n_tokens, d_model, n_head, d_hid, n_layers, dropout=dropout)
+            self.model = TransformerModel(n_tokens, d_model, n_head, d_hid, n_layers, dropout=dropout).to(device)
         else:
-            self.model = model
+            self.model = model.to(device)
 
 
     def get_params(self):
@@ -91,8 +91,8 @@ class TransformerModelWrapper(ModelWrapper):
 
 
     def train(self, train_data, val_data, epochs=10, criterion=None):
-        train_data = torch.tensor(train_data, dtype=torch.long)
-        val_data = torch.tensor(val_data, dtype=torch.long)
+        train_data = torch.tensor(train_data, dtype=torch.long).to(device)
+        val_data = torch.tensor(val_data, dtype=torch.long).to(device)
         train_data, val_data = batchify(train_data, self.batch_size), batchify(val_data, self.batch_size)
 
         best_model = train(self.model, train_data, val_data, epochs, self.bptt, self.n_tokens, self.lr, self.sc, criterion=criterion)
@@ -104,7 +104,7 @@ class TransformerModelWrapper(ModelWrapper):
     def predict(self, tokens):
         with torch.no_grad():
             self.model.eval()
-            data = torch.tensor(tokens, dtype=torch.long)
+            data = torch.tensor(tokens, dtype=torch.long).to(device)
             data = data.reshape((data.shape[0], 1))
             output = self.model(data)
             return output

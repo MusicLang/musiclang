@@ -3,30 +3,42 @@ from lark.exceptions import UnexpectedToken, UnexpectedInput, UnexpectedCharacte
 from fractions import Fraction as frac
 from lark import Lark
 
+
 grammar = """
+// EBNF Rule for a simple music language based on chord
+// Melodies are specified relatively to the chord scale context
 %ignore " "
 %ignore "\\n"
 %ignore "\\t"
-start           : (expression "+")* expression ";"
-expression      : chord "(" chord_dict ")"
-chord           : "(" DEGREE (EXTENSION)? ( "%" tonality) ")"
+start           : (expression "+")* expression SEMICOLON
+expression      : chord LPAR chord_dict RPAR
+chord           : LPAR DEGREE (FIGURED_BASS)? ( PERCENT tonality) RPAR
 chord_dict      : (INSTRUMENT EQUAL melody COMMA)* (INSTRUMENT EQUAL melody) 
-melody          : (note "+")* note
-note            : NOTE ("." full_duration)? ("." OCTAVE )? ("." DYNAMIC)?
-full_duration   : (DURATION (DOTTED)*) | (DURATION (N_UPLET)?)
-tonality        : DEGREE ("." ACCIDENT)? "." MODE
-DEGREE          : "I" | "II" | "III" | "IV" | "V" | "VI" | "VII"
-ACCIDENT        : "b" | "s"
+melody          : (note PLUS)* note
+note            : (SCALE_NOTE | CHROMATIC_NOTE | SILENCE | CONTINUATION ) (DOT full_duration)? (DOT OCTAVE )? (DOT DYNAMIC)?
+full_duration   : (DURATION (DOTTED_DURATION)*) | (DURATION (N_UPLET)?)
+tonality        : DEGREE (DOT ACCIDENT)? DOT TONALITY_MODE
+LPAR            : "("
+RPAR            : ")"
+PERCENT         : "%"
+PLUS            : "+"
+SEMICOLON       : ";"
+DOT             : "."
+DEGREE          : "I" | "II" | "III" | "IV" | "V" | "VI" | "VII" // Chord degree (always upper case because relative to a tonality)
+ACCIDENT        : "b" | "s" // flat and sharp
 COMMA           : ","
 EQUAL           : "="
-MODE            : "m" | "M" | "mm"
-EXTENSION       : "[]"  | "['7']" | "['6']" | "['64']" | "['65']" | "['2']" | "['63']" | "['43']"
-OCTAVE          : "o(1)" | "o(-1)" | "o(-2)" | "o(2)" | "o(3)" | "o(-3)" | "o(4)" | "o(-4)"| "o(5)" | "o(-5)"
-DURATION        : "t" | "s" | "e" | "q" | "h" | "w"
-DOTTED          : "d"
+TONALITY_MODE   : "M" | "m" | "mm" // Major, minor and melodic minor
+FIGURED_BASS    : "[]"  | "['7']" | "['6']" | "['64']" | "['65']" | "['2']" | "['63']" | "['43']" // Roman numeral figured bass
+OCTAVE          : "o(1)" | "o(-1)" | "o(-2)" | "o(2)" | "o(3)" | "o(-3)" | "o(4)" | "o(-4)"| "o(5)" | "o(-5)" // Delta octave (1, -1, ...)
+DURATION        : "w" | "h" | "q" | "e" | "s" | "t" // (Base duration of a note, by order : ( "whole" | "half" | "quarter" | "sixteenth" | "thirty-second" )
+DOTTED_DURATION : "d"  // Dotted duration
 N_UPLET         : "3" | "5" | "7"
-NOTE            : "s0" | "s1" | "s2" | "s3" | "s4" | "s5" | "s6" | "h0" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "h7" | "h8" | "h9" | "h10" | "h11" | "l" | "r"
-DYNAMIC         : "ppp" | "pp" | "p" | "mf" | "f" | "ff" | "fff"
+SCALE_NOTE      : "s0" | "s1" | "s2" | "s3" | "s4" | "s5" | "s6" // Scale notes : s0 = first note of the chord scale, s1 = second note , etc ...). Example : In (I % I.M), s0 = C, s1 = D, s6 = B
+CHROMATIC_NOTE  : "h0" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "h7" | "h8" | "h9" | "h10" | "h11" // Chromatic note, example, in (I % I.M):  h0 = C, h1 = C#, h6 = F#
+SILENCE         : "r" // To denote a rest in the music
+CONTINUATION    : "l" // To denote that it should be the continuation of the previous note in a melody
+DYNAMIC         : "ppp" | "pp" | "p" | "mf" | "f" | "ff" | "fff" ("molto pianissimo" | "pianissimo" | "piano" | "mezzo forte" | "forte" | "double forte" | "triple forte"
 INSTRUMENT      : "V__0" | "piano__0" | "piano__1" | "piano__2" | "piano__3" | "piano__4" | "piano__5" | "piano__6" | "piano__7" | "piano__8" | "piano__9" | "piano__10" | "piano__11" | "piano__12" | "piano__13" | "piano__14" | "piano__15"
 """
 
@@ -41,9 +53,9 @@ TOKENS  = [
     ('DEGREE', 'V'),
     ('DEGREE', 'VI'),
     ('DEGREE', 'VII'),
-    ('MODE', 'm'),
-    ('MODE', 'M'),
-    ('MODE', 'mm'),
+    ('TONALITY_MODE', 'm'),
+    ('TONALITY_MODE', 'M'),
+    ('TONALITY_MODE', 'mm'),
     ('ACCIDENT', 'b'),
     ('ACCIDENT', 's'),
     ('PERCENT', '%'),
@@ -52,13 +64,13 @@ TOKENS  = [
     ('LPAR', '('),
     ('RPAR', ')'),
     ('SEMICOLON', ';'),
-    ('EXTENSION', "['7']"),
-    ('EXTENSION', "['64']"),
-    ('EXTENSION', "['6']"),
-    ('EXTENSION', "['65']"),
-    ('EXTENSION', "['2']"),
-    ('EXTENSION', "['63']"),
-    ('EXTENSION', "['43']"),
+    ('FIGURED_BASS', "['7']"),
+    ('FIGURED_BASS', "['64']"),
+    ('FIGURED_BASS', "['6']"),
+    ('FIGURED_BASS', "['65']"),
+    ('FIGURED_BASS', "['2']"),
+    ('FIGURED_BASS', "['63']"),
+    ('FIGURED_BASS', "['43']"),
     ('OCTAVE', "o(1)"),
     ('OCTAVE', "o(-1)"),
     ('OCTAVE', "o(2)"),
@@ -75,31 +87,31 @@ TOKENS  = [
     ('DURATION', "q"),
     ('DURATION', "h"),
     ('DURATION', "w"),
-    ('DOTTED', 'd'),
+    ('DOTTED_DURATION', 'd'),
     ('N_UPLET', "3"),
     ('N_UPLET', "5"),
     ('N_UPLET', "7"),
-    ('NOTE', "r"),
-    ('NOTE', "l"),
-    ('NOTE', "s0"),
-    ('NOTE', "s1"),
-    ('NOTE', "s2"),
-    ('NOTE', "s3"),
-    ('NOTE', "s4"),
-    ('NOTE', "s5"),
-    ('NOTE', "s6"),
-    ('NOTE', "h0"),
-    ('NOTE', "h1"),
-    ('NOTE', "h2"),
-    ('NOTE', "h3"),
-    ('NOTE', "h4"),
-    ('NOTE', "h5"),
-    ('NOTE', "h6"),
-    ('NOTE', "h7"),
-    ('NOTE', "h8"),
-    ('NOTE', "h9"),
-    ('NOTE', "h10"),
-    ('NOTE', "h11"),
+    ('SILENCE', "r"),
+    ('CONTINUATION', "l"),
+    ('SCALE_NOTE', "s0"),
+    ('SCALE_NOTE', "s1"),
+    ('SCALE_NOTE', "s2"),
+    ('SCALE_NOTE', "s3"),
+    ('SCALE_NOTE', "s4"),
+    ('SCALE_NOTE', "s5"),
+    ('SCALE_NOTE', "s6"),
+    ('CHROMATIC_NOTE', "h0"),
+    ('CHROMATIC_NOTE', "h1"),
+    ('CHROMATIC_NOTE', "h2"),
+    ('CHROMATIC_NOTE', "h3"),
+    ('CHROMATIC_NOTE', "h4"),
+    ('CHROMATIC_NOTE', "h5"),
+    ('CHROMATIC_NOTE', "h6"),
+    ('CHROMATIC_NOTE', "h7"),
+    ('CHROMATIC_NOTE', "h8"),
+    ('CHROMATIC_NOTE', "h9"),
+    ('CHROMATIC_NOTE', "h10"),
+    ('CHROMATIC_NOTE', "h11"),
     ('DYNAMIC', "ppp"),
     ('DYNAMIC', "pp"),
     ('DYNAMIC', "p"),
@@ -107,6 +119,7 @@ TOKENS  = [
     ('DYNAMIC', "f"),
     ('DYNAMIC', "ff"),
     ('DYNAMIC', "fff"),
+    ('INSTRUMENT', 'V__0'),
     ('INSTRUMENT', 'piano__0'),
     ('INSTRUMENT', 'piano__1'),
     ('INSTRUMENT', 'piano__2'),

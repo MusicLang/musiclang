@@ -10,11 +10,15 @@ class BasePredictor:
 
     ## BASE METHODS
 
-    def train(self, train_scores, eval_scores, epochs=10, **kwargs):
+    def train(self, train_scores, eval_scores, epochs=10, tokenize=True, **kwargs):
         # Convert scores
         # If already scores
-        train_data = self.scores_to_tokens(train_scores)
-        eval_data = self.scores_to_tokens(eval_scores)
+        if tokenize:
+            train_data = self.scores_to_tokens(train_scores)
+            eval_data = self.scores_to_tokens(eval_scores)
+        else:
+            train_data = train_scores
+            eval_data = eval_scores
         self.model.train(train_data, eval_data, epochs=epochs, **kwargs)
 
     def predict_proba(self, tokens):

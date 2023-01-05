@@ -19,3 +19,5 @@ locals/
 *.pyc
 build/
 musiclang.egg-info/
+documentation/build/
+documentation/_build/

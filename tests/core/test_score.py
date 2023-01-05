@@ -1,4 +1,4 @@
-from musiclang.core.library import *
+from musiclang.write.library import *
 
 
 

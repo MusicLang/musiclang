@@ -1,4 +1,4 @@
-from musiclang.core.pitches.pitches_utils import *
+from musiclang.write.pitches.pitches_utils import *
 from musiclang import Note
 
 def test_relative_scale_up_value():

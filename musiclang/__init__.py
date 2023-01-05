@@ -1,6 +1,6 @@
-from .core.score import  Score
-from .core.note import Note, Silence, Continuation
-from .core.melody import Melody
-from .core.chord import Chord
-from .core.tonality import Tonality
-from .core.element import Element
+from .write.score import  Score
+from .write.note import Note, Silence, Continuation
+from .write.melody import Melody
+from .write.chord import Chord
+from .write.tonality import Tonality
+from .write.element import Element

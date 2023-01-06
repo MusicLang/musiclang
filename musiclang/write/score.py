@@ -79,16 +79,20 @@ class Score:
 
 
     def to_voicings(self, instruments=None):
-        """Convert score to a four voice voicing using the extensions
-        :return:
+        """Convert score to a four voice voicing using the extensions provided in the chord.
+
+        It will remove the existing scores of each chord and create the associated voicings
 
         Parameters
         ----------
-        instruments :
-             (Default value = None)
+        instruments : None or List[str] (Default value = ['piano__0', 'piano__1', 'piano__2', 'piano__3'])
+                      The list of instruments used to create the voicings.
 
         Returns
         -------
+
+        score: Score
+               The score with voicings corresponding to chords
 
         """
         from .library import s0, s1, s2, s3, s4, s5, s6
@@ -140,7 +144,7 @@ class Score:
     def __getitem__(self, item):
         """
         If str return a score with only this voice
-        Else returns item getter of the list of chords and convert it back to a score
+        else returns item getter of the list of chords and convert it back to a score
         """
         from .note import Silence
         from .chord import Chord
@@ -172,36 +176,62 @@ class Score:
 
     def put_on_same_chord(self):
         """Take the first chord as reference,
-        Put everything into this chord (It will of course change the harmony)
-        :return:
+        Put everything into the first chord preserving the note value (It will change the piece to a static harmony)
 
         Parameters
         ----------
+        score : Score
+                Input score
+
 
         Returns
         -------
+        score: Score
+               Score containing one chord with all the melodies
+
+        Examples
+        --------
+
+        >>> from musiclang.library import *
+        >>> score = (I % I.m)(piano__0=s0) + (V % I.m)(piano__0=s2)
+        >>> score.put_on_same_chord()
+        (I % I.m)(piano__0=s0 + s2)
 
         """
         from .time_utils import put_on_same_chord
         return put_on_same_chord(self)
 
     def project_on_score(self, score2, keep_score=False):
-        """Project harmonically the score onto the score2
+        """Project harmonically the current score onto the score2
+        Algorithm : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
 
         Parameters
         ----------
-        score2 :
+        score : Score
+                Score to project on the chords of score2
+        score2 : Score
             Score that contains the harmony
-        keep_score :
-            Keep the voice of score2 ? (Default value = False)
+        keep_score : Score (Default value = False)
+            Keep the voices of score2 ? (Default value = False)
 
         Returns
         -------
+        new_score: Score
+                  The score projected on score2 chord progression. It will fit the minimal duration of both scores
+
+        Examples
+        --------
+
+        >>> from musiclang.library import *
+        >>> score1 = (I % I.m)(piano__0=s0.e) + (V % I.m)(piano__0=s2.e)
+        >>> score2 = (II % III.m)(piano__0=s0.e + s0.e)
+        >>> score1.project_on_score(score2, keep_score=False)
+        (II % III.m)(piano__0=s0.e + s2.e)
 
         """
         # Algo : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
         from .time_utils import project_on_score
-        return project_on_score(self.copy(), score2.copy(), keep_score=keep_score)
+        return project_on_score(self.to_score(), score2.to_score(), keep_score=keep_score)
 
 
     def get_chord_between(self, chord, start, end):
@@ -226,6 +256,7 @@ class Score:
 
     def get_score_between(self, start=None, end=None):
         """
+        Get the score between start and end time.
 
         Parameters
         ----------
@@ -243,18 +274,33 @@ class Score:
 
     def reduce(self, n_voices=4, start_low=False, instruments=None):
         """
+        Reduce the score to n_voices
 
         Parameters
         ----------
-        n_voices :
-             (Default value = 4)
-        start_low :
-             (Default value = False)
-        instruments :
-             (Default value = None)
-
+        n_voices : int, (Default value = 4)
+                   Number of voices in the reduction
+        start_low : bool (Default value = False)
+                    If true the first voice in the reduction will be the bass, else the soprano
+        instruments : List[str] or None (Default value = None)
+                      Name of the voices in the reduction
         Returns
         -------
+        score : Score
+                The reduced score
+
+        Examples
+        --------
+
+        >>> from musiclang.library import *
+        >>> score = (I % I.M)(piano=[s0, s2, s4]) + (V % I.M)(piano=[s0, s2, s4])
+        >>> score.reduce(n_voices=2, start_low=False, instruments=['cello__0', 'violin__0'])
+        (I % I.M)(
+            cello__0=s0,
+            violin__0=s4)+
+        (V % I.M)(
+            cello__0=s0,
+            violin__0=s4)
 
         """
         from .arrange_utils import reduce
@@ -262,14 +308,12 @@ class Score:
 
     def to_pickle(self, filepath):
         """
+        Save the score into a pickle file
 
         Parameters
         ----------
-        filepath :
-            
-
-        Returns
-        -------
+        filepath : str
+                   Filepath on which to save the score
 
         """
         import pickle
@@ -279,14 +323,20 @@ class Score:
     @classmethod
     def from_midi(cls, filename):
         """
+        Load a midi score into musiclang
+
+        .. warning:: This step can take some time depending on the length of the file
 
         Parameters
         ----------
-        filename :
+        filename : str
+                   Filepath of the file
             
 
         Returns
         -------
+        score: Score
+               The loaded score
 
         """
         from musiclang.analyze import parse_to_musiclang
@@ -297,14 +347,22 @@ class Score:
     @classmethod
     def from_xml(cls, filename):
         """
+        Load a musicxml score into musiclang
+
+        .. warning:: This step can take some time depending on the length of the file
+
 
         Parameters
         ----------
-        filename :
+        filename : str
+                   Filepath of the file
             
 
         Returns
         -------
+
+        score: Score
+               The loaded score
 
         """
         from musiclang.analyze import parse_to_musiclang
@@ -313,7 +371,10 @@ class Score:
         return score
 
     def decompose_duration(self):
-        """ """
+        """
+        Decompose the duration in a note + continuations. It recursively call
+        :func:`~Note.decompose_duration()`
+        """
         return Score([chord.decompose_duration() for chord in self.chords])
 
     def to_score(self):
@@ -340,7 +401,7 @@ class Score:
 
     def to_sequence(self, **kwargs):
         """
-
+        Convert
         Parameters
         ----------
         **kwargs :

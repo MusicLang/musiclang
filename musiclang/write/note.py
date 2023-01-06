@@ -13,7 +13,7 @@ class Note:
     """
     Represents a note in MusicLang.
 
-    The specificity of MusicLang is that notes are always represented relatively to a chord inside a tonality
+    **The specificity of MusicLang is that notes are always represented relatively to a chord inside a tonality.**
 
     Usually you won't be instantiating notes yourself but use the builtin ``musiclang.write.library`` which already
     defines common symbols of musiclang. See the examples to get familiar with the notation library.
@@ -47,8 +47,7 @@ class Note:
 
     You can spcify a rythm to a note using properties
 
-    - ``h=half, w=whole, q=quarter, e=eight, \
-    s=sixteenth, t=thirty-seconds``
+    - ``h=half, w=whole, q=quarter, e=eight, s=sixteenth, t=thirty-seconds``
     - You can use n-uplet ``(3, 5, 7)`` : for example s0.e3 is s0 with a duration of a triolet etc ...
     - You can use dots with ``d`` : For example s0.qd has a dotter quarter duration. You can use double dots
     - You can use the :func:`~Note.augment` method if you want a custom duration that can't be notated easily. \
@@ -217,15 +216,18 @@ class Note:
 
     def augment(self, value):
         """
-        Augment the duration of a note
+        Returns a copy with augmented duration (multiply current duration by the value)
+
         Parameters
         ----------
-        value :
+        value : fractions.Fraction
+                Fraction on which to multiply the current duration
             
 
         Returns
         -------
-        Note
+        note: Note
+              New note with increased duration
 
         Examples
         --------
@@ -391,7 +393,7 @@ class Note:
     def to_sequence(self, chord, inst):
         """
         Helper function to generate an array of some specific property from a note
-        /!\ Only used internally to generate a dataframe from a Score
+        .. warning:: Only used internally to generate a dataframe from a Score
 
         Transform in a list of [(start_time, end_time, pitch, self)]
 
@@ -558,8 +560,6 @@ class Note:
         If other is Integer, repeat the note other times
         If other is note, create a vertical melody
         If other is melody append note to vertical melody
-        :param other:
-        :return:
         """
         from .melody import Melody
         if isinstance(other, int):

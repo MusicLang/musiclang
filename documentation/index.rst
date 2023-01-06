@@ -6,24 +6,35 @@
 Welcome to MusicLang's documentation!
 =====================================
 
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    ./usage/about.rst
+
+.. toctree::
+   :maxdepth: 2
+
    ./usage/user_guide.rst
+
+.. toctree::
+   :maxdepth: 2
+
    ./usage/installation.rst
+
+.. toctree::
+   :maxdepth: 1
+
    ./usage/module_reference.rst
+
+.. toctree::
+   :maxdepth: 2
+
    ./usage/developer_guide.rst
 
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+See the :ref:`examples-gallery`.
 
 
 

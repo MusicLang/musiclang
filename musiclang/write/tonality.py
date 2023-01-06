@@ -60,7 +60,26 @@ class Tonality:
 
     @property
     def scale_pitches(self):
-        """ """
+        """
+        Get the scale absolute pitches (integers)
+
+        See Also
+        --------
+        :func:`~Chord.scale_pitches`
+        :func:`~Chord.to_pitch()`
+
+        Returns
+        -------
+        res: List[int]
+
+        Examples
+        --------
+
+        >>> from musiclang.library import *
+        >>> I.M.scale_pitches
+        [0, 2, 4, 5, 7, 9, 11]
+
+        """
         abs_degree = self.abs_degree
         mode = self.mode
         pitch_scale = [n + abs_degree for n in SCALES[mode]]

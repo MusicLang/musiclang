@@ -8,16 +8,17 @@ LICENSE file in the root directory of this source tree.
 
 def put_on_same_chord(score):
     """Take the first chord as reference,
-    Put everything into this chord (It will change the piece to a static harmony)
-    :return:
+    Put everything into the first chord preserving the note value (It will change the piece to a static harmony)
 
     Parameters
     ----------
-    score :
+    score : Score
+            Input score
         
 
     Returns
     -------
+
 
     """
     from musiclang import Silence
@@ -39,17 +40,17 @@ def project_on_score(score, score2, keep_score=False):
 
     Parameters
     ----------
-    score2 :
+    score : Score
+            Score to project on the chords of score2
+    score2 : Score
         Score that contains the harmony
-    keep_score :
-        Keep the voice of score2 ? (Default value = False)
-    score :
-        
+    keep_score : Score (Default value = False)
+        Keep the voices of score2 ? (Default value = False)
 
     Returns
     -------
-    type
-        new_score, Score, The score projected on score2 chord progression
+    new_score: Score
+              The score projected on score2 chord progression
 
     """
 

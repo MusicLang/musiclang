@@ -143,7 +143,9 @@ class Chord:
         return note_to_pitch_result(note, self, last_pitch=last_pitch)
 
     def to_sequence(self):
-        """ """
+        """
+        See :func:`~Score.to_sequence()
+        """
         sequence_dict = []
         for inst in self.instruments:
             sequence_dict += self.score[inst].to_sequence(self, inst)
@@ -157,39 +159,57 @@ class Chord:
 
     def show(self, *args, **kwargs):
         """
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
-
+        See :func:`~Score.show()
         """
         return self.to_score().show(*args, **kwargs)
 
     @property
     def scale_degree(self):
-        """ """
+        """
+
+        Returns
+        -------
+
+        """
         tonic = self.scale_pitches[0]
         return DEGREE_TO_SCALE_DEGREE[tonic % 12] + tonic // 12
 
     @property
     def pitch_set(self):
-        """ """
+        """
+        Get a frozenset of :func:`~Chord.chord_pitches`
+        """
         return frozenset({s % 12 for s in self.chord_pitches})
 
     @property
     def scale_set(self):
-        """ """
+        """
+        Get a frozenset of :func:`~Chord.scale_pitches`
+        """
         return frozenset({s % 12 for s in self.scale_pitches})
 
     @property
     def chord_pitches(self):
-        """ """
+        """
+        Get the chord absolute pitches (integers) starting with the chord root.
+
+        See Also
+        --------
+        :func:`~Tonality.scale_pitches`
+        :func:`~Chord.to_pitch()`
+
+        Returns
+        -------
+        res: List[int]
+
+        Examples
+        --------
+
+        >>> from musiclang.library import *
+        >>> (I % I.M).chord_pitches
+        [0, 4, 7]
+
+        """
         scale_pitches = self.scale_pitches
         max_res = [scale_pitches[i] for i in [0, 2, 4, 6, 1, 3, 5]]
         id = len(self.possible_notes)
@@ -197,7 +217,26 @@ class Chord:
 
     @property
     def scale_pitches(self):
-        """ """
+        """
+        Get the scale absolute pitches (integers) starting with the chord root.
+
+        See Also
+        --------
+        :func:`~Tonality.scale_pitches`
+        :func:`~Chord.to_pitch()`
+
+        Returns
+        -------
+        res: List[int]
+
+        Examples
+        --------
+
+        >>> from musiclang.library import *
+        >>> (I % I.M).scale_pitches
+        [0, 2, 4, 5, 7, 9, 11]
+
+        """
         from .tonality import Tonality
         if self.tonality is None:
             return (self % Tonality(0)).scale_pitches
@@ -214,24 +253,32 @@ class Chord:
 
     @property
     def parts(self):
-        """ """
+        """
+        Get the list of all parts names
+        Same as :func:`~Chord.instruments`
+        """
         return list(self.score.keys())
 
     @property
     def instruments(self):
-        """ """
+        """
+        Get the list of all part names
+        """
         return list(self.score.keys())
 
     def get_part(self, item):
         """
+        Get the corresponding part of the chord score. Can be an integer (part index) or a string (part name)
 
         Parameters
         ----------
-        item :
-            
+        item : str or int
+               Part name or part index
 
         Returns
         -------
+        melody: Melody
+                The melody corresponding to the part
 
         """
         if isinstance(item, int):
@@ -241,14 +288,15 @@ class Chord:
 
     def score_equals(self, other):
         """
+        Check if the parts of both chords are equal
 
         Parameters
         ----------
-        other :
-            
+        other : Chord
 
         Returns
         -------
+        res : bool
 
         """
         if not isinstance(other, Chord):
@@ -257,6 +305,7 @@ class Chord:
 
     def chord_equals(self, other):
         """
+        Check if two chords are equal
 
         Parameters
         ----------
@@ -265,6 +314,7 @@ class Chord:
 
         Returns
         -------
+        res: bool
 
         """
         if not isinstance(other, Chord):
@@ -284,7 +334,15 @@ class Chord:
 
     @property
     def possible_notes(self):
-        """ """
+        """
+        List the notes that belong to the chord (only the chord, not the scale)
+
+        Returns
+        -------
+        notes: List[Note]
+               The list of possible notes for a chord
+
+        """
         from .note import Note
         if self.extension in ['5', '', '6', '64']:
             return [Note("s", 0, 0, 1), Note("s", 2, 0, 1), Note("s", 4, 0, 1)]
@@ -303,26 +361,51 @@ class Chord:
 
     @property
     def scale_notes(self):
-        """ """
+        """
+        List the notes that belong to the chord scale
+
+        Returns
+        -------
+        notes: List[Note]
+               The list of possible notes for the chord scale
+        """
         from .note import Note
         return [Note("s", i, 0, 1) for i in range(7)]
 
     @property
     def scale_dissonances(self):
-        """ """
+        """
+        Returns the notes that don't belong to the chord but belong to the chord scale
+
+        Returns
+        -------
+        notes: List[Note]
+               The list of possible notes for the chord scale
+        """
         consonances = {(note.val % 7) for note in self.possible_notes}
         return [note for note in self.scale_notes if note.val not in consonances]
 
     def __getitem__(self, item):
         """
-        Assign a figured bass to the chord (eg : 64)
-        :param item:
-        :return:
+        Attach a figured bass to the chord (eg : 64)
+
+        Parameters
+        ----------
+
+        item: int or str in ['5', '7', '9', '11', '13', '65', '43', '2', '6', '64', '']
+              Extension of the chord
+
+        Returns
+        -------
+
+        chord: Chord
+               A new chord with the figured bass extension
+
         """
         item = str(item)
         res = self.copy()
         res.extension = str(item)
-        possible_extensions = ['5', '7', '9', '11', '13', '65', '43', '2', '6', '64']
+        possible_extensions = ['5', '7', '9', '11', '13', '65', '43', '2', '6', '64', '']
         if item not in possible_extensions:
             raise Exception(f'Not valid chord extension : {item}, possible are : {possible_extensions}')
         return res
@@ -335,47 +418,74 @@ class Chord:
 
     @property
     def duration(self):
-        """Get the chord duration as the max duration of the melodies contained in the chords
-        :return:
+        """
+        Get the chord duration as the max duration of the melodies contained in the chords
 
         Returns
         -------
-        duration of the chord
+        duration: fractions.Fraction or int
+                  duration of the chord
         """
         if len(self.score.keys()) == 0:
             return 0
         return max([self.score[key].duration for key in self.score.keys()])
 
-    def set_part(self, part, melody):
+    def set_part(self, part, melody, inplace=False):
         """
         Set a part on the chord (inplace operation)
         Parameters
         ----------
-        instrument : melody
-            
+        part : part name
+
         melody :  melody to apply to the part
-            
+        inplace: bool
+                 If the operation is inplace
 
         Returns
         -------
 
         """
-        part_name = self.parts[part] if isinstance(part, int) else part
-        self.score[part_name] = part
+
+        if inplace:
+            score = self
+        else:
+            score = self.copy()
+        part_name = score.parts[part] if isinstance(part, int) else part
+        score[part_name] = melody
+        return score
+
 
     def has_score(self):
-        """ """
+        """
+
+        """
         return self.score is not None
 
     def to_chord(self):
-        """ """
+        """
+        Returns a copy of the chord without the chord score
+
+        Returns
+        -------
+        chord: Chord
+               Chord with empty score
+
+        """
         result = self.copy()
         result.score = {}
         return result
 
     @property
     def chords(self):
-        """ """
+        """
+        Returns a Score object with this chord
+
+        Returns
+        -------
+        score: Score
+               The score with this chord as the only element
+
+        """
         from .score import Score
         return Score([self]).chords
 
@@ -402,6 +512,7 @@ class Chord:
 
     def modulate(self, other):
         """
+        Modulate to another tonality relative to the current tonality
 
         Parameters
         ----------
@@ -411,6 +522,8 @@ class Chord:
 
         Returns
         -------
+        chord: Chord
+               Modulated chord
 
         """
         from .tonality import Tonality
@@ -457,35 +570,42 @@ class Chord:
             return Score([self.copy()])
 
     def element_to_str(self):
-        """ """
+        """
+        Convert the element of the chord into a string
+
+        Returns
+        -------
+        res: str
+
+        """
         return ELEMENT_TO_STR[self.element]
 
     def extension_to_str(self):
-        """ """
+        """
+        Converts the extension of the chord into a string
+
+        Returns
+        -------
+        res: str
+
+        """
         if str(self.extension) == '5' or str(self.extension) == '':
             return ''
         else:
             return f"['{self.extension}']"
 
-    def tonality_to_str(self, sep="/"):
+
+    def tonality_to_str(self):
         """
+        Convert the tonality of the chord to a string.
 
         Parameters
         ----------
-        sep :
-             (Default value = "/")
 
         Returns
         -------
 
         """
-        if self.tonality is None:
-            return ""
-        else:
-            return f"{sep}" + str(self.tonality)
-
-    def tonality_to_code(self):
-        """ """
         if self.tonality is None:
             return ""
 
@@ -562,27 +682,33 @@ class Chord:
                      octave=self.octave
                      )
 
-    def preparse_named_melodies(self, named_melodies):
+    @staticmethod
+    def preparse_named_melodies(named_melodies):
         """
-        Helper function to deal with named melodies
+        Helper function to deal with dictionary of melodies that can contain a list of melodies for some parts
 
         Parameters
         ----------
-        named_melodies :
+        named_melodies : dict
+                         The dictionary of named melodies
             
 
         Returns
         -------
-
+        res: dict
+             The
 
         Examples
         --------
         >>> from musiclang.library import *
-        >>> score =  (I % I.M)(piano=[s0, s2, s4.e + s2.e])
-        (I % I.M)(
-            piano__0=s0,
-            piano__1=s2,
-            piano__2=s4.e + s2.e)
+        >>> from musiclang import Chord
+        >>> D = {"piano":[s0, s2, s4.e + s2.e]}
+        >>> Chord.preparse_named_melodies(D)
+        {
+            piano__0:s0,
+            piano__1:s2,
+            piano__2:s4.e + s2.e
+            }
 
         """
         named_melodies_result = {}
@@ -620,11 +746,14 @@ class Chord:
 
     def __call__(self, *melodies, **named_melodies):
         """
+        Method that allows to assign melodies and instruments to a chord
 
         Parameters
         ----------
-        melodies
-        named_melodies
+        *melodies: List[Melody]
+                   Melodies that will be assigned to default instrument (piano)
+        **named_melodies: Dict[str, Melody]
+                        Dictionary of named melodies that will be unpacked if necessary
 
         Returns
         -------
@@ -662,7 +791,14 @@ class Chord:
         return chord
 
     def melody_to_str(self):
-        """ """
+        """
+        Convert The chord score to its string representation
+
+        Returns
+        -------
+        res: str
+
+        """
         return '\n' + ', \n'.join([f"\t{k}=" + str(melody) for k, melody in self.score.items()])
 
     def __repr__(self):
@@ -680,7 +816,7 @@ class Chord:
         -------
 
         """
-        chord_str = f"({self.element_to_str()}{self.extension_to_str()}{self.tonality_to_code()})"
+        chord_str = f"({self.element_to_str()}{self.extension_to_str()}{self.tonality_to_str()})"
         if self.octave != 0:
             chord_str = f"{chord_str}.o({self.octave})"
 
@@ -688,6 +824,12 @@ class Chord:
 
     def to_midi(self, filepath, **kwargs):
         """
+        Save the chord to midi
+
+        See Also
+        --------
+
+        :func:`~Score.to_midi()`
 
         Parameters
         ----------

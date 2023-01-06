@@ -1,0 +1,57 @@
+.wy-side-nav-search{ background-color:#422371; }
+
+.wy-side-scroll{ background-color:#EEEEEE; }
+
+.caption-text{color: #422371;}
+
+a{
+    color: #422371;
+}
+
+.note > .admonition-title{background-color:#422371 !important;
+}
+
+.note {
+    background-color:#EEEEEE !important;
+}
+
+.seealso > .admonition-title{background-color:#422371 !important;
+}
+
+.seealso {
+    background-color:#EEEEEE !important;
+}
+
+.wy-menu-vertical a{
+    color: #888888 ;
+}
+
+current .wy-menu-vertical a{
+    color: black !important;
+}
+
+.sig .sig-object .py{
+
+    background-color:#A379C9 !important;
+}
+
+html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)>dt {
+    color: #422371;
+    border-top: 3px solid #422371;
+    background-color: #FFF4FF;
+
+}
+
+
+.wy-nav-side {
+    background-color:#422371;
+
+}
+
+.wy-nav-content-wrap {
+    background: #EEEEEE;
+}
+
+.wy-menu-vertical a:hover {
+    background-color: #DDDDDD;
+}

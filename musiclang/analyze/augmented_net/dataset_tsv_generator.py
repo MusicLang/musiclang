@@ -17,6 +17,21 @@ from .joint_parser import (
 
 
 def generateDataset(synthesize=False, texturize=False, tsvDir="dataset"):
+    """
+
+    Parameters
+    ----------
+    synthesize :
+         (Default value = False)
+    texturize :
+         (Default value = False)
+    tsvDir :
+         (Default value = "dataset")
+
+    Returns
+    -------
+
+    """
     statsdict = {
         "file": [],
         "annotation": [],

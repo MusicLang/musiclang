@@ -147,6 +147,7 @@ TOKENIZER_STR = {val[1]: idx for idx, val in enumerate(TOKENS)}
 DETOKENIZER = {val: key for key, val in TOKENIZER.items()}
 
 def _construct_tokens():
+    """ """
     result = {}
     for type, val in TOKENS:
         idx = TOKENIZER[(type, val)]
@@ -189,9 +190,17 @@ CANDIDATES_DENOM = {
 
 def correct_with_grammar(text):
     """
-    Return
-    valid_character : boolean, True if the character is suitable for musiclang
-    expected : list[str]: List of expected tokens
+
+    Parameters
+    ----------
+    text :
+        
+
+    Returns
+    -------
+    type
+        valid_character : boolean, True if the character is suitable for musiclang
+        expected : list[str]: List of expected tokens
 
     """
     try:
@@ -205,9 +214,17 @@ def correct_with_grammar(text):
 
 def get_candidates(text):
     """
-    Return
-    valid_character : boolean, True if the character is suitable for musiclang
-    expected : list[str]: List of expected tokens
+
+    Parameters
+    ----------
+    text :
+        
+
+    Returns
+    -------
+    type
+        valid_character : boolean, True if the character is suitable for musiclang
+        expected : list[str]: List of expected tokens
 
     """
     import time
@@ -224,6 +241,21 @@ def get_candidates(text):
 ALL_INSTRUMENTS = {f'piano__{i}' for i in range(16)}
 
 def get_candidates_idx(text, authorized_tokens=None, can_terminate=False):
+    """
+
+    Parameters
+    ----------
+    text :
+        
+    authorized_tokens :
+         (Default value = None)
+    can_terminate :
+         (Default value = False)
+
+    Returns
+    -------
+
+    """
     import numpy as np
     possible_tokens_vec = np.zeros(len(TOKENIZER), dtype=float)
     if authorized_tokens is not None:
@@ -250,28 +282,94 @@ def get_candidates_idx(text, authorized_tokens=None, can_terminate=False):
 
 
 def get_is_terminal(text):
+    """
+
+    Parameters
+    ----------
+    text :
+        
+
+    Returns
+    -------
+
+    """
     return TERMINAL_TYPE in get_candidates(text)
 
 
 def tokenize_string(text):
+    """
+
+    Parameters
+    ----------
+    text :
+        
+
+    Returns
+    -------
+
+    """
     tokens = [TOKENIZER[(d.type, d.value)] for d in list(PARSER.lex(text))]
     return tokens
 
 def score_to_text(score):
+    """
+
+    Parameters
+    ----------
+    score :
+        
+
+    Returns
+    -------
+
+    """
     clean_score = decompose_duration_score(score.to_score())
     score_str = str(clean_score) + ';'
     return score_str
 
 def tokenize(score):
+    """
+
+    Parameters
+    ----------
+    score :
+        
+
+    Returns
+    -------
+
+    """
     score_str = score_to_text(score)
     tokens = tokenize_string(score_str)
     return tokens
 
 def untokenize(tokens):
+    """
+
+    Parameters
+    ----------
+    tokens :
+        
+
+    Returns
+    -------
+
+    """
     return ''.join([DETOKENIZER[d][1] for d in tokens])
 
 
 def decompose_duration(note):
+    """
+
+    Parameters
+    ----------
+    note :
+        
+
+    Returns
+    -------
+
+    """
     from musiclang import Continuation
     result = None
     # Find biggest that fit
@@ -295,6 +393,17 @@ def decompose_duration(note):
 
 
 def decompose_duration_score(score):
+    """
+
+    Parameters
+    ----------
+    score :
+        
+
+    Returns
+    -------
+
+    """
     new_score = None
     for chord in score:
         new_dict = {}

@@ -12,6 +12,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from ..base.model import ModelWrapper
 
 class TransformerModelWrapper(ModelWrapper):
+    """ """
 
     def __init__(self, n_tokens, d_model, n_head,  d_hid, n_layers, bptt, batch_size, lr, sc, dropout=0.5, model=None, **kwargs):
         self.n_tokens = n_tokens
@@ -32,6 +33,7 @@ class TransformerModelWrapper(ModelWrapper):
 
 
     def get_params(self):
+        """ """
         return {'n_tokens': self.n_tokens,
                 'd_model': self.d_model,
                 'n_head': self.n_head,
@@ -45,6 +47,17 @@ class TransformerModelWrapper(ModelWrapper):
                 }
 
     def set_params(self, params):
+        """
+
+        Parameters
+        ----------
+        params :
+            
+
+        Returns
+        -------
+
+        """
         self.n_tokens = params['n_tokens']
         self.d_model = params['d_model']
         self.n_head = params['n_head']
@@ -61,12 +74,22 @@ class TransformerModelWrapper(ModelWrapper):
         """Divides the data into bsz separate sequences, removing extra elements
         that wouldn't cleanly fit.
 
-        Args:
-            data: Tensor, shape [N]
-            bsz: int, batch size
+        Parameters
+        ----------
+        data :
+            Tensor, shape [N]
+        bsz :
+            int, batch size
+        data: Tensor :
+            
+        bsz: int :
+            
 
-        Returns:
+        Returns
+        -------
+        
             Tensor of shape [N // bsz, bsz]
+
         """
         seq_len = data.size(0) // bsz
         data = data[:seq_len * bsz]
@@ -74,6 +97,17 @@ class TransformerModelWrapper(ModelWrapper):
         return data.to(device)
 
     def save_model(self, filepath):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+
+        Returns
+        -------
+
+        """
         torch.save({'weights': self.model.state_dict(),
                     'params': self.get_params()
                     }, filepath)
@@ -81,6 +115,17 @@ class TransformerModelWrapper(ModelWrapper):
 
     @classmethod
     def load_model(cls, filepath):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+
+        Returns
+        -------
+
+        """
         data = torch.load(filepath)
         model_wrapper = cls(**data['params'])
         model = model_wrapper.model
@@ -91,6 +136,23 @@ class TransformerModelWrapper(ModelWrapper):
 
 
     def train(self, train_data, val_data, epochs=10, criterion=None):
+        """
+
+        Parameters
+        ----------
+        train_data :
+            
+        val_data :
+            
+        epochs :
+             (Default value = 10)
+        criterion :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         train_data = torch.tensor(train_data, dtype=torch.long).to(device)
         val_data = torch.tensor(val_data, dtype=torch.long).to(device)
         train_data, val_data = batchify(train_data, self.batch_size), batchify(val_data, self.batch_size)
@@ -102,6 +164,17 @@ class TransformerModelWrapper(ModelWrapper):
                                        dropout=self.dropout, model=best_model)
 
     def predict(self, tokens):
+        """
+
+        Parameters
+        ----------
+        tokens :
+            
+
+        Returns
+        -------
+
+        """
         with torch.no_grad():
             self.model.eval()
             data = torch.tensor(tokens, dtype=torch.long).to(device)
@@ -111,6 +184,7 @@ class TransformerModelWrapper(ModelWrapper):
 
 
 class TransformerModel(nn.Module):
+    """ """
 
     def __init__(self, ntoken: int, d_model: int, nhead: int, d_hid: int,
                  nlayers: int, dropout: float = 0.5, **kwargs):
@@ -126,6 +200,7 @@ class TransformerModel(nn.Module):
         self.init_weights()
 
     def init_weights(self) -> None:
+        """ """
         initrange = 0.1
         self.encoder.weight.data.uniform_(-initrange, initrange)
         self.decoder.bias.data.zero_()
@@ -133,12 +208,23 @@ class TransformerModel(nn.Module):
 
     def forward(self, src: Tensor, src_mask: Tensor = None) -> Tensor:
         """
-        Args:
-            src: Tensor, shape [seq_len, batch_size]
-            src_mask: Tensor, shape [seq_len, seq_len]
 
-        Returns:
+        Parameters
+        ----------
+        src :
+            Tensor, shape [seq_len, batch_size]
+        src_mask :
+            Tensor, shape [seq_len, seq_len]
+        src: Tensor :
+            
+        src_mask: Tensor :
+             (Default value = None)
+
+        Returns
+        -------
+        
             output Tensor of shape [seq_len, batch_size, ntoken]
+
         """
         src = self.encoder(src) * math.sqrt(self.d_model)
         src = self.pos_encoder(src)
@@ -149,6 +235,7 @@ class TransformerModel(nn.Module):
 
 
 class PositionalEncoding(nn.Module):
+    """ """
 
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
@@ -163,15 +250,34 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         """
-        Args:
-            x: Tensor, shape [seq_len, batch_size, embedding_dim]
+
+        Parameters
+        ----------
+        x :
+            Tensor, shape [seq_len, batch_size, embedding_dim]
+        x: Tensor :
+            
+
+        Returns
+        -------
+
         """
         x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
 
 def generate_square_subsequent_mask(sz: int) -> Tensor:
-    """Generates an upper-triangular matrix of -inf, with zeros on diag."""
+    """Generates an upper-triangular matrix of -inf, with zeros on diag.
+
+    Parameters
+    ----------
+    sz: int :
+        
+
+    Returns
+    -------
+
+    """
     return torch.triu(torch.ones(sz, sz) * float('-inf'), diagonal=1)
 
 
@@ -179,12 +285,22 @@ def batchify(data: Tensor, bsz: int) -> Tensor:
     """Divides the data into bsz separate sequences, removing extra elements
     that wouldn't cleanly fit.
 
-    Args:
-        data: Tensor, shape [N]
-        bsz: int, batch size
+    Parameters
+    ----------
+    data :
+        Tensor, shape [N]
+    bsz :
+        int, batch size
+    data: Tensor :
+        
+    bsz: int :
+        
 
-    Returns:
+    Returns
+    -------
+    
         Tensor of shape [N // bsz, bsz]
+
     """
     seq_len = data.size(0) // bsz
     data = data[:seq_len * bsz]
@@ -194,13 +310,26 @@ def batchify(data: Tensor, bsz: int) -> Tensor:
 
 def get_batch(source: Tensor, i: int, bptt) -> Tuple[Tensor, Tensor]:
     """
-    Args:
-        source: Tensor, shape [full_seq_len, batch_size]
-        i: int
 
-    Returns:
+    Parameters
+    ----------
+    source :
+        Tensor, shape [full_seq_len, batch_size]
+    i :
+        int
+    source: Tensor :
+        
+    i: int :
+        
+    bptt :
+        
+
+    Returns
+    -------
+    
         tuple (data, target), where data has shape [seq_len, batch_size] and
         target has shape [seq_len * batch_size]
+
     """
     seq_len = min(bptt, len(source) - 1 - i)
     data = source[i:i+seq_len]
@@ -213,6 +342,33 @@ import time
 
 
 def train(model, train_data, val_data, epochs, bptt, ntokens, lr, sc, criterion=None):
+    """
+
+    Parameters
+    ----------
+    model :
+        
+    train_data :
+        
+    val_data :
+        
+    epochs :
+        
+    bptt :
+        
+    ntokens :
+        
+    lr :
+        
+    sc :
+        
+    criterion :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=sc)
     criterion = nn.CrossEntropyLoss() if criterion is None else criterion
@@ -239,6 +395,31 @@ def train(model, train_data, val_data, epochs, bptt, ntokens, lr, sc, criterion=
 
 
 def train_one(train_data, model, ntokens, bptt, criterion, optimizer, scheduler, epoch) -> None:
+    """
+
+    Parameters
+    ----------
+    train_data :
+        
+    model :
+        
+    ntokens :
+        
+    bptt :
+        
+    criterion :
+        
+    optimizer :
+        
+    scheduler :
+        
+    epoch :
+        
+
+    Returns
+    -------
+
+    """
 
     model.train()  # turn on train mode
     total_loss = 0.
@@ -273,6 +454,25 @@ def train_one(train_data, model, ntokens, bptt, criterion, optimizer, scheduler,
             start_time = time.time()
 
 def evaluate(model: nn.Module, eval_data: Tensor, bptt, ntokens, criterion) -> float:
+    """
+
+    Parameters
+    ----------
+    model: nn.Module :
+        
+    eval_data: Tensor :
+        
+    bptt :
+        
+    ntokens :
+        
+    criterion :
+        
+
+    Returns
+    -------
+
+    """
     model.eval()  # turn on evaluation mode
     total_loss = 0.
     src_mask = generate_square_subsequent_mask(bptt).to(device)

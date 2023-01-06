@@ -7,10 +7,18 @@ LICENSE file in the root directory of this source tree.
 """
 
 def put_on_same_chord(score):
-    """
-    Take the first chord as reference,
+    """Take the first chord as reference,
     Put everything into this chord (It will change the piece to a static harmony)
     :return:
+
+    Parameters
+    ----------
+    score :
+        
+
+    Returns
+    -------
+
     """
     from musiclang import Silence
     first_chord = score[0]
@@ -26,12 +34,23 @@ def put_on_same_chord(score):
 
 
 def project_on_score(score, score2, keep_score=False):
-    """
-    Project harmonically the score onto the score2
+    """Project harmonically the score onto the score2
     Algorithm : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
-    :param score2: Score that contains the harmony
-    :param keep_score: Keep the voice of score2 ?
-    :return: new_score, Score, The score projected on score2 chord progression
+
+    Parameters
+    ----------
+    score2 :
+        Score that contains the harmony
+    keep_score :
+        Keep the voice of score2 ? (Default value = False)
+    score :
+        
+
+    Returns
+    -------
+    type
+        new_score, Score, The score projected on score2 chord progression
+
     """
 
     start_time = 0
@@ -69,12 +88,22 @@ def project_on_score(score, score2, keep_score=False):
 
 
 def get_chord_between(chord, start, end):
-    """
-    Get the chord with melodies that are between start and end
-    :param chord: chord on which to extract subchord melodies
-    :param start: Start time (relative to chord)
-    :param end:  End time (relative to chord)
-    :return: chord, Chord, modified chord
+    """Get the chord with melodies that are between start and end
+
+    Parameters
+    ----------
+    chord :
+        chord on which to extract subchord melodies
+    start :
+        Start time (relative to chord)
+    end :
+        End time (relative to chord)
+
+    Returns
+    -------
+    type
+        chord, Chord, modified chord
+
     """
     new_parts = {ins: None for ins in chord.instruments}
     for part in chord.score.keys():
@@ -127,12 +156,22 @@ def get_chord_between(chord, start, end):
 
 
 def get_score_between(score, start=None, end=None):
-    """
-    Get the score with melodies that are between start and end
-    :param score: initial score
-    :param start: Start time (relative to score)
-    :param end: End time (relative to score)
-    :return: score, Score, modified score
+    """Get the score with melodies that are between start and end
+
+    Parameters
+    ----------
+    score :
+        initial score
+    start :
+        Start time (relative to score) (Default value = None)
+    end :
+        End time (relative to score) (Default value = None)
+
+    Returns
+    -------
+    type
+        score, Score, modified score
+
     """
     start = start if start is not None else 0
     end = end if end is not None else score.duration

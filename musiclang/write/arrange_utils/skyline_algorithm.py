@@ -9,10 +9,18 @@ LICENSE file in the root directory of this source tree.
 import numpy as np
 
 class SkylineSolution:
+    """ """
     def get_skyline(self, notes):
         """
-        :type notes: List[List[int]]
-        :rtype: List[List[int]]
+
+        Parameters
+        ----------
+        notes :
+            
+
+        Returns
+        -------
+
         """
         if not notes:
             return []
@@ -25,6 +33,19 @@ class SkylineSolution:
         return self.merge(left, right)
 
     def merge(self, left, right):
+        """
+
+        Parameters
+        ----------
+        left :
+            
+        right :
+            
+
+        Returns
+        -------
+
+        """
         h1, h2 = 0, 0
         i, j = 0, 0
         note1, note2 = [], []
@@ -57,4 +78,17 @@ class SkylineSolution:
         return result
 
     def is_valid(self, result, new_height):
+        """
+
+        Parameters
+        ----------
+        result :
+            
+        new_height :
+            
+
+        Returns
+        -------
+
+        """
         return not result or result[-1][1] != new_height

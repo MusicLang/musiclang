@@ -18,6 +18,7 @@ from .output_representations import (
 
 
 class DefaultArguments(object):
+    """ """
     base = {
         "tsvDir": "dataset",
     }
@@ -78,6 +79,17 @@ class DefaultArguments(object):
 
 
 def _base(is_parent_parser=True):
+    """
+
+    Parameters
+    ----------
+    is_parent_parser :
+         (Default value = True)
+
+    Returns
+    -------
+
+    """
     if is_parent_parser:
         parser = ArgumentParser(add_help=False)
     else:
@@ -92,6 +104,7 @@ def _base(is_parent_parser=True):
 
 
 def tsv():
+    """ """
     parents = [_base()]
     parser = ArgumentParser(description=tsv_description, parents=parents)
     parser.add_argument(
@@ -109,6 +122,17 @@ def tsv():
 
 
 def npz(is_parent_parser=False):
+    """
+
+    Parameters
+    ----------
+    is_parent_parser :
+         (Default value = False)
+
+    Returns
+    -------
+
+    """
     parents = [_base()]
     if is_parent_parser:
         parser = ArgumentParser(add_help=False, parents=parents)
@@ -183,6 +207,7 @@ def npz(is_parent_parser=False):
 
 
 def train():
+    """ """
     parents = [npz(is_parent_parser=True)]
     parser = ArgumentParser(description=train_description, parents=parents)
     parser.add_argument(
@@ -258,6 +283,7 @@ def train():
 
 
 def inference():
+    """ """
     parser = ArgumentParser(description=inference_description, parents=[])
     parser.add_argument(
         "inputPath",

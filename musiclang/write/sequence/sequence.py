@@ -11,11 +11,22 @@ from fractions import Fraction as frac
 
 
 def sequence_to_score(sequence, sort_by_time=True, **kwargs):
-    """
-    Convert a dataframe (called a sequence) to a MusicLang score
-    :param sequence: pandas.DataFrame with required columns
-    :param sort_by_time: boolean, default=True, If true sort by 'start' column before reconverting to score
-    :return: score, Score : converted score
+    """Convert a dataframe (called a sequence) to a MusicLang score
+
+    Parameters
+    ----------
+    sequence :
+        pandas.DataFrame with required columns
+    sort_by_time :
+        boolean, default=True, If true sort by 'start' column before reconverting to score
+    **kwargs :
+        
+
+    Returns
+    -------
+    type
+        score, Score : converted score
+
     """
     from ..chord import Chord
     from ..tonality import Tonality
@@ -51,10 +62,20 @@ def sequence_to_score(sequence, sort_by_time=True, **kwargs):
 
 
 def score_to_sequence(score, **kwargs):
-    """
-    Convert a score to a sequence (pandas.DataFrame with specific columns)
-    :param score: musiclang.Score
-    :return: sequence, pandas.DataFrame : converted sequence
+    """Convert a score to a sequence (pandas.DataFrame with specific columns)
+
+    Parameters
+    ----------
+    score :
+        musiclang.Score
+    **kwargs :
+        
+
+    Returns
+    -------
+    type
+        sequence, pandas.DataFrame : converted sequence
+
     """
 
     sequence = []

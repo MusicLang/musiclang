@@ -3,10 +3,25 @@ from ..base.predictor import BasePredictor
 
 
 class ScoreTransformerPredictor(BasePredictor):
-    """
-    Create a transformer model to predict chord progression model of a given score
-    """
+    """Create a transformer model to predict chord progression model of a given score"""
     def init_model(self, *args, lr=2, sc=0.95, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        lr :
+             (Default value = 2)
+        sc :
+             (Default value = 0.95)
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         from ..models.transformer_model import TransformerModelWrapper
         from .score_tokenizer import TOKENS
         n_tokens = len(TOKENS)  # size of vocabulary
@@ -23,16 +38,65 @@ class ScoreTransformerPredictor(BasePredictor):
 
 
     def save_model(self, filepath):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+
+        Returns
+        -------
+
+        """
         self.model.save_model(filepath)
 
     @classmethod
     def load_model(cls, filepath, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         from ..models.transformer_model import TransformerModelWrapper
         predictor = cls(*args, **kwargs)
         predictor.model = TransformerModelWrapper.load_model(filepath)
         return predictor
 
     def predict_from_text(self, start_text, authorized_tokens=None, temperature=0, include_start=True, n_tokens=5, max_tokens=None, **kwargs):
+        """
+
+        Parameters
+        ----------
+        start_text :
+            
+        authorized_tokens :
+             (Default value = None)
+        temperature :
+             (Default value = 0)
+        include_start :
+             (Default value = True)
+        n_tokens :
+             (Default value = 5)
+        max_tokens :
+             (Default value = None)
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         DEFAULT_START_TEXT = '(I%I.M)(V__0=r)'
         if max_tokens is None:
             max_tokens = 3 * n_tokens
@@ -71,32 +135,62 @@ class ScoreTransformerPredictor(BasePredictor):
             tokens = self.tokenize(start_text)
 
     def score_to_text(self, score: 'musiclang.Score') -> str:
+        """
+
+        Parameters
+        ----------
+        score: 'musiclang.Score' :
+            
+
+        Returns
+        -------
+
+        """
         from .score_tokenizer import score_to_text
         return score_to_text(score)
 
     def tokenize(self, text):
-        """
-        Convert a text to a list of tokens (number)
-        :param text:
-        :return:
+        """Convert a text to a list of tokens (number)
+
+        Parameters
+        ----------
+        text :
+            return:
+
+        Returns
+        -------
+
         """
         from .score_tokenizer import tokenize_string
         tokens = tokenize_string(text)
         return tokens
 
     def untokenize(self, tokens):
-        """
-        Convert a list of tokens to a text
-        :param tokens:
-        :return:
+        """Convert a list of tokens to a text
+
+        Parameters
+        ----------
+        tokens :
+            return:
+
+        Returns
+        -------
+
         """
         from .score_tokenizer import untokenize
         return untokenize(tokens)
 
     def text_to_score(self, text):
         """
-        :param text:
-        :return:
+
+        Parameters
+        ----------
+        text :
+            return:
+
+        Returns
+        -------
+
         """
         from musiclang.write.library import I, II, III, IV, V, VI, VII, s0, s1, s2, s3, s4, s5, s6, \
             h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, l, r

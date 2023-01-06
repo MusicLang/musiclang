@@ -7,6 +7,7 @@ LICENSE file in the root directory of this source tree.
 """
 
 class Item(object):
+    """ """
     def __init__(self, name, start, end, vel=0, pitch=0, track=0, channel=0, voice=0, value=''):
         self.name = name
         self.start = start  # start step
@@ -21,6 +22,17 @@ class Item(object):
 
     @classmethod
     def frommatrix(cls, matrix):
+        """
+
+        Parameters
+        ----------
+        matrix :
+            
+
+        Returns
+        -------
+
+        """
         return [Item('', start, end, vel, pitch, track, voice, channel) for start, end, vel, pitch, track, voice, channel in matrix]
 
     def __repr__(self):
@@ -33,15 +45,26 @@ class Item(object):
                self.pitch == other.pitch and self.track == other.track
 
     def array(self):
+        """ """
         return [self.start, self.end, self.vel, self.pitch, self.track, self.channel, self.voice]
 
 
 
 def quantize_notes_raw(notes, limit_denominator=8):
-    """
-    Quantize a sequence of notes limiting the denominator to "limit_denominator" parameter
-    :param notes: List[Item] : sequence of notes
-    :return: new_notes : List[Item], quantized notes
+    """Quantize a sequence of notes limiting the denominator to "limit_denominator" parameter
+
+    Parameters
+    ----------
+    notes :
+        List[Item] : sequence of notes
+    limit_denominator :
+         (Default value = 8)
+
+    Returns
+    -------
+    type
+        new_notes : List[Item], quantized notes
+
     """
     from fractions import Fraction as frac
     new_notes = []
@@ -56,13 +79,19 @@ def quantize_notes_raw(notes, limit_denominator=8):
 
 
 def convert_to_items(notes):
-    """
-    Convert an array of notes into an array of Item objects that represents notes
+    """Convert an array of notes into an array of Item objects that represents notes
     and quantize them
-    :param notes:
-    :param bar_duration:
-    :param offset:
-    :return:
+
+    Parameters
+    ----------
+    notes :
+        param bar_duration:
+    offset :
+        return:
+
+    Returns
+    -------
+
     """
     # Quantize
     items = []

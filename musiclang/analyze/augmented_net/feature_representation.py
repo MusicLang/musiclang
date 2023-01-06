@@ -122,6 +122,7 @@ NOTEDURATIONS = [
 
 
 class FeatureRepresentation(object):
+    """ """
     features = 1
 
     def __init__(self, df):
@@ -132,19 +133,59 @@ class FeatureRepresentation(object):
 
     @property
     def shape(self):
+        """ """
         return (self.frames, self.features)
 
     def run(self, tranposition=None):
+        """
+
+        Parameters
+        ----------
+        tranposition :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         return array
 
     def dataAugmentation(self, intervals):
+        """
+
+        Parameters
+        ----------
+        intervals :
+            
+
+        Returns
+        -------
+
+        """
         for interval in intervals:
             yield self.run(transposition=interval)
         return
 
     @classmethod
     def encodeManyHot(cls, array, timestep, index, value=1):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+        timestep :
+            
+        index :
+            
+        value :
+             (Default value = 1)
+
+        Returns
+        -------
+
+        """
         if 0 <= index < cls.features:
             array[timestep, index] = value
         else:
@@ -152,6 +193,21 @@ class FeatureRepresentation(object):
 
     @classmethod
     def encodeCategorical(cls, array, timestep, classNumber):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+        timestep :
+            
+        classNumber :
+            
+
+        Returns
+        -------
+
+        """
         if 0 <= classNumber < cls.features:
             array[timestep] = classNumber
         else:
@@ -160,12 +216,31 @@ class FeatureRepresentation(object):
 
 class FeatureRepresentationTI(FeatureRepresentation):
     """TI stands for Transposition Invariant.
-
+    
     If a representation is TI, dataAugmentation consists of
-    returning a copy of the array that was already computed.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    type
+        
+
     """
 
     def dataAugmentation(self, intervals):
+        """
+
+        Parameters
+        ----------
+        intervals :
+            
+
+        Returns
+        -------
+
+        """
         for _ in intervals:
             yield np.copy(self.array)
         return

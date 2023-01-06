@@ -14,6 +14,19 @@ from musiclang.composing.arrange import get_absolute_voice
 
 
 def generate_random_melody(duration, seed=None):
+    """
+
+    Parameters
+    ----------
+    duration :
+        
+    seed :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     rythm, patterns = generate_random_sequence(duration, seed=seed)
     melody = generate_random_melody_on_rythm(rythm, seed=seed)
     # Convert to absolute melody
@@ -22,11 +35,41 @@ def generate_random_melody(duration, seed=None):
 
 
 def generate_random_melody_on_patterns(patterns, **kwargs):
+    """
+
+    Parameters
+    ----------
+    patterns :
+        
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     result = generate_random_melody_on_rythm(sum(patterns, None), **kwargs)
     assert result.duration == sum(patterns, None).duration
     return result, patterns
 
 def generate_random_melody_on_rythm(rythm, octaves=2, seed=None, **kwargs):
+    """
+
+    Parameters
+    ----------
+    rythm :
+        
+    octaves :
+         (Default value = 2)
+    seed :
+         (Default value = None)
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     if seed is None:
         seed = np.random.randint(0, 2 ** 31)
     rg = np.random.RandomState(seed)
@@ -53,5 +96,20 @@ def generate_random_melody_on_rythm(rythm, octaves=2, seed=None, **kwargs):
 
 
 def get_possible_candidates(candidates, octaves, acc):
+    """
+
+    Parameters
+    ----------
+    candidates :
+        
+    octaves :
+        
+    acc :
+        
+
+    Returns
+    -------
+
+    """
     possible_values = [c for c in candidates if abs(c.delta_value + acc) <= 7 * (octaves//2)]
     return possible_values

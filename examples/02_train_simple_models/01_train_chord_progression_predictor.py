@@ -31,12 +31,12 @@ import lightgbm
 print('Number of examples : ', str(len(data)))
 print('Training ...')
 clf = RandomForestClassifier(n_estimators=30, max_depth=None, n_jobs=1)
-predictor = WindowedPredictor(clf, memory=6, vector_size=100, window=4)
+predictor = WindowedPredictor(clf, memory=2, vector_size=24, window=3)
 import numpy as np
-print(np.mean(predictor.cross_val_score(data)))
+print(np.mean(predictor.cross_val_score(data, cv=2)))
 #exit()
 predictor.fit(data)
-predictor.save('../data/model.pickle')
+predictor.save('../data/chord_predictor.pickle')
 
 from musiclang.write.library import *
 chord_progression = (I % I.M) + (I['6'] % I.M) + (IV % I.M) + (VII['7'] % V.m)
@@ -46,7 +46,7 @@ tokens = tokenizer.tokenize(chord_progression)
 
 # Predict next two chords
 for i in range(10):
-    predicted_token = predictor.predict(tokens, temperature=0.0)
+    predicted_token = predictor.predict(tokens)
     tokens.append(predicted_token)
 
 # Convert tokens to a score

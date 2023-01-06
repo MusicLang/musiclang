@@ -4,6 +4,7 @@
 # Classifier = score -> (fit, predict)
 
 class Transformer:
+    """ """
 
     def __init__(self):
         pass

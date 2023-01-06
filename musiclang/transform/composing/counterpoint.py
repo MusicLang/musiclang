@@ -8,6 +8,19 @@ import numpy as np
 
 
 def create_counterpoint(fixed_voices, voices):
+    """
+
+    Parameters
+    ----------
+    fixed_voices :
+        
+    voices :
+        
+
+    Returns
+    -------
+
+    """
     result = []
 
     # Convert fixed_voices in absolute
@@ -31,6 +44,21 @@ def create_counterpoint(fixed_voices, voices):
     return result
 
 def create_counterpoint_on_chord(chord, subject_parts, counterpoint_parts):
+    """
+
+    Parameters
+    ----------
+    chord :
+        
+    subject_parts :
+        
+    counterpoint_parts :
+        
+
+    Returns
+    -------
+
+    """
     fixed_voices = [chord.score[chord.parts[idx]] for idx in subject_parts]
     voices = [chord.score[chord.parts[idx]] for idx in counterpoint_parts]
     new_voices = create_counterpoint(fixed_voices, voices)
@@ -38,6 +66,21 @@ def create_counterpoint_on_chord(chord, subject_parts, counterpoint_parts):
 
 
 def create_counterpoint_after_chords(score, subject_parts, counterpoint_parts):
+    """
+
+    Parameters
+    ----------
+    score :
+        
+    subject_parts :
+        
+    counterpoint_parts :
+        
+
+    Returns
+    -------
+
+    """
     chord, idx_stops, offsets, melodies, chords = project_on_one_chord(score)
     new_chord = create_counterpoint_on_chord(chord, subject_parts, counterpoint_parts)
     new_score = reproject_on_multiple_chords(chords, new_chord, idx_stops, offsets)
@@ -46,6 +89,17 @@ def create_counterpoint_after_chords(score, subject_parts, counterpoint_parts):
 
 
 def get_array_fixed(voice):
+    """
+
+    Parameters
+    ----------
+    voice :
+        
+
+    Returns
+    -------
+
+    """
     prev = None
     res = []
     for n in voice.notes:
@@ -59,15 +113,33 @@ def get_array_fixed(voice):
     return res
 
 def get_array(voice):
+    """
+
+    Parameters
+    ----------
+    voice :
+        
+
+    Returns
+    -------
+
+    """
     return [n.val + 7 * n.octave if n.is_note else None for n in voice.notes]
 
 def get_projections_on_voice(voices, reference):
-    """
-    Project all voices on rythm given by reference
+    """Project all voices on rythm given by reference
     and convert it to array of values
-    :param voices:
-    :param reference:
-    :return:
+
+    Parameters
+    ----------
+    voices :
+        param reference:
+    reference :
+        
+
+    Returns
+    -------
+
     """
     return [get_array_fixed(project_on_rythm(reference, voice)) for voice in voices]
 
@@ -77,10 +149,16 @@ FORBIDDEN_PARALLELS = [0, 4, 3, 7]
 
 
 def get_future_delta(delta):
-    """
-    Explore around (0, 1, -1, 2, -2, etc ...)
-    :param delta:
-    :return:
+    """Explore around (0, 1, -1, 2, -2, etc ...)
+
+    Parameters
+    ----------
+    delta :
+        return:
+
+    Returns
+    -------
+
     """
     if delta == 0:
         return 1
@@ -90,20 +168,79 @@ def get_future_delta(delta):
         return -delta + 1
 
 def get_delta_list():
+    """ """
     return [0, 1, -1, 2, -2, 3, -3, 4, -4]
 
 def is_dissonnance(n1, n2):
+    """
+
+    Parameters
+    ----------
+    n1 :
+        
+    n2 :
+        
+
+    Returns
+    -------
+
+    """
     return interval(n1, n2) not in AUTHORIZED_INTERVALS
 
 def is_forbidden_parallel(last_interval, subject, candidate):
+    """
+
+    Parameters
+    ----------
+    last_interval :
+        
+    subject :
+        
+    candidate :
+        
+
+    Returns
+    -------
+
+    """
     new_interval = interval(subject, candidate)
     return new_interval in FORBIDDEN_PARALLELS and last_interval == new_interval
 
 def is_parallel_dissonnance(last_interval, subject, candidate):
+    """
+
+    Parameters
+    ----------
+    last_interval :
+        
+    subject :
+        
+    candidate :
+        
+
+    Returns
+    -------
+
+    """
     return is_dissonnance(subject, candidate) and last_interval not in AUTHORIZED_INTERVALS
 
 
 def nb_forbidden_parallel(last_intervals, subject_notes, candidate):
+    """
+
+    Parameters
+    ----------
+    last_intervals :
+        
+    subject_notes :
+        
+    candidate :
+        
+
+    Returns
+    -------
+
+    """
     count = 0
     for s, inter in zip(subject_notes, last_intervals):
         if s is None:
@@ -115,6 +252,21 @@ def nb_forbidden_parallel(last_intervals, subject_notes, candidate):
     return count
 
 def nb_parallel_dissonnances(last_intervals, subject_notes, candidate):
+    """
+
+    Parameters
+    ----------
+    last_intervals :
+        
+    subject_notes :
+        
+    candidate :
+        
+
+    Returns
+    -------
+
+    """
     count = 0
     for s, inter in zip(subject_notes, last_intervals):
         if s is None:
@@ -126,9 +278,39 @@ def nb_parallel_dissonnances(last_intervals, subject_notes, candidate):
     return count
 
 def is_triton(candidate, subject_note):
+    """
+
+    Parameters
+    ----------
+    candidate :
+        
+    subject_note :
+        
+
+    Returns
+    -------
+
+    """
     return {candidate % 7, subject_note % 7} == {3, 6}
 
 def scorer(subject_notes, note, delta, last_intervals):
+    """
+
+    Parameters
+    ----------
+    subject_notes :
+        
+    note :
+        
+    delta :
+        
+    last_intervals :
+        
+
+    Returns
+    -------
+
+    """
 
     not_silenced_subject_notes = [s for s in subject_notes if s is not None]
     candidate = note + delta
@@ -140,6 +322,23 @@ def scorer(subject_notes, note, delta, last_intervals):
     return 10 - 2 * NB_DISSONNANCES - 2 * NB_FORBIDDEN_PARALLELS - 2 * NB_PARALLEL_DISSONNANCES - 0.2 * DISTANCE - 0.2 * NB_TRITON
 
 def get_counterpoint_for_one_note(subjects_notes, note, last_intervals, delta=0):
+    """
+
+    Parameters
+    ----------
+    subjects_notes :
+        
+    note :
+        
+    last_intervals :
+        
+    delta :
+         (Default value = 0)
+
+    Returns
+    -------
+
+    """
 
     deltas = get_delta_list()
     scores = [scorer(subjects_notes, note, delta, last_intervals) for delta in deltas]
@@ -155,6 +354,21 @@ def get_counterpoint_for_one_note(subjects_notes, note, last_intervals, delta=0)
 
 
 def interval(n1, n2, replace=None):
+    """
+
+    Parameters
+    ----------
+    n1 :
+        
+    n2 :
+        
+    replace :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     if n1 is None or n2 is None:
         if replace:
             return replace
@@ -163,17 +377,37 @@ def interval(n1, n2, replace=None):
 
 
 def clear_list_intervals(intervals):
+    """
+
+    Parameters
+    ----------
+    intervals :
+        
+
+    Returns
+    -------
+
+    """
     if len(intervals) > 0:
         return intervals[-3:]
     return intervals
 
 
 def get_counterpoint(subjects, to_fix):
-    """
-    Given a list of subjects modify the voice to best fit a counterpoint
-    :param fixed_voices:
-    :param voice:
-    :return:
+    """Given a list of subjects modify the voice to best fit a counterpoint
+
+    Parameters
+    ----------
+    fixed_voices :
+        param voice:
+    subjects :
+        
+    to_fix :
+        
+
+    Returns
+    -------
+
     """
     subjects = np.asarray(subjects)
     last_intervals = [[None for s in subjects]]
@@ -191,6 +425,19 @@ def get_counterpoint(subjects, to_fix):
 
 
 def convert_array_to_melody(rythm, notes):
+    """
+
+    Parameters
+    ----------
+    rythm :
+        
+    notes :
+        
+
+    Returns
+    -------
+
+    """
     new_melody = None
     for idx, note in enumerate(rythm.notes):
         to_add = note.copy()

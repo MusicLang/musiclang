@@ -30,10 +30,36 @@ class_hierarchy = {
 
 
 def reconstruct_chord(degree, extension, tonality):
+    """
+
+    Parameters
+    ----------
+    degree :
+        
+    extension :
+        
+    tonality :
+        
+
+    Returns
+    -------
+
+    """
     return f"({degree}{extension} % {tonality})"
 
 
 def get_chord_characs(chord):
+    """
+
+    Parameters
+    ----------
+    chord :
+        
+
+    Returns
+    -------
+
+    """
     result = re.findall(REGEX_CHORD, chord)
     if len(result) == 0:
         return '', '', ''
@@ -41,14 +67,33 @@ def get_chord_characs(chord):
     return degree, extension, tonality
 
 def scorer_func(y_true, y_pred):
+    """
+
+    Parameters
+    ----------
+    y_true :
+        
+    y_pred :
+        
+
+    Returns
+    -------
+
+    """
     return np.mean(np.min((y_pred == y_true), axis=1))
 
 class HierarchicalChordPredictor:
-    """
-    Hierarchical classifier for next chord prediction
+    """Hierarchical classifier for next chord prediction
     - using a Word2Vec embeding
     - A random forest regressor trained on a embedded chord window of size memory to predict the next chord embeding
     - The predicted chord will be the closest vector in the Word2Vec space
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     _vector_size = 10
     _window = 3
@@ -74,11 +119,18 @@ class HierarchicalChordPredictor:
         self.encoder_tonality = LabelEncoder()
 
     def cross_val_score(self, data, **kwargs):
-        """
-        Return the cross val scores of this model using the data provided
-        :param data:
-        :param kwargs: arguments that will be passed to sklearn.model_selection.cross_val_score
-        :return:
+        """Return the cross val scores of this model using the data provided
+
+        Parameters
+        ----------
+        data :
+            param kwargs: arguments that will be passed to sklearn.model_selection.cross_val_score
+        **kwargs :
+            
+
+        Returns
+        -------
+
         """
         from sklearn.model_selection import cross_val_score
         X, Y = self.transform(data, **kwargs)
@@ -89,15 +141,32 @@ class HierarchicalChordPredictor:
 
 
     def filter(self, data):
-        """
-        Filter some data by default before training, it can help to reduce the vocab size
-        :param data:
-        :return:
+        """Filter some data by default before training, it can help to reduce the vocab size
+
+        Parameters
+        ----------
+        data :
+            return:
+
+        Returns
+        -------
+
         """
         return data
 
 
     def get_feature_vector(self, chord):
+        """
+
+        Parameters
+        ----------
+        chord :
+            
+
+        Returns
+        -------
+
+        """
         degree, extension, tonality = get_chord_characs(chord)
 
         return [self.encoder_degree.transform([degree])[0],
@@ -105,6 +174,17 @@ class HierarchicalChordPredictor:
                 self.encoder_tonality.transform([tonality])[0]]
 
     def preprocess(self, data):
+        """
+
+        Parameters
+        ----------
+        data :
+            
+
+        Returns
+        -------
+
+        """
         self.encoder_degree.fit(DEGREES + [''])
         self.encoder_extension.fit(EXTENSIONS + [''])
         self.encoder_tonality.fit(TONALITIES + [''])
@@ -115,6 +195,17 @@ class HierarchicalChordPredictor:
 
 
     def fit(self, data):
+        """
+
+        Parameters
+        ----------
+        data :
+            
+
+        Returns
+        -------
+
+        """
         X, Y = self.transform(data)
         y = self.encoder.fit_transform(Y)
         #y = [self.get_feature_vector(chord) for chord in Y]
@@ -122,6 +213,17 @@ class HierarchicalChordPredictor:
         return self
 
     def transform(self, data):
+        """
+
+        Parameters
+        ----------
+        data :
+            
+
+        Returns
+        -------
+
+        """
         from sklearn.utils import shuffle
         data_transformed, filtered_data = self.preprocess(data)
         # Create X, Y dataset
@@ -137,6 +239,19 @@ class HierarchicalChordPredictor:
         return X, Y
 
     def predict(self, sequence, temperature=0):
+        """
+
+        Parameters
+        ----------
+        sequence :
+            
+        temperature :
+             (Default value = 0)
+
+        Returns
+        -------
+
+        """
         import numpy as np
         if len(sequence) < self.memory:
             to_fill = self.memory - len(sequence)

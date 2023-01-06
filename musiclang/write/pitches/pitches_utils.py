@@ -9,6 +9,21 @@ LICENSE file in the root directory of this source tree.
 import numpy as np
 
 def relative_scale_up_value(delta, last_pitch, scale_pitches):
+    """
+
+    Parameters
+    ----------
+    delta :
+        
+    last_pitch :
+        
+    scale_pitches :
+        
+
+    Returns
+    -------
+
+    """
     scale_mod = list(sorted([i % 12 for i in scale_pitches]))
     # Get scale index
     if delta == 0:
@@ -23,6 +38,21 @@ def relative_scale_up_value(delta, last_pitch, scale_pitches):
 
 
 def relative_scale_down_value(delta, last_pitch, scale_pitches):
+    """
+
+    Parameters
+    ----------
+    delta :
+        
+    last_pitch :
+        
+    scale_pitches :
+        
+
+    Returns
+    -------
+
+    """
     scale_mod = list(sorted([i % 12 for i in scale_pitches]))
     # Get scale index
     if delta == 0:
@@ -36,6 +66,21 @@ def relative_scale_down_value(delta, last_pitch, scale_pitches):
 
 
 def get_relative_scale_value(note, last_pitch, scale_pitches):
+    """
+
+    Parameters
+    ----------
+    note :
+        
+    last_pitch :
+        
+    scale_pitches :
+        
+
+    Returns
+    -------
+
+    """
     if note.is_up:
         return relative_scale_up_value(note.val + 7 * note.octave, last_pitch, scale_pitches)
     elif note.is_down:
@@ -45,9 +90,37 @@ def get_relative_scale_value(note, last_pitch, scale_pitches):
 
 
 def get_value_to_scale_note(value, scale_pitches):
+    """
+
+    Parameters
+    ----------
+    value :
+        
+    scale_pitches :
+        
+
+    Returns
+    -------
+
+    """
     return scale_pitches[value % len(scale_pitches)] + 12 * (value // len(scale_pitches))
 
 def note_to_pitch_result(note, chord, last_pitch=None):
+    """
+
+    Parameters
+    ----------
+    note :
+        
+    chord :
+        
+    last_pitch :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     real_chord = note.real_chord(chord)
     scale_pitches = real_chord.scale_pitches
 

@@ -26,6 +26,7 @@ from .utils import tensorflowGPUHack, disableGPU
 
 
 class InputOutput(object):
+    """ """
     def __init__(self, name, array):
         self.name = name
         self.array = array
@@ -42,6 +43,19 @@ class InputOutput(object):
 
 
 def _loadNpz(npzPath, synthetic=False):
+    """
+
+    Parameters
+    ----------
+    npzPath :
+        
+    synthetic :
+         (Default value = False)
+
+    Returns
+    -------
+
+    """
     datasetFile = f"{npzPath}-synth.npz" if synthetic else f"{npzPath}.npz"
     dataset = np.load(datasetFile, mmap_mode="r")
     X_train, y_train = [], []
@@ -60,6 +74,21 @@ def _loadNpz(npzPath, synthetic=False):
 
 
 def loadData(npzPath, syntheticDataStrategy=None, modelName="AugmentedNet"):
+    """
+
+    Parameters
+    ----------
+    npzPath :
+        
+    syntheticDataStrategy :
+         (Default value = None)
+    modelName :
+         (Default value = "AugmentedNet")
+
+    Returns
+    -------
+
+    """
     if not syntheticDataStrategy:
         (X_train, y_train), (X_test, y_test) = _loadNpz(
             npzPath, synthetic=False
@@ -88,6 +117,19 @@ def loadData(npzPath, syntheticDataStrategy=None, modelName="AugmentedNet"):
 
 
 def printTrainingExample(x, y):
+    """
+
+    Parameters
+    ----------
+    x :
+        
+    y :
+        
+
+    Returns
+    -------
+
+    """
     pd.set_option("display.max_rows", 640)
     ret = {}
     for xi in x:
@@ -103,6 +145,17 @@ def printTrainingExample(x, y):
 
 
 def findBestModel(checkpointPath=".model_checkpoint/"):
+    """
+
+    Parameters
+    ----------
+    checkpointPath :
+         (Default value = ".model_checkpoint/")
+
+    Returns
+    -------
+
+    """
     models = [f for f in os.listdir(checkpointPath)]
     accuracies = [f.replace(".hdf5", "").split("-")[-1] for f in models]
     best = accuracies.index(max(accuracies))
@@ -110,7 +163,21 @@ def findBestModel(checkpointPath=".model_checkpoint/"):
 
 
 class ModdedModelCheckpoint(keras.callbacks.ModelCheckpoint):
+    """ """
     def on_epoch_end(self, epoch, logs={}):
+        """
+
+        Parameters
+        ----------
+        epoch :
+            
+        logs :
+             (Default value = {})
+
+        Returns
+        -------
+
+        """
         monitored = list(availableOutputs.keys())
         nonMonitored = [
             "ChordQuality11",
@@ -133,6 +200,21 @@ class ModdedModelCheckpoint(keras.callbacks.ModelCheckpoint):
 
 
 def evaluate(modelHdf5, X_test, y_true):
+    """
+
+    Parameters
+    ----------
+    modelHdf5 :
+        
+    X_test :
+        
+    y_true :
+        
+
+    Returns
+    -------
+
+    """
     model = keras.models.load_model(modelHdf5)
     X = [xi.array for xi in X_test]
     padding = np.sum(X[0], axis=2) == -X[0].shape[2]
@@ -225,6 +307,41 @@ def train(
     transferLearningFrom="",
     transferLearningFreeze=True,
 ):
+    """
+
+    Parameters
+    ----------
+    X_train :
+        
+    y_train :
+        
+    X_test :
+        
+    y_test :
+        
+    modelName :
+         (Default value = "AugmentedNet")
+    checkpointPath :
+         (Default value = ".model_checkpoint/")
+    lrBoundaries :
+         (Default value = [40])
+    lrValues :
+         (Default value = [0.01)
+    0.0001] :
+        
+    epochs :
+         (Default value = 100)
+    batchsize :
+         (Default value = 16)
+    transferLearningFrom :
+         (Default value = "")
+    transferLearningFreeze :
+         (Default value = True)
+
+    Returns
+    -------
+
+    """
     # printTrainingExample(X_train, y_train)
     if transferLearningFrom:
         print("TRANSFER LEARNING")
@@ -305,6 +422,41 @@ def run_experiment(
     transferLearningFreeze,
     **kwargs,
 ):
+    """
+
+    Parameters
+    ----------
+    experiment_name :
+        
+    run_name :
+        
+    useExistingNpz :
+        
+    syntheticDataStrategy :
+        
+    model :
+        
+    lr_boundaries :
+        
+    lr_values :
+        
+    nogpu :
+        
+    epochs :
+        
+    batchsize :
+        
+    transferLearningFrom :
+        
+    transferLearningFreeze :
+        
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     if nogpu:
         disableGPU()
     else:

@@ -4,11 +4,35 @@ import numpy as np
 
 
 def generate_chords_from_sequence(patterns):
+    """
+
+    Parameters
+    ----------
+    patterns :
+        
+
+    Returns
+    -------
+
+    """
 
     pass
     return [I] * len(patterns), [pattern.duration for pattern in patterns]
 
 def generate_random_sequence(duration, seed=None):
+    """
+
+    Parameters
+    ----------
+    duration :
+        
+    seed :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     if seed is None:
         seed = np.random.randint(0, 2 ** 31)
     rg = np.random.RandomState(seed)
@@ -32,6 +56,23 @@ def generate_random_sequence(duration, seed=None):
 
 
 def generate_random_rythm_pattern(duration, counting, tick, seed=None):
+    """
+
+    Parameters
+    ----------
+    duration :
+        
+    counting :
+        
+    tick :
+        
+    seed :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     if seed is None:
         seed = np.random.randint(0, 2 ** 31)
     rg = np.random.RandomState(seed)

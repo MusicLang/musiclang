@@ -12,12 +12,20 @@ from musiclang.write.constants import OCTAVES
 
 
 def infer_score_with_chords_durations(sequence, chords, instruments):
-    """
-    Get the score from a note sequence, the chords with durations and the instruments assigned to each tracks
-    :param sequence:
-    :param chords:
-    :param instruments:
-    :return:
+    """Get the score from a note sequence, the chords with durations and the instruments assigned to each tracks
+
+    Parameters
+    ----------
+    sequence :
+        param chords:
+    instruments :
+        return:
+    chords :
+        
+
+    Returns
+    -------
+
     """
     # Split each chords, instruments, voices
     time_start = 0
@@ -63,6 +71,27 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
 
 
 def infer_score(sequence, chords, instruments, bar_duration_in_ticks, offset_in_ticks, tick_value):
+    """
+
+    Parameters
+    ----------
+    sequence :
+        
+    chords :
+        
+    instruments :
+        
+    bar_duration_in_ticks :
+        
+    offset_in_ticks :
+        
+    tick_value :
+        
+
+    Returns
+    -------
+
+    """
 
     # Split each chord, instrument, voice
     time_start = 0
@@ -113,10 +142,18 @@ def infer_score(sequence, chords, instruments, bar_duration_in_ticks, offset_in_
 
 
 def infer_voices_per_tracks(sequence):
-    """
-    Separate voices of each tracks
-    :param sequence:
-    :return: sequence_result: New sequence with assigned "voice" property
+    """Separate voices of each tracks
+
+    Parameters
+    ----------
+    sequence :
+        return: sequence_result: New sequence with assigned "voice" property
+
+    Returns
+    -------
+    type
+        sequence_result: New sequence with assigned "voice" property
+
     """
     # Get all tracks
     tracks = list(set([int(s.track) for s in sequence]))
@@ -138,19 +175,47 @@ Utils
 
 
 def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, cont):
-    """
-    Parse a single voice to a musicLang melody between start time and end time
-    :param voice_notes: list of notes from sequence that represents a voice
-    :param chord: chord on which to parse the melody (to get the references pitches)
-    :param bar_time_start: Time start
-    :param bar_time_end: Time end
-    :param tick_value: Unit of time
-    :param cont: Is there a continuation to take in account and to add to melody
-    :return: melody : musiclang.Melody : parsed melody,
-    :return: return_cont: If the last note end time is higher that bar_time_end returns a continuation with duration
-    note_time_end - bar_time_end
+    """Parse a single voice to a musicLang melody between start time and end time
+
+    Parameters
+    ----------
+    voice_notes :
+        list of notes from sequence that represents a voice
+    chord :
+        chord on which to parse the melody (to get the references pitches)
+    bar_time_start :
+        Time start
+    bar_time_end :
+        Time end
+    tick_value :
+        Unit of time
+    cont :
+        Is there a continuation to take in account and to add to melody
+
+    Returns
+    -------
+    type
+        melody : musiclang.Melody : parsed melody,
+
     """
     def _parse_note(note, duration, chord, tick_value):
+        """
+
+        Parameters
+        ----------
+        note :
+            
+        duration :
+            
+        chord :
+            
+        tick_value :
+            
+
+        Returns
+        -------
+
+        """
         value = chord.parse(note.pitch - 60)
         value = value.augment(duration)
         value.amp = note.vel

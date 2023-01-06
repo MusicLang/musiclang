@@ -6,10 +6,12 @@ This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
 
-from .constants import *
-
 
 class Score:
+    """Represents a score in musiclang
+
+
+    """
     def __init__(self, chords=None, config=None):
         self.chords = chords
         self.config = config
@@ -20,13 +22,26 @@ class Score:
 
 
     def to_chords(self):
+        """ """
         res = [chord.to_chord() for chord in self.chords]
         return res
 
     def copy(self):
+        """ """
         return Score([c.copy() for c in self.chords], config=self.config.copy())
 
     def o(self, val):
+        """
+
+        Parameters
+        ----------
+        val :
+            
+
+        Returns
+        -------
+
+        """
         return Score([c.o_melody(val) for c in self], config=self.config.copy())
 
     def __add__(self, other):
@@ -44,8 +59,15 @@ class Score:
     @property
     def instruments(self):
         """
-        Return the list of all voices used in the score
-        :return:
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        type
+            :return:
+
         """
         result = []
         for chord in self:
@@ -57,9 +79,17 @@ class Score:
 
 
     def to_voicings(self, instruments=None):
-        """
-        Convert score to a four voice voicing using the extensions
+        """Convert score to a four voice voicing using the extensions
         :return:
+
+        Parameters
+        ----------
+        instruments :
+             (Default value = None)
+
+        Returns
+        -------
+
         """
         from .library import s0, s1, s2, s3, s4, s5, s6
         extension_dict = {
@@ -83,9 +113,19 @@ class Score:
         return score
 
     def show(self, *args, **kwargs):
-        """
-        Wrapper to the music21 show method
+        """Wrapper to the music21 show method
         :return:
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
         """
         import music21
         import tempfile
@@ -131,20 +171,33 @@ class Score:
             return sum(chords, None)
 
     def put_on_same_chord(self):
-        """
-        Take the first chord as reference,
+        """Take the first chord as reference,
         Put everything into this chord (It will of course change the harmony)
         :return:
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         from .time_utils import put_on_same_chord
         return put_on_same_chord(self)
 
     def project_on_score(self, score2, keep_score=False):
-        """
-        Project harmonically the score onto the score2
-        :param score2: Score that contains the harmony
-        :param keep_score: Keep the voice of score2 ?
-        :return:
+        """Project harmonically the score onto the score2
+
+        Parameters
+        ----------
+        score2 :
+            Score that contains the harmony
+        keep_score :
+            Keep the voice of score2 ? (Default value = False)
+
+        Returns
+        -------
+
         """
         # Algo : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
         from .time_utils import project_on_score
@@ -152,25 +205,90 @@ class Score:
 
 
     def get_chord_between(self, chord, start, end):
+        """
+
+        Parameters
+        ----------
+        chord :
+            
+        start :
+            
+        end :
+            
+
+        Returns
+        -------
+
+        """
         from .time_utils import get_chord_between
         return get_chord_between(chord, start, end)
 
 
     def get_score_between(self, start=None, end=None):
+        """
+
+        Parameters
+        ----------
+        start :
+             (Default value = None)
+        end :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         from .time_utils import get_score_between
         return get_score_between(self, start, end)
 
     def reduce(self, n_voices=4, start_low=False, instruments=None):
+        """
+
+        Parameters
+        ----------
+        n_voices :
+             (Default value = 4)
+        start_low :
+             (Default value = False)
+        instruments :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         from .arrange_utils import reduce
         return reduce(self, n_voices=n_voices, start_low=start_low, instruments=instruments)
 
     def to_pickle(self, filepath):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+
+        Returns
+        -------
+
+        """
         import pickle
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
 
     @classmethod
     def from_midi(cls, filename):
+        """
+
+        Parameters
+        ----------
+        filename :
+            
+
+        Returns
+        -------
+
+        """
         from musiclang.analyze import parse_to_musiclang
         score, config = parse_to_musiclang(filename)
         score.config = config
@@ -178,29 +296,77 @@ class Score:
 
     @classmethod
     def from_xml(cls, filename):
+        """
+
+        Parameters
+        ----------
+        filename :
+            
+
+        Returns
+        -------
+
+        """
         from musiclang.analyze import parse_to_musiclang
         score, config = parse_to_musiclang(filename)
         score.config = config
         return score
 
     def decompose_duration(self):
+        """ """
         return Score([chord.decompose_duration() for chord in self.chords])
 
     def to_score(self):
+        """ """
         return self.copy()
 
     @classmethod
     def from_sequence(cls, sequence, **kwargs):
+        """
+
+        Parameters
+        ----------
+        sequence :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         from .sequence.sequence import sequence_to_score
         return sequence_to_score(sequence, **kwargs)
 
     def to_sequence(self, **kwargs):
+        """
+
+        Parameters
+        ----------
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         from .sequence.sequence import score_to_sequence
         return score_to_sequence(self, **kwargs)
 
 
     @classmethod
     def from_pickle(cls, filepath):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+
+        Returns
+        -------
+
+        """
         import pickle
         with open(filepath, 'rb') as f:
             data = pickle.load(f)
@@ -245,12 +411,21 @@ class Score:
 
     @property
     def duration(self):
+        """ """
         return sum([c.duration for c in self.chords])
 
     def to_code(self, **kwargs):
-        """
-        Export the chord serie as a string representing valid python code that recreates the score
+        """Export the chord serie as a string representing valid python code that recreates the score
         :return:
+
+        Parameters
+        ----------
+        **kwargs :
+            
+
+        Returns
+        -------
+
         """
         from .out.to_code import chord_serie_to_code
 
@@ -258,10 +433,18 @@ class Score:
         return code
 
     def to_code_file(self, filepath, **kwargs):
-        """
-        Export the chord serie as a file representing valid python code that recreates the score
-        :param filepath:
-        :return:
+        """Export the chord serie as a file representing valid python code that recreates the score
+
+        Parameters
+        ----------
+        filepath :
+            return:
+        **kwargs :
+            
+
+        Returns
+        -------
+
         """
         code = self.to_code(**kwargs)
         with open(filepath, 'w') as f:
@@ -269,6 +452,19 @@ class Score:
 
 
     def to_midi(self, filepath, **kwargs):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         # Convert score to midi
         from .out.to_midi import score_to_midi
 

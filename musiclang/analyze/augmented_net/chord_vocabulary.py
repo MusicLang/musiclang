@@ -7,14 +7,36 @@ from numpy.linalg import norm
 
 
 def cosineSimilarity(v1, v2):
+    """
+
+    Parameters
+    ----------
+    v1 :
+        
+    v2 :
+        
+
+    Returns
+    -------
+
+    """
     return dot(v1, v2) / (norm(v1) * norm(v2))
 
 
 def closestPcSet(pcset):
     """Get the closest matching pcset from the vocabulary.
-
+    
     Uses cosine similarity to measure the distance between
     the given pcset and all pcsets in the vocabulary.
+
+    Parameters
+    ----------
+    pcset :
+        
+
+    Returns
+    -------
+
     """
     v1 = np.zeros(12)
     for pc in pcset:

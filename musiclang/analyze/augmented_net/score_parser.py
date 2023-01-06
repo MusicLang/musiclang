@@ -38,6 +38,19 @@ S_LISTTYPE_COLUMNS = [
 
 
 def _m21Parse(f, fmt=None):
+    """
+
+    Parameters
+    ----------
+    f :
+        
+    fmt :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     s = music21.converter.parse(f, format=fmt, forceSource=True)
     perc = [
         p
@@ -49,6 +62,19 @@ def _m21Parse(f, fmt=None):
 
 
 def from_tsv(tsv, sep="\t"):
+    """
+
+    Parameters
+    ----------
+    tsv :
+        
+    sep :
+         (Default value = "\t")
+
+    Returns
+    -------
+
+    """
     df = pd.read_csv(tsv, sep=sep)
     df.set_index("s_offset", inplace=True)
     for col in S_LISTTYPE_COLUMNS:
@@ -57,6 +83,17 @@ def from_tsv(tsv, sep="\t"):
 
 
 def _measureNumberShift(m21Score):
+    """
+
+    Parameters
+    ----------
+    m21Score :
+        
+
+    Returns
+    -------
+
+    """
     firstMeasure = m21Score.parts[0].measure(0) or m21Score.parts[0].measure(1)
     isAnacrusis = True if firstMeasure.paddingLeft > 0.0 else False
     if isAnacrusis and firstMeasure.number == 1:
@@ -67,6 +104,17 @@ def _measureNumberShift(m21Score):
 
 
 def _lastOffset(m21Score):
+    """
+
+    Parameters
+    ----------
+    m21Score :
+        
+
+    Returns
+    -------
+
+    """
     lastMeasure = m21Score.parts[0].measure(-1)
     filledDuration = lastMeasure.duration.quarterLength / float(
         lastMeasure.barDurationProportion()
@@ -77,10 +125,21 @@ def _lastOffset(m21Score):
 
 def _initialDataFrame(s, fmt=None):
     """Parses a score and produces a pandas dataframe.
-
+    
     The features obtained are the note names, their position in the score,
     measure number, and their ties (in case something fancy needs to be done,
     with the tie information).
+
+    Parameters
+    ----------
+    s :
+        
+    fmt :
+         (Default value = None)
+
+    Returns
+    -------
+
     """
     dfdict = {col: [] for col in S_COLUMNS}
     measureNumberShift = _measureNumberShift(s)
@@ -113,14 +172,25 @@ def _initialDataFrame(s, fmt=None):
 
 def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
     """Reindexes a dataframe according to a fixed note-value.
-
+    
     It could be said that the DataFrame produced by parseScore
     is a "salami-sliced" version of the score. This is intuitive
     for humans, but does not really work in machine learning.
-
+    
     What works, is to slice the score in fixed note intervals,
     for example, a sixteenth note. This reindex function does
     exactly that.
+
+    Parameters
+    ----------
+    df :
+        
+    fixedOffset :
+         (Default value = FIXEDOFFSET)
+
+    Returns
+    -------
+
     """
     firstRow = df.head(1)
     lastRow = df.tail(1)
@@ -146,7 +216,19 @@ def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
 
 
 def _engraveScore(df, timeSignatures=None):
-    """Useful for debugging _texturizeAnnotationScore."""
+    """Useful for debugging _texturizeAnnotationScore.
+
+    Parameters
+    ----------
+    df :
+        
+    timeSignatures :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     tss = timeSignatures or {0.0: "4/4"}
     chords = music21.stream.Stream()
     offset = 0.0
@@ -165,6 +247,21 @@ def _engraveScore(df, timeSignatures=None):
 
 
 def _texturizeAnnotationScore(df, duration, numberOfNotes):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+    duration :
+        
+    numberOfNotes :
+        
+
+    Returns
+    -------
+
+    """
     # Preemptively, remove any notion of held notes in an annotation file
     df["s_isOnset"] = df.s_isOnset.apply(lambda l: [True for _ in l])
     outputdf = df.copy()
@@ -200,6 +297,23 @@ def _texturizeAnnotationScore(df, duration, numberOfNotes):
 
 
 def parseScore(f, fmt=None, fixedOffset=FIXEDOFFSET, eventBased=False):
+    """
+
+    Parameters
+    ----------
+    f :
+        
+    fmt :
+         (Default value = None)
+    fixedOffset :
+         (Default value = FIXEDOFFSET)
+    eventBased :
+         (Default value = False)
+
+    Returns
+    -------
+
+    """
     # Step 0: Use music21 to parse the score
     s = _m21Parse(f, fmt)
     # Step 1: Parse and produce a salami-sliced dataset
@@ -211,6 +325,21 @@ def parseScore(f, fmt=None, fixedOffset=FIXEDOFFSET, eventBased=False):
 
 
 def _recursiveTexturization(df, fixedOffset=FIXEDOFFSET, eventBased=False):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+    fixedOffset :
+         (Default value = FIXEDOFFSET)
+    eventBased :
+         (Default value = False)
+
+    Returns
+    -------
+
+    """
     for duration in available_durations:
         for numberOfNotes in available_number_of_notes:
             df = _texturizeAnnotationScore(df, duration, numberOfNotes)
@@ -224,14 +353,22 @@ def parseAnnotationAsScore(
 ):
     """Generates a DataFrame from a synthesized RomanText file.
 
-    Args:
-        f (string): The path to the input RomanText file.
-        texturize (bool, optional): Texturize the synthetic score. Defaults to False.
-        fixedOffset (float, optional): The sampling rate in quarter notes. Defaults to FIXEDOFFSET.
-        eventBased (bool, optional): If True, no fixedOffset sampling is done. Defaults to False.
+    Parameters
+    ----------
+    f : string
+        The path to the input RomanText file.
+    texturize : bool
+        Texturize the synthetic score. Defaults to False.
+    fixedOffset : float
+        The sampling rate in quarter notes. Defaults to FIXEDOFFSET.
+    eventBased : bool
+        If True, no fixedOffset sampling is done. Defaults to False.
 
-    Returns:
-        DataFrame: The output DataFrame
+    Returns
+    -------
+    DataFrame
+        The output DataFrame
+
     """
     fmt = "romantext"
     if not texturize:

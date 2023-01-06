@@ -11,6 +11,17 @@ from ..pitches.pitches_utils import note_to_pitch_result
 
 
 def get_track_list(score):
+    """
+
+    Parameters
+    ----------
+    score :
+        
+
+    Returns
+    -------
+
+    """
     items = sum([chord.parts for chord in score.chords], [])
     tracks = list(dict.fromkeys(items))
 
@@ -18,6 +29,23 @@ def get_track_list(score):
 
 
 def get_or_default_last_pitch(chord, track_idx, time, last_pitch):
+    """
+
+    Parameters
+    ----------
+    chord :
+        
+    track_idx :
+        
+    time :
+        
+    last_pitch :
+        
+
+    Returns
+    -------
+
+    """
     if last_pitch is not None:
         return last_pitch
 
@@ -25,6 +53,25 @@ def get_or_default_last_pitch(chord, track_idx, time, last_pitch):
 
 
 def note_to_pitch(note, chord, track_idx, time, last_pitch):
+    """
+
+    Parameters
+    ----------
+    note :
+        
+    chord :
+        
+    track_idx :
+        
+    time :
+        
+    last_pitch :
+        
+
+    Returns
+    -------
+
+    """
 
     # Get real scale pitches
     if last_pitch is not None:
@@ -47,6 +94,25 @@ def note_to_pitch(note, chord, track_idx, time, last_pitch):
 
 
 def melody_to_pitches(part, chord, track_idx, time, last_pitch):
+    """
+
+    Parameters
+    ----------
+    part :
+        
+    chord :
+        
+    track_idx :
+        
+    time :
+        
+    last_pitch :
+        
+
+    Returns
+    -------
+
+    """
     chord_result = []
     for note in part.notes:
         to_append, last_pitch = note_to_pitch(note, chord, track_idx, time, last_pitch)
@@ -57,6 +123,21 @@ def melody_to_pitches(part, chord, track_idx, time, last_pitch):
 
 
 def create_melody_for_track(score, track_idx, track):
+    """
+
+    Parameters
+    ----------
+    score :
+        
+    track_idx :
+        
+    track :
+        
+
+    Returns
+    -------
+
+    """
     result = []
     last_pitch = None
     time = 0
@@ -73,12 +154,38 @@ def create_melody_for_track(score, track_idx, track):
 
 
 def to_midi(notes, output_file=None, **kwargs):
+    """
+
+    Parameters
+    ----------
+    notes :
+        
+    output_file :
+         (Default value = None)
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     from .midi_utils import matrix_to_mid
     res = matrix_to_mid(notes, output_file=output_file, **kwargs)
     return res
 
 
 def tracks_to_instruments(tracks):
+    """
+
+    Parameters
+    ----------
+    tracks :
+        
+
+    Returns
+    -------
+
+    """
     from .constants import INSTRUMENTS_DICT
     names = [t.split('__')[0] for t in tracks]
     instruments_idx = {i: INSTRUMENTS_DICT.get(name, 0) for i, name in enumerate(names)}
@@ -86,12 +193,22 @@ def tracks_to_instruments(tracks):
 
 
 def score_to_midi(score, filepath, **kwargs):
-    """
-    Transform a score to a midi file
-    :param score:
-    :param filepath:
-    :param kwargs:
-    :return:
+    """Transform a score to a midi file
+
+    Parameters
+    ----------
+    score :
+        param filepath:
+    kwargs :
+        return:
+    filepath :
+        
+    **kwargs :
+        
+
+    Returns
+    -------
+
     """
 
     # Get all tracks

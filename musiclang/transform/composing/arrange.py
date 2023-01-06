@@ -2,6 +2,23 @@
 from .project import get_melody_between, project_on_rythm, get_absolute_voice, get_nearest_note_in_context
 
 def arrange_melody_with_chords(melody, patterns, score, inst):
+    """
+
+    Parameters
+    ----------
+    melody :
+        
+    patterns :
+        
+    score :
+        
+    inst :
+        
+
+    Returns
+    -------
+
+    """
     time = 0
     new_score = None
     for pattern, chord in zip(patterns, score.chords):
@@ -18,10 +35,22 @@ def arrange_melody_with_chords(melody, patterns, score, inst):
 
 
 def modify_melody_to_be_on_chord(melody, rythm, chord, dict_notes=None):
-    """
-    Modify the melody to be on notes specified
-    :param rythm:
-    :return:
+    """Modify the melody to be on notes specified
+
+    Parameters
+    ----------
+    rythm :
+        return:
+    melody :
+        
+    chord :
+        
+    dict_notes :
+         (Default value = None)
+
+    Returns
+    -------
+
     """
 
     melody = get_absolute_voice(melody)

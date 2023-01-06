@@ -11,12 +11,22 @@ This file groups a set of functions to parse files into MusicLang objects
 """
 
 def parse_to_musiclang(input_file: str):
-    """
-    Parse an input file into a musiclang Score
+    """Parse an input file into a musiclang Score
     - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
     - Get voice separation and parsing
-    :param input_file:
-    :return: musiclang.Score, Dict of score configuration
+
+    Parameters
+    ----------
+    input_file :
+        return: musiclang.Score, Dict of score configuration
+    input_file: str :
+        
+
+    Returns
+    -------
+    type
+        musiclang.Score, Dict of score configuration
+
     """
     extension = input_file.split('.')[-1]
     if extension in ['mid', 'midi']:
@@ -27,12 +37,22 @@ def parse_to_musiclang(input_file: str):
         raise Exception('Unknown extension {}'.format(extension))
 
 def parse_midi_to_musiclang(input_file: str):
-    """
-    Parse a midi input file into a musiclang Score
+    """Parse a midi input file into a musiclang Score
     - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
     - Get voice separation and parsing
-    :param input_file:
-    :return: musiclang.Score, Dict of score configuration
+
+    Parameters
+    ----------
+    input_file :
+        return: musiclang.Score, Dict of score configuration
+    input_file: str :
+        
+
+    Returns
+    -------
+    type
+        musiclang.Score, Dict of score configuration
+
     """
     import tempfile
     import os
@@ -49,12 +69,22 @@ def parse_midi_to_musiclang(input_file: str):
 
 
 def parse_mxl_to_musiclang(input_file: str):
-    """
-    Parse a music xml input file into a musiclang Score
+    """Parse a music xml input file into a musiclang Score
     - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
     - Get voice separation and parsing
-    :param input_file:
-    :return: musiclang.Score, Dict of score configuration
+
+    Parameters
+    ----------
+    input_file :
+        return: musiclang.Score, Dict of score configuration
+    input_file: str :
+        
+
+    Returns
+    -------
+    type
+        musiclang.Score, Dict of score configuration
+
     """
 
     import tempfile
@@ -71,10 +101,20 @@ def parse_mxl_to_musiclang(input_file: str):
     return result
 
 def parse_directory_to_musiclang(directory: str):
-    """
-    Parse a directory containing a 'data.mid' and 'data_annotated.rntxt' file (midi file and chord annotation file)
-    :param directory:
-    :return: Score, Dict of score configuration
+    """Parse a directory containing a 'data.mid' and 'data_annotated.rntxt' file (midi file and chord annotation file)
+
+    Parameters
+    ----------
+    directory :
+        return: Score, Dict of score configuration
+    directory: str :
+        
+
+    Returns
+    -------
+    type
+        Score, Dict of score configuration
+
     """
     import os
     from .augmented_net import batch
@@ -91,6 +131,19 @@ def parse_directory_to_musiclang(directory: str):
 
 
 def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str):
+    """
+
+    Parameters
+    ----------
+    midi_file: str :
+        
+    annotation_file: str :
+        
+
+    Returns
+    -------
+
+    """
 
     chords = get_chords_from_analysis(annotation_file)
     score, tempo = parse_musiclang_sequence(midi_file, chords)
@@ -101,11 +154,18 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
 
 
 def parse_tonality(element):
-    """
-    Parse tonality as written in musicLang from Music21 object
-    :param element:
-    :return: key_tonic : Degree of the key (in 0-12)
-    :return: key_mode : Key mode of the key (in ['m', 'mm', 'M'])
+    """Parse tonality as written in musicLang from Music21 object
+
+    Parameters
+    ----------
+    element :
+        return: key_tonic : Degree of the key (in 0-12)
+
+    Returns
+    -------
+    type
+        key_tonic : Degree of the key (in 0-12)
+
     """
     DICT_MODE = {'major': 'M', 'minor': 'm'}
     if element.secondaryRomanNumeralKey is not None:
@@ -130,10 +190,18 @@ def parse_tonality(element):
 
 
 def get_degree(element):
-    """
-    Get the scale degree of an element (from Music21)
-    :param element: Music21 element
-    :return: degree : int,
+    """Get the scale degree of an element (from Music21)
+
+    Parameters
+    ----------
+    element :
+        Music21 element
+
+    Returns
+    -------
+    type
+        degree : int,
+
     """
     degree = element.scaleDegree - 1
     if 'Ger' in element.primaryFigure:
@@ -150,21 +218,36 @@ def get_degree(element):
 
 
 def get_duration(roman):
-    """
-    Get the duration of a chord
-    :param roman:
-    :return: result, fractions.Fraction with denominator limited to 8
+    """Get the duration of a chord
+
+    Parameters
+    ----------
+    roman :
+
+
+    Returns
+    -------
+    type
+        result, fractions.Fraction with denominator limited to 8
+
     """
     from fractions import Fraction as frac
     return frac(roman.duration.quarterLength).limit_denominator(8)
 
 
 def parse_musiclang_sequence(midi_file, chords):
-    """
-    Parse a midi file into MusicLang and chords with chords duration
-    :param midi_file:
-    :param chords:
-    :return:
+    """Parse a midi file into MusicLang and chords with chords duration
+
+    Parameters
+    ----------
+    midi_file :
+
+    chords :
+        
+
+    Returns
+    -------
+
     """
     from .midi_parser import parse_midi
     from .item import convert_to_items
@@ -180,10 +263,18 @@ def parse_musiclang_sequence(midi_file, chords):
 
 
 def get_chords_from_mxl(input_file):
-    """
-    Given a mxl file, return a MusicLang score parsing only the chord progression
-    :param input_file:
-    :return: musiclang.Score
+    """Given a mxl file, return a MusicLang score parsing only the chord progression
+
+    Parameters
+    ----------
+    input_file :
+        return: musiclang.Score
+
+    Returns
+    -------
+    type
+        musiclang.Score
+
     """
     import shutil
     import tempfile
@@ -198,10 +289,20 @@ def get_chords_from_mxl(input_file):
 
 
 def get_chords_from_analysis(analysis):
-    """
-    Given an analysis file (.rntxt), return a MusicLang score parsing only the chord progression
-    :param input_file:
-    :return: musiclang.Score
+    """Given an analysis file (.rntxt), return a MusicLang score parsing only the chord progression
+
+    Parameters
+    ----------
+    input_file :
+        return: musiclang.Score
+    analysis :
+        
+
+    Returns
+    -------
+    type
+        musiclang.Score
+
     """
     import music21
     analysis = music21.converter.parse(analysis, format="romanText")
@@ -212,6 +313,17 @@ def get_chords_from_analysis(analysis):
 
 
 def chords_to_musiclang(chords):
+    """
+
+    Parameters
+    ----------
+    chords :
+        
+
+    Returns
+    -------
+
+    """
     from musiclang import Tonality, Chord, Note
     new_score = None
     for notes, duration, degree, figure, key in chords:
@@ -230,6 +342,17 @@ def chords_to_musiclang(chords):
 
 
 def music21_roman_analysis_to_chords(score):
+    """
+
+    Parameters
+    ----------
+    score :
+        
+
+    Returns
+    -------
+
+    """
     time_sig = None
 
     chords = []

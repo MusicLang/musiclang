@@ -9,11 +9,47 @@ LICENSE file in the root directory of this source tree.
 import numpy as np
 
 def voice_to_channel(instrument_list, voice, instruments):
+    """
+
+    Parameters
+    ----------
+    instrument_list :
+        
+    voice :
+        
+    instruments :
+        
+
+    Returns
+    -------
+
+    """
     instrument_of_voice = instruments.get(voice, 0)
     return instrument_list.index(instrument_of_voice)
 
 
 def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, **kwargs):
+    """
+
+    Parameters
+    ----------
+    matrix :
+        
+    output_file :
+         (Default value = None)
+    ticks_per_beat :
+         (Default value = 480)
+    tempo :
+         (Default value = 120)
+    instruments :
+         (Default value = {})
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     from mido import MidiFile, MidiTrack, Message, MetaMessage
     from ..constants import SILENCE, CONTINUATION, PITCH, TRACK, OFFSET, VELOCITY, DURATION
     from .constants import OCTAVES
@@ -22,6 +58,17 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     matrix = np.asarray(matrix)
 
     def number_to_channel(n):
+        """
+
+        Parameters
+        ----------
+        n :
+            
+
+        Returns
+        -------
+
+        """
         if n < 9:
             return n
         if n >= 9:
@@ -115,6 +162,27 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
 
 
 def matrix_to_mid_one_channel_per_track(matrix, output_file=None, ticks_per_beat=96, tempo=120, instruments={}, **kwargs):
+    """
+
+    Parameters
+    ----------
+    matrix :
+        
+    output_file :
+         (Default value = None)
+    ticks_per_beat :
+         (Default value = 96)
+    tempo :
+         (Default value = 120)
+    instruments :
+         (Default value = {})
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     from mido import MidiFile, MidiTrack, Message, MetaMessage
     from ..constants import SILENCE, CONTINUATION, PITCH, TRACK, OFFSET, VELOCITY, DURATION
     from .constants import OCTAVES
@@ -123,6 +191,17 @@ def matrix_to_mid_one_channel_per_track(matrix, output_file=None, ticks_per_beat
     matrix = np.asarray(matrix)
 
     def number_to_channel(n):
+        """
+
+        Parameters
+        ----------
+        n :
+            
+
+        Returns
+        -------
+
+        """
         if n < 9:
             return n
         if n >= 9:

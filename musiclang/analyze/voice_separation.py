@@ -21,11 +21,20 @@ from .item import Item
 import pickle
 
 def separate_voices(notes):
-    """
-    Input a sequence of notes
-    :param notes:
-    :return: Sequence of note items with voice correctly
-    set with the following algorithm : (https://homepages.inf.ed.ac.uk/steedman/papers/music/VoiceSeparation.pdf)
+    """Input a sequence of notes
+
+    Parameters
+    ----------
+    notes :
+        return: Sequence of note items with voice correctly
+        set with the following algorithm : (https://homepages.inf.ed.ac.uk/steedman/papers/music/VoiceSeparation.pdf)
+
+    Returns
+    -------
+    type
+        Sequence of note items with voice correctly
+        set with the following algorithm : (https://homepages.inf.ed.ac.uk/steedman/papers/music/VoiceSeparation.pdf)
+
     """
 
     # Split notes in groups that are playing simultaneously
@@ -41,12 +50,20 @@ def separate_voices(notes):
 
 
 def voice_separation_algorithm(splitted_notes, beam_size=1, max_states=1):
-    """
-    Implementation of the voice separation algorithm
-    :param splitted_notes:
-    :param beam_size: Number of best states to keep for each iteration
-    :param max_states: Number of state to keep for each iteration
-    :return:
+    """Implementation of the voice separation algorithm
+
+    Parameters
+    ----------
+    splitted_notes :
+        param beam_size: Number of best states to keep for each iteration
+    max_states :
+        Number of state to keep for each iteration (Default value = 1)
+    beam_size :
+         (Default value = 1)
+
+    Returns
+    -------
+
     """
     S = [([], 1)] # State, logprob of state
     for idx, incoming_notes in enumerate(splitted_notes):
@@ -59,13 +76,22 @@ def voice_separation_algorithm(splitted_notes, beam_size=1, max_states=1):
     return final_path
 
 def evaluate_new_states(S, logprob, n, beam_size):
-    """
-    Evaluate all candidate states for new note n in state S
-    :param S:
-    :param logprob:
-    :param n:
-    :param beam_size:
-    :return:
+    """Evaluate all candidate states for new note n in state S
+
+    Parameters
+    ----------
+    S :
+        param logprob:
+    n :
+        param beam_size:
+    logprob :
+        
+    beam_size :
+        
+
+    Returns
+    -------
+
     """
     probas = generate_probas_for_one(S, n)
     assert len(probas) > 0
@@ -76,10 +102,18 @@ def evaluate_new_states(S, logprob, n, beam_size):
     return new_states
 
 def split_notes(notes):
-    """
-    Split notes in a group of notes that are playing simultaneously
-    :param notes:
-    :return: list[list[note]]
+    """Split notes in a group of notes that are playing simultaneously
+
+    Parameters
+    ----------
+    notes :
+        return: list[list[note]]
+
+    Returns
+    -------
+    type
+        list[list[note]]
+
     """
     notes = sorted(notes, key=lambda x: x[0])
     splitted_notes = []
@@ -96,6 +130,21 @@ def split_notes(notes):
     return splitted_notes
 
 def get_new_state(S, n, w):
+    """
+
+    Parameters
+    ----------
+    S :
+        
+    n :
+        
+    w :
+        
+
+    Returns
+    -------
+
+    """
     import copy
     import time
     new_S = pickle.loads(pickle.dumps(S, -1))
@@ -109,6 +158,19 @@ def get_new_state(S, n, w):
 
 
 def generate_probas_for_one(S, n):
+    """
+
+    Parameters
+    ----------
+    S :
+        
+    n :
+        
+
+    Returns
+    -------
+
+    """
     nb_voices = len(S)
     new_voices = np.arange(-1, -nb_voices-2, -1).tolist()
     existing_voices = np.arange(1, nb_voices+1).tolist()
@@ -131,119 +193,215 @@ def generate_probas_for_one(S, n):
     return list(zip(W, probas))
 
 def on(n):
-    """
-    On time of note
-    :param n: note
-    :return:
+    """On time of note
+
+    Parameters
+    ----------
+    n :
+        note
+
+    Returns
+    -------
+
     """
     return float(n[0])
 
 def off(n):
-    """
-    Off time of note
-    :param n: note
-    :return:
+    """Off time of note
+
+    Parameters
+    ----------
+    n :
+        note
+
+    Returns
+    -------
+
     """
     return float(n[1])
 
 def duration(n):
-    """
-    Duration of note
-    :param n:
-    :return:
+    """Duration of note
+
+    Parameters
+    ----------
+    n :
+        return:
+
+    Returns
+    -------
+
     """
     return off(n) - on(n)
 
 def num(n):
-    """
-    Pitch of note
-    :param n:
-    :return:
+    """Pitch of note
+
+    Parameters
+    ----------
+    n :
+        return:
+
+    Returns
+    -------
+
     """
     return n[3]
 
 def can_be_same_voice(n1, n2):
-    """
-    Can n1 and n2 be on the same voice
+    """Can n1 and n2 be on the same voice
     There is a condition on the overlapping of the two notes
-    :param n1:
-    :param n2:
-    :return:
+
+    Parameters
+    ----------
+    n1 :
+        param n2:
+    n2 :
+        
+
+    Returns
+    -------
+
     """
     cond1 = off(n1) - on(n2) <= duration(n1)/2
     cond2 = off(n1) < off(n2)
     return cond1 and cond2
 
 def gauss(mu, sig):
-    """
-    Gaussian density
+    """Gaussian density
+
+    Parameters
+    ----------
+    mu :
+        
+    sig :
+        
+
+    Returns
+    -------
+
     """
     return np.exp(-((mu) / sig)**2)
 
 
 def g(S, n, w, sig_g=127000):
-    """
-    Estimate a penalty about the time gap between new note added in the specific voice of S
-    :param S: State
-    :param n: note
-    :param w: voice index of note
-    :param sig_g: std of g, tunable parameter
-    :return:
+    """Estimate a penalty about the time gap between new note added in the specific voice of S
+
+    Parameters
+    ----------
+    S :
+        State
+    n :
+        note
+    w :
+        voice index of note
+    sig_g :
+        std of g, tunable parameter (Default value = 127000)
+
+    Returns
+    -------
+
     """
     last_V_w = S[w-1][-1]
     return np.log(1-(on(n) - off(last_V_w))/sig_g) + 1
 
 def gap(S, n, w, gmin=9e-5):
-    """
-    Bound g gap function with a gmin
-    :param S:
-    :param n:
-    :param w:
-    :param gmin:
-    :return:
+    """Bound g gap function with a gmin
+
+    Parameters
+    ----------
+    S :
+        param n:
+    w :
+        param gmin:
+    n :
+        
+    gmin :
+         (Default value = 9e-5)
+
+    Returns
+    -------
+
     """
     return max(g(S, n, w), gmin)
 
 # sigp = 4 before
 def pitch(S, n, w, sigp=20):
-    """
-    Return the deviation of note pitch with average pitch of the state voice with gaussian density
-    :param S: State
-    :param n: note
-    :param w: index in state where to add the note
-    :param sigp: standard deviation of the density
-    :return:
+    """Return the deviation of note pitch with average pitch of the state voice with gaussian density
+
+    Parameters
+    ----------
+    S :
+        State
+    n :
+        note
+    w :
+        index in state where to add the note
+    sigp :
+        standard deviation of the density (Default value = 20)
+
+    Returns
+    -------
+
     """
     return gauss(num(n) - average_pitch(S[w-1]), sigp)
 
 
 def logP_Ti(S, ni, wi):
-    """
-    Log-probability of a state transition of ni in voice wi - 1 of S
-    :param S: State
-    :param ni: note
-    :param wi: index in state where to add the note
-    :return:
+    """Log-probability of a state transition of ni in voice wi - 1 of S
+
+    Parameters
+    ----------
+    S :
+        State
+    ni :
+        note
+    wi :
+        index in state where to add the note
+
+    Returns
+    -------
+
     """
     return np.log(P(S, ni, wi)) + np.log(order(S, ni, wi))
 
 def P_T(S, n, w):
-    """
-    Log-probability of a state transition of notes n in voices w of S
-    :param S: State
-    :param ni: list[note]
-    :param wi: list[index in state where to add the note]
-    :return:
+    """Log-probability of a state transition of notes n in voices w of S
+
+    Parameters
+    ----------
+    S :
+        State
+    ni :
+        list[note]
+    wi :
+        list[index in state where to add the note]
+    n :
+        
+    w :
+        
+
+    Returns
+    -------
+
     """
     return np.product([P(S, ni, wi) * order(S, ni, wi) for ni, wi in zip(n, w)])
 
 def order(S, n, w):
-    """
-    Penalty to avoid note crossing, see : https://homepages.inf.ed.ac.uk/steedman/papers/music/VoiceSeparation.pdf
-    :param S:
-    :param n:
-    :param w: index in state where to add the note
-    :return:
+    """Penalty to avoid note crossing, see : https://homepages.inf.ed.ac.uk/steedman/papers/music/VoiceSeparation.pdf
+
+    Parameters
+    ----------
+    S :
+        param n:
+    w :
+        index in state where to add the note
+    n :
+        
+
+    Returns
+    -------
+
     """
     case1 = (abs(w) > 1) and (average_pitch(S[abs(w) - 2]) > num(n)) # Crossing
     case2 = (0 < w < len(S)) and (average_pitch(S[w]) < num(n))
@@ -251,13 +409,22 @@ def order(S, n, w):
     return 2 ** -(case1 + case2 + case3)
 
 def P(S, n, w, s_new=0):
-    """
-    Probability
-    :param S: State
-    :param n: note
-    :param w: index in state where to add the note
-    :param s_new: Proba of creating a new voice
-    :return:
+    """Probability
+
+    Parameters
+    ----------
+    S :
+        State
+    n :
+        note
+    w :
+        index in state where to add the note
+    s_new :
+        Proba of creating a new voice (Default value = 0)
+
+    Returns
+    -------
+
     """
     if w > 0:
         return pitch(S, n, w) * gap(S, n, w)
@@ -265,11 +432,18 @@ def P(S, n, w, s_new=0):
         return s_new
 
 def average_pitch(V, l=5):
-    """
-    Calculate the weighted average pitch of the voice over a window of size l
-    :param V:
-    :param l:
-    :return:
+    """Calculate the weighted average pitch of the voice over a window of size l
+
+    Parameters
+    ----------
+    V :
+        param l:
+    l :
+         (Default value = 5)
+
+    Returns
+    -------
+
     """
     min_l_V = min(l, len(V))
     len_V = len(V)

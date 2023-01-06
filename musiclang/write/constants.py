@@ -16,7 +16,7 @@ ELEMENT_TO_STR = {
     6: "VII"
 }
 
-DEGREE_TO_STR =  {
+DEGREE_TO_STR = {
     0: "I",
     1: "II.b",
     2: "II",
@@ -31,7 +31,7 @@ DEGREE_TO_STR =  {
     11: "VII"
 }
 
-DEGREE_TO_SCALE_DEGREE =  {
+DEGREE_TO_SCALE_DEGREE = {
     0: 0,
     1: 1,
     2: 1,
@@ -57,6 +57,7 @@ SCALE_DEGREE = {
 }
 
 from fractions import Fraction as frac
+
 W = frac(4)
 H = frac(2)
 Q = frac(1)
@@ -86,7 +87,8 @@ Sd = S * frac(3) / frac(2)
 Td = T * frac(3) / frac(2)
 
 STR_TO_DURATION = {
-    "n": 0,  # We let possibility for empty notes because it can be useful (eg : when projecting a melody), these should be ignored by parser
+    "n": 0,
+    # We let possibility for empty notes because it can be useful (eg : when projecting a melody), these should be ignored by parser
     "w": frac(4),
     "h": frac(2),
     "q": frac(1),
@@ -189,66 +191,65 @@ INDEX_MODE = {
         (6, "b"): 10,
     },
 
-
     "mm": {
-            (0, ""): 0,
-            (0, "s"): 0,
-            (0, "b"): 0,
+        (0, ""): 0,
+        (0, "s"): 0,
+        (0, "b"): 0,
 
-            (1, ""): 2,
-            (1, "s"): 2,
-            (1, "b"): 1,
+        (1, ""): 2,
+        (1, "s"): 2,
+        (1, "b"): 1,
 
-            (2, ""): 3,
-            (2, "s"): 4,
-            (2, "b"): 3,
+        (2, ""): 3,
+        (2, "s"): 4,
+        (2, "b"): 3,
 
-            (3, ""): 5,
-            (3, "s"): 6,
-            (3, "b"): 5,
+        (3, ""): 5,
+        (3, "s"): 6,
+        (3, "b"): 5,
 
-            (4, ""): 7,
-            (4, "s"): 7,
-            (4, "b"): 6,
+        (4, ""): 7,
+        (4, "s"): 7,
+        (4, "b"): 6,
 
-            (5, ""): 9,
-            (5, "s"): 9,
-            (5, "b"): 8,
+        (5, ""): 9,
+        (5, "s"): 9,
+        (5, "b"): 8,
 
-            (6, ""): 11,
-            (6, "s"): 11,
-            (6, "b"): 10,
-        },
+        (6, ""): 11,
+        (6, "s"): 11,
+        (6, "b"): 10,
+    },
 
     "dorian": {
-            (0, ""): 0,
-            (0, "s"): 0,
-            (0, "b"): 0,
+        (0, ""): 0,
+        (0, "s"): 0,
+        (0, "b"): 0,
 
-            (1, ""): 2,
-            (1, "s"): 2,
-            (1, "b"): 1,
+        (1, ""): 2,
+        (1, "s"): 2,
+        (1, "b"): 1,
 
-            (2, ""): 3,
-            (2, "s"): 4,
-            (2, "b"): 3,
+        (2, ""): 3,
+        (2, "s"): 4,
+        (2, "b"): 3,
 
-            (3, ""): 5,
-            (3, "s"): 6,
-            (3, "b"): 5,
+        (3, ""): 5,
+        (3, "s"): 6,
+        (3, "b"): 5,
 
-            (4, ""): 7,
-            (4, "s"): 7,
-            (4, "b"): 6,
+        (4, ""): 7,
+        (4, "s"): 7,
+        (4, "b"): 6,
 
-            (5, ""): 9,
-            (5, "s"): 9,
-            (5, "b"): 8,
+        (5, ""): 9,
+        (5, "s"): 9,
+        (5, "b"): 8,
 
-            (6, ""): 10,
-            (6, "s"): 11,
-            (6, "b"): 10,
-        },
+        (6, ""): 10,
+        (6, "s"): 11,
+        (6, "b"): 10,
+    },
 
     "phrygian": {
         (0, ""): 0,
@@ -402,11 +403,11 @@ INDEX_MODE = {
         (6, "b"): 10,
     },
 
-
 }
 
 
 def construct_index_tonality():
+    """ """
     result = {}
     for mode in INDEX_MODE.keys():
         D = INDEX_MODE[mode]
@@ -421,8 +422,8 @@ def construct_index_tonality():
         # Choose best
     return result
 
-INDEX_TONALITY = construct_index_tonality()
 
+INDEX_TONALITY = construct_index_tonality()
 
 SCALES = {
     "M": [0, 2, 4, 5, 7, 9, 11],
@@ -596,7 +597,6 @@ OCTAVES = {
 OCTAVES = {
     key: 0 for key in OCTAVES.keys()
 }
-
 
 ALL_INST = list(OCTAVES.keys())
 

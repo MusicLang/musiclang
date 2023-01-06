@@ -2,11 +2,18 @@ from musiclang.write.library import *
 import numpy as np
 
 def offset_between_chords(c1, c2):
-    """
-    How much should we transpose the melody of the second chord for the s0 of c2 to be the nearest of c1's s0
-    :param c1:
-    :param c2:
-    :return:
+    """How much should we transpose the melody of the second chord for the s0 of c2 to be the nearest of c1's s0
+
+    Parameters
+    ----------
+    c1 :
+        param c2:
+    c2 :
+        
+
+    Returns
+    -------
+
     """
     offset_degrees = c2.element - c1.element
 
@@ -23,9 +30,17 @@ def offset_between_chords(c1, c2):
 
 
 def project_on_one_chord(chord_serie):
-    """
-    Clever projection of a score in several chords into the first chord
+    """Clever projection of a score in several chords into the first chord
     :return:
+
+    Parameters
+    ----------
+    chord_serie :
+        
+
+    Returns
+    -------
+
     """
     chords = chord_serie.chords
     first_chord = chords[0]
@@ -47,6 +62,21 @@ def project_on_one_chord(chord_serie):
 
 
 def get_melody_starting_between(melody, start, stop):
+    """
+
+    Parameters
+    ----------
+    melody :
+        
+    start :
+        
+    stop :
+        
+
+    Returns
+    -------
+
+    """
 
     new_melody = None
     time = 0
@@ -60,6 +90,19 @@ def get_melody_starting_between(melody, start, stop):
     return new_melody
 
 def note_duration_still_playing_at(melody, start):
+    """
+
+    Parameters
+    ----------
+    melody :
+        
+    start :
+        
+
+    Returns
+    -------
+
+    """
     result = None
     time = 0
 
@@ -74,6 +117,19 @@ def note_duration_still_playing_at(melody, start):
     return result
 
 def note_still_playing_at(melody, start):
+    """
+
+    Parameters
+    ----------
+    melody :
+        
+    start :
+        
+
+    Returns
+    -------
+
+    """
     time = 0
     for note in melody.notes:
         if (time < start) and (time + note.duration > start):
@@ -89,6 +145,23 @@ def note_still_playing_at(melody, start):
 
 
 def get_melody_between(melody, start, stop, continuation=True):
+    """
+
+    Parameters
+    ----------
+    melody :
+        
+    start :
+        
+    stop :
+        
+    continuation :
+         (Default value = True)
+
+    Returns
+    -------
+
+    """
     melody_between = get_melody_starting_between(melody, start, stop)
     if continuation:
         note_still_playing = note_duration_still_playing_at(melody, start)
@@ -113,6 +186,25 @@ def get_melody_between(melody, start, stop, continuation=True):
 
 
 def reproject_on_multiple_chords(chords, new_chord, idx_stops, offsets, offset=True):
+    """
+
+    Parameters
+    ----------
+    chords :
+        
+    new_chord :
+        
+    idx_stops :
+        
+    offsets :
+        
+    offset :
+         (Default value = True)
+
+    Returns
+    -------
+
+    """
     new_score = None
     # Put everything back on same melody
     #accs = {key: 0 for key in idx_stops.keys()}
@@ -131,6 +223,17 @@ def reproject_on_multiple_chords(chords, new_chord, idx_stops, offsets, offset=T
     return new_score
 
 def parse_relative_to_absolute(melody):
+    """
+
+    Parameters
+    ----------
+    melody :
+        
+
+    Returns
+    -------
+
+    """
     result = None
     prev = None
     for note in melody.copy().notes:
@@ -168,19 +271,71 @@ def parse_relative_to_absolute(melody):
 
 
 def is_continuation(note, silence_as_continuation=True):
+    """
+
+    Parameters
+    ----------
+    note :
+        
+    silence_as_continuation :
+         (Default value = True)
+
+    Returns
+    -------
+
+    """
     if silence_as_continuation:
         return note.type == "l" or note.type == "r"
     else:
         return note.type == "l"
 
 def is_rest(note):
+    """
+
+    Parameters
+    ----------
+    note :
+        
+
+    Returns
+    -------
+
+    """
     return note.type == "r"
 
 def is_in_time(start, end, time):
+    """
+
+    Parameters
+    ----------
+    start :
+        
+    end :
+        
+    time :
+        
+
+    Returns
+    -------
+
+    """
     return (start <= time) and (end > time)
 
 
 def project_on_rythm(rythm, melody):
+    """
+
+    Parameters
+    ----------
+    rythm :
+        
+    melody :
+        
+
+    Returns
+    -------
+
+    """
     new_melody = None
 
     melody_without_relative = parse_relative_to_absolute(melody.copy())
@@ -218,16 +373,55 @@ def project_on_rythm(rythm, melody):
 
 
 def get_nearest_note(candidates, note):
+    """
+
+    Parameters
+    ----------
+    candidates :
+        
+    note :
+        
+
+    Returns
+    -------
+
+    """
     candidate_val = min(candidates, key=lambda x: abs(x.val - note.val))
     return get_nearest_val(note, candidate_val.val)
 
 
 def get_nearest_note(candidates, note):
+    """
+
+    Parameters
+    ----------
+    candidates :
+        
+    note :
+        
+
+    Returns
+    -------
+
+    """
     candidate_val = min(candidates, key=lambda x: abs(x.val - note.val))
     return get_nearest_val(note, candidate_val.val)
 
 
 def get_nearest_val(n, new_val):
+    """
+
+    Parameters
+    ----------
+    n :
+        
+    new_val :
+        
+
+    Returns
+    -------
+
+    """
     delta_val = (new_val - n.val) % 7
     notes_candidate = [n.add_value(delta_val, 0), n.add_value(delta_val, -1), n.add_value(delta_val, 1)]
     candidate = min(notes_candidate, key=lambda x: note_distance_abs(n, x))
@@ -235,14 +429,57 @@ def get_nearest_val(n, new_val):
 
 
 def note_distance_abs(n1, n2):
+    """
+
+    Parameters
+    ----------
+    n1 :
+        
+    n2 :
+        
+
+    Returns
+    -------
+
+    """
     return abs(n2.scale_pitch - n1.scale_pitch)
 
 
 def note_distance(n1, n2):
+    """
+
+    Parameters
+    ----------
+    n1 :
+        
+    n2 :
+        
+
+    Returns
+    -------
+
+    """
     return n1.val - n2.val
 
 
 def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
+    """
+
+    Parameters
+    ----------
+    rythm_note :
+        
+    note :
+        
+    chord :
+        
+    dict_notes :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     if dict_notes is None:
         dict_notes = {}
     candidates = get_notes_candidate_in_context(rythm_note, chord, dict_notes=dict_notes)
@@ -255,6 +492,21 @@ def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
 
 
 def get_notes_candidate_in_context(rythm_note, chord, dict_notes=None):
+    """
+
+    Parameters
+    ----------
+    rythm_note :
+        
+    chord :
+        
+    dict_notes :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     if dict_notes is None:
         dict_notes = {}
     rythm_note = rythm_note.set_duration(Q)
@@ -275,6 +527,23 @@ def get_notes_candidate_in_context(rythm_note, chord, dict_notes=None):
 
 
 def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
+    """
+
+    Parameters
+    ----------
+    rythm_note :
+        
+    note :
+        
+    chord :
+        
+    dict_notes :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     if dict_notes is None:
         dict_notes = {}
     candidates = get_notes_candidate_in_context(rythm_note, chord, dict_notes=dict_notes)
@@ -287,12 +556,29 @@ def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
 
 
 def get_absolute_voice(voice):
-    """
-    Transform a relative melody to an absolute one
-    :param voice:
-    :return:
+    """Transform a relative melody to an absolute one
+
+    Parameters
+    ----------
+    voice :
+        return:
+
+    Returns
+    -------
+
     """
     return parse_relative_to_absolute(voice)
 
 def get_absolute_voices(voices):
+    """
+
+    Parameters
+    ----------
+    voices :
+        
+
+    Returns
+    -------
+
+    """
     return [get_absolute_voice(voice) for voice in voices]

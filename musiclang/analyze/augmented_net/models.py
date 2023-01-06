@@ -6,7 +6,21 @@ from tensorflow.keras import layers
 
 
 def AugmentedNet(inputs, outputs, blocks=6):
-    """Definition of the AugmentedNet architecture."""
+    """Definition of the AugmentedNet architecture.
+
+    Parameters
+    ----------
+    inputs :
+        
+    outputs :
+        
+    blocks :
+         (Default value = 6)
+
+    Returns
+    -------
+
+    """
     x = []  # (raw) inputs of the network
     xprime = []  # inputs after initial convolutional blocks
     for i in inputs:
@@ -47,9 +61,38 @@ def AugmentedNet(inputs, outputs, blocks=6):
 
 
 def Micchi2020(inputs, outputs):
-    """The model by Micchi et al. (2020)."""
+    """The model by Micchi et al. (2020).
+
+    Parameters
+    ----------
+    inputs :
+        
+    outputs :
+        
+
+    Returns
+    -------
+
+    """
 
     def DenseNetLayer(x, b, f, n=1):
+        """
+
+        Parameters
+        ----------
+        x :
+            
+        b :
+            
+        f :
+            
+        n :
+             (Default value = 1)
+
+        Returns
+        -------
+
+        """
         with tf.name_scope(f"denseNet_{n}"):
             for _ in range(b):
                 y = layers.BatchNormalization()(x)
@@ -72,6 +115,23 @@ def Micchi2020(inputs, outputs):
         return x
 
     def PoolingLayer(x, k, s, n=1):
+        """
+
+        Parameters
+        ----------
+        x :
+            
+        k :
+            
+        s :
+            
+        n :
+             (Default value = 1)
+
+        Returns
+        -------
+
+        """
         with tf.name_scope(f"poolingLayer_{n}"):
             y = layers.BatchNormalization()(x)
             y = layers.Conv1D(
@@ -88,6 +148,19 @@ def Micchi2020(inputs, outputs):
         return y
 
     def MultiTaskLayer(h, outputs):
+        """
+
+        Parameters
+        ----------
+        h :
+            
+        outputs :
+            
+
+        Returns
+        -------
+
+        """
         y = []
         for output in outputs:
             outputFeatures = output.outputFeatures

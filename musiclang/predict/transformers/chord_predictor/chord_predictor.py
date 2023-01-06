@@ -3,10 +3,21 @@ from ..base.predictor import BasePredictor
 
 
 class ChordTransformerPredictor(BasePredictor):
-    """
-    Create a transformer model to predict chord progression model of a given score
-    """
+    """Create a transformer model to predict chord progression model of a given score"""
     def init_model(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         from ..models.transformer_model import TransformerModelWrapper
         from .chord_tokenizer import TOKENS
         n_tokens = len(TOKENS)  # size of vocabulary
@@ -23,10 +34,36 @@ class ChordTransformerPredictor(BasePredictor):
 
 
     def save_model(self, filepath):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+
+        Returns
+        -------
+
+        """
         self.model.save_model(filepath)
 
     @classmethod
     def load_model(cls, filepath, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        filepath :
+            
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         from ..models.transformer_model import TransformerModelWrapper
         predictor = cls(*args, **kwargs)
         predictor.model = TransformerModelWrapper.load_model(filepath)
@@ -34,6 +71,23 @@ class ChordTransformerPredictor(BasePredictor):
 
 
     def predict_from_text(self, start_text, include_start=True, n_tokens=5, max_tokens=None):
+        """
+
+        Parameters
+        ----------
+        start_text :
+            
+        include_start :
+             (Default value = True)
+        n_tokens :
+             (Default value = 5)
+        max_tokens :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         if max_tokens is None:
             max_tokens = 3 * n_tokens
 
@@ -66,32 +120,62 @@ class ChordTransformerPredictor(BasePredictor):
         return chars
 
     def score_to_text(self, score: 'musiclang.Score') -> str:
+        """
+
+        Parameters
+        ----------
+        score: 'musiclang.Score' :
+            
+
+        Returns
+        -------
+
+        """
         from .chord_tokenizer import score_to_text
         return score_to_text(score)
 
     def tokenize(self, text):
-        """
-        Convert a text to a list of tokens (number)
-        :param text:
-        :return:
+        """Convert a text to a list of tokens (number)
+
+        Parameters
+        ----------
+        text :
+            return:
+
+        Returns
+        -------
+
         """
         from .chord_tokenizer import tokenize_string
         tokens = tokenize_string(text)
         return tokens
 
     def untokenize(self, tokens):
-        """
-        Convert a list of tokens to a text
-        :param tokens:
-        :return:
+        """Convert a list of tokens to a text
+
+        Parameters
+        ----------
+        tokens :
+            return:
+
+        Returns
+        -------
+
         """
         from .chord_tokenizer import untokenize
         return untokenize(tokens)
 
     def text_to_score(self, text):
         """
-        :param text:
-        :return:
+
+        Parameters
+        ----------
+        text :
+            return:
+
+        Returns
+        -------
+
         """
         from musiclang.write.library import I, II, III, IV, V, VI, VII
         # First make sure it compiles in musiclang code

@@ -10,6 +10,12 @@ Welcome to MusicLang's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   ./usage/about.rst
+   ./usage/user_guide.rst
+   ./usage/installation.rst
+   ./usage/module_reference.rst
+   ./usage/developer_guide.rst
+
 
 
 Indices and tables
@@ -18,3 +24,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+

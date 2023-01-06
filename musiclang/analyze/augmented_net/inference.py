@@ -37,7 +37,17 @@ inversions = {
 
 
 def formatChordLabel(cl):
-    """Format the chord label for end-user presentation."""
+    """Format the chord label for end-user presentation.
+
+    Parameters
+    ----------
+    cl :
+        
+
+    Returns
+    -------
+
+    """
     # The only change I can think of: Cmaj -> C
     cl = cl.replace("maj", "") if cl.endswith("maj") else cl
     cl = cl.replace("-", "b")
@@ -45,7 +55,19 @@ def formatChordLabel(cl):
 
 
 def formatRomanNumeral(rn, key):
-    """Format the Roman numeral label for end-user presentation."""
+    """Format the Roman numeral label for end-user presentation.
+
+    Parameters
+    ----------
+    rn :
+        
+    key :
+        
+
+    Returns
+    -------
+
+    """
     # Something of "I" and "I" of something
     if rn == "I/I":
         rn = "I"
@@ -53,10 +75,46 @@ def formatRomanNumeral(rn, key):
 
 
 def solveChordSegmentation(df):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+
+    Returns
+    -------
+
+    """
     return df.dropna()[df.HarmonicRhythm7 == 0]
 
 
 def resolveRomanNumeralCosine(b, t, a, s, pcs, key, numerator, tonicizedKey):
+    """
+
+    Parameters
+    ----------
+    b :
+        
+    t :
+        
+    a :
+        
+    s :
+        
+    pcs :
+        
+    key :
+        
+    numerator :
+        
+    tonicizedKey :
+        
+
+    Returns
+    -------
+
+    """
     pcsetVector = np.zeros(12)
     chord = music21.chord.Chord(f"{b}2 {t}3 {a}4 {s}5")
     for n in chord.pitches:
@@ -107,6 +165,19 @@ def resolveRomanNumeralCosine(b, t, a, s, pcs, key, numerator, tonicizedKey):
 
 
 def generateRomanText(h, ts):
+    """
+
+    Parameters
+    ----------
+    h :
+        
+    ts :
+        
+
+    Returns
+    -------
+
+    """
     metadata = h.metadata
     metadata.composer = metadata.composer or "Unknown"
     metadata.title = metadata.title or "Unknown"
@@ -144,6 +215,19 @@ Analyst: AugmentedNet v{__version__} - https://github.com/napulen/AugmentedNet
 
 
 def predict(model, inputPath):
+    """
+
+    Parameters
+    ----------
+    model :
+        
+    inputPath :
+        
+
+    Returns
+    -------
+
+    """
     df = parseScore(inputPath)
     inputs = [l.name.rsplit("_")[1] for l in model.inputs]
     encodedInputs = [availableInputs[i](df) for i in inputs]
@@ -224,6 +308,19 @@ def predict(model, inputPath):
 
 
 def batch(inputPath, useGpu=False):
+    """
+
+    Parameters
+    ----------
+    inputPath :
+        
+    useGpu :
+         (Default value = False)
+
+    Returns
+    -------
+
+    """
     modelPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'AugmentedNet.hdf5')
     if useGpu:
         tensorflowGPUHack()

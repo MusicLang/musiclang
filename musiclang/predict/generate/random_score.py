@@ -4,12 +4,20 @@ from .random_melody import generate_random_melody
 from musiclang.composing.arrange import arrange_melody_with_chords
 
 def generate_random_score(duration, instruments, candidate_chords):
-    """
-    Generate a score with given duration and instruments and candidate chords
-    :param duration:
-    :param instruments:
-    :param candidate_chords:
-    :return:
+    """Generate a score with given duration and instruments and candidate chords
+
+    Parameters
+    ----------
+    duration :
+        param instruments:
+    candidate_chords :
+        return:
+    instruments :
+        
+
+    Returns
+    -------
+
     """
     melody, patterns = generate_random_melody(duration)
     assert sum(patterns, None).duration == duration

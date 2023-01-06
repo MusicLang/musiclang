@@ -8,14 +8,21 @@ COLUMNS_HARMONIC_RYTHM = ['chord_duration', 'dummy']
 
 
 def merge_and_update(left, right, on):
-    """
-    Merge two sequences by updating when it is possible
+    """Merge two sequences by updating when it is possible
     If the right array does not have an entry for the left row, use the previous value of the column
 
-    :param left: Sequence that should be updated
-    :param right: Sequence acting as the updater
-    :param on: str or list, on which columns to perform the left join
-    :return:
+    Parameters
+    ----------
+    left :
+        Sequence that should be updated
+    right :
+        Sequence acting as the updater
+    on :
+        str or list, on which columns to perform the left join
+
+    Returns
+    -------
+
     """
     if isinstance(on, str) or isinstance(on, int):
         on = [on]
@@ -35,12 +42,20 @@ def merge_and_update(left, right, on):
 # Find markov path of chords
 
 def find_words_proba(df, columns, n=4):
-    """
-    Find the markov distribution with word of size n
-    :param df:
-    :param columns:
-    :param n:
-    :return:
+    """Find the markov distribution with word of size n
+
+    Parameters
+    ----------
+    df :
+        param columns:
+    n :
+        return: (Default value = 4)
+    columns :
+        
+
+    Returns
+    -------
+
     """
     from collections import Counter
     sequence = df[columns]
@@ -56,6 +71,21 @@ def find_words_proba(df, columns, n=4):
 
 
 def find_transitions_proba(df, columns, n=4):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+    columns :
+        
+    n :
+         (Default value = 4)
+
+    Returns
+    -------
+
+    """
     from collections import Counter
     sequence = df[columns]
     assert sequence.isnull().sum().sum() == 0
@@ -85,17 +115,57 @@ def find_transitions_proba(df, columns, n=4):
 
 
 def sample_markov_path(words, transitions, first=None, m=10, n=1):
-    """
-    Sample m transitions from a markov path
+    """Sample m transitions from a markov path
+
+    Parameters
+    ----------
+    words :
+        
+    transitions :
+        
+    first :
+         (Default value = None)
+    m :
+         (Default value = 10)
+    n :
+         (Default value = 1)
+
+    Returns
+    -------
+
     """
 
     def split(a, n):
+        """
+
+        Parameters
+        ----------
+        a :
+            
+        n :
+            
+
+        Returns
+        -------
+
+        """
 
         parts = len(a) // n
         k, m = divmod(len(a), parts)
         return [a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(parts)]
 
     def _sample_at_random(D):
+        """
+
+        Parameters
+        ----------
+        D :
+            
+
+        Returns
+        -------
+
+        """
         return random.choices(list(D.keys()), weights=D.values(), k=1)[0]
 
     import random
@@ -116,12 +186,20 @@ def sample_markov_path(words, transitions, first=None, m=10, n=1):
 
 
 def find_distribution(df, columns, n=2):
-    """
-    Calculate the words and transitions of words distribution for given columns
-    :param df:
-    :param columns:
-    :param n:
-    :return:
+    """Calculate the words and transitions of words distribution for given columns
+
+    Parameters
+    ----------
+    df :
+        param columns:
+    n :
+        return: (Default value = 2)
+    columns :
+        
+
+    Returns
+    -------
+
     """
     words_probs = find_words_proba(df, columns, n=n)
     transitions_probs = find_transitions_proba(df, columns, n=n)
@@ -130,10 +208,16 @@ def find_distribution(df, columns, n=2):
 
 
 def find_chords_distribution(df):
-    """
-    Find the chords and chords transitions probabilities of a sequence
-    :param df:
-    :return:
+    """Find the chords and chords transitions probabilities of a sequence
+
+    Parameters
+    ----------
+    df :
+        return:
+
+    Returns
+    -------
+
     """
     chords = df.groupby('chord_idx').first()
 
@@ -148,10 +232,16 @@ def find_chords_distribution(df):
 
 
 def find_rythm_distribution(df):
-    """
-    Find the rythm and rythm transitions probabilities of a sequence
-    :param df:
-    :return:
+    """Find the rythm and rythm transitions probabilities of a sequence
+
+    Parameters
+    ----------
+    df :
+        return:
+
+    Returns
+    -------
+
     """
 
     df = df.sort_values(['instrument', 'start'], ascending=True)
@@ -166,10 +256,16 @@ def find_rythm_distribution(df):
 
 
 def find_melody_distribution(df):
-    """
-    Find the melody and melody transitions probabilities of a sequence
-    :param df:
-    :return:
+    """Find the melody and melody transitions probabilities of a sequence
+
+    Parameters
+    ----------
+    df :
+        return:
+
+    Returns
+    -------
+
     """
     df = df.sort_values(['instrument', 'start'], ascending=True)
     N = [1, 2, 3, 4]
@@ -183,10 +279,16 @@ def find_melody_distribution(df):
 
 
 def find_harmonic_rythm_distribution(df):
-    """
-    Find the harmonic rythm and harmonic rythm transitions probabilities of a sequence
-    :param df:
-    :return:
+    """Find the harmonic rythm and harmonic rythm transitions probabilities of a sequence
+
+    Parameters
+    ----------
+    df :
+        return:
+
+    Returns
+    -------
+
     """
     df['chord_duration_max'] = df.groupby('chord_idx')['chord_relative_end'].transform('max')
     df['chord_duration_min'] = df.groupby('chord_idx')['chord_relative_start'].transform('min')
@@ -205,6 +307,17 @@ def find_harmonic_rythm_distribution(df):
 
 
 def find_distributions(df):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+
+    Returns
+    -------
+
+    """
     Pc, Tc = find_chords_distribution(df)
     Pr, Tr = find_rythm_distribution(df)
     Pm, Tm = find_melody_distribution(df)
@@ -213,8 +326,62 @@ def find_distributions(df):
     return Pc, Tc, Pr, Tr, Pm, Tm, Ph, Th
 
 def sample_score(Pc, Tc, Pr, Tr, Pm, Tm, Ph, Th, duration=10, n_c=1, n_h=1, n_r=1, n_m=4):
+    """
+
+    Parameters
+    ----------
+    Pc :
+        
+    Tc :
+        
+    Pr :
+        
+    Tr :
+        
+    Pm :
+        
+    Tm :
+        
+    Ph :
+        
+    Th :
+        
+    duration :
+         (Default value = 10)
+    n_c :
+         (Default value = 1)
+    n_h :
+         (Default value = 1)
+    n_r :
+         (Default value = 1)
+    n_m :
+         (Default value = 4)
+
+    Returns
+    -------
+
+    """
     import pandas as pd
     def _sample_with_duration_constraint(P, T, idx_duration, duration, n=1):
+        """
+
+        Parameters
+        ----------
+        P :
+            
+        T :
+            
+        idx_duration :
+            
+        duration :
+            
+        n :
+             (Default value = 1)
+
+        Returns
+        -------
+
+        """
         import numpy as np
         # Sample harmonic rythm
         m = 10

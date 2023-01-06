@@ -40,10 +40,34 @@ A_LISTTYPE_COLUMNS = [
 
 
 def _m21Parse(f):
+    """
+
+    Parameters
+    ----------
+    f :
+        
+
+    Returns
+    -------
+
+    """
     return music21.converter.parse(f, format="romantext", forceSource=True)
 
 
 def from_tsv(tsv, sep="\t"):
+    """
+
+    Parameters
+    ----------
+    tsv :
+        
+    sep :
+         (Default value = "\t")
+
+    Returns
+    -------
+
+    """
     df = pd.read_csv(tsv, sep=sep)
     df.set_index("a_offset", inplace=True)
     for col in A_LISTTYPE_COLUMNS:
@@ -53,11 +77,20 @@ def from_tsv(tsv, sep="\t"):
 
 def _initialDataFrame(s):
     """Parses an annotation RomanText file and produces a pandas dataframe.
-
+    
     Unpacking a roman numeral is slightly more complicated here than in
     previous approaches/papers, the reason is that I include more features
     than usual (e.g., inversion). It may be easier to predict which features
     lead to a better Roman numeral reconstruction this way.
+
+    Parameters
+    ----------
+    s :
+        
+
+    Returns
+    -------
+
     """
     dfdict = {col: [] for col in A_COLUMNS}
     for idx, rn in enumerate(s.flat.getElementsByClass("RomanNumeral")):
@@ -106,6 +139,19 @@ def _initialDataFrame(s):
 
 
 def _hackRomanNumerals(figure, localKey):
+    """
+
+    Parameters
+    ----------
+    figure :
+        
+    localKey :
+        
+
+    Returns
+    -------
+
+    """
     flatsix = r"bVI[\d]*|bVI[\d]*/[#b]?[IV]+"
     if figure == "iio7":
         figure = "iiø7"
@@ -119,6 +165,17 @@ def _hackRomanNumerals(figure, localKey):
 
 
 def _fixRnSynonyms(figure):
+    """
+
+    Parameters
+    ----------
+    figure :
+        
+
+    Returns
+    -------
+
+    """
     ret = figure.replace("6/4", "64")
     ret = ret.replace("6/5", "65")
     ret = ret.replace("4/3", "43")
@@ -129,11 +186,33 @@ def _fixRnSynonyms(figure):
 
 
 def _simplifyRomanNumeral(figure):
+    """
+
+    Parameters
+    ----------
+    figure :
+        
+
+    Returns
+    -------
+
+    """
     missingAdd = re.compile("(\[(add\d)*\]|\[(no\d*)*\])")
     return missingAdd.sub("", figure)
 
 
 def _removeInversion(figure):
+    """
+
+    Parameters
+    ----------
+    figure :
+        
+
+    Returns
+    -------
+
+    """
     ret = figure.replace("65", "7")
     ret = ret.replace("43", "7")
     ret = ret.replace("64", "")
@@ -143,13 +222,36 @@ def _removeInversion(figure):
 
 
 def _preprocessRomanNumeral(figure, localKey):
+    """
+
+    Parameters
+    ----------
+    figure :
+        
+    localKey :
+        
+
+    Returns
+    -------
+
+    """
     return _fixRnSynonyms(
         _simplifyRomanNumeral(_hackRomanNumerals(figure, localKey))
     )
 
 
 def _extractRomanNumeralInformation(rn):
-    """Hacks and workarounds to retrieve the RomanNumeral from music21."""
+    """Hacks and workarounds to retrieve the RomanNumeral from music21.
+
+    Parameters
+    ----------
+    rn :
+        
+
+    Returns
+    -------
+
+    """
     localKey = rn.key.tonicPitchNameWithCase
     originalpcset = rn.pitchClasses
     originalFigure = rn.figure
@@ -203,7 +305,17 @@ def _extractRomanNumeralInformation(rn):
 
 
 def _correctRomanNumeral(rndata):
-    """Trust nobody. Rewrite all Roman numerals based on chord vocabulary."""
+    """Trust nobody. Rewrite all Roman numerals based on chord vocabulary.
+
+    Parameters
+    ----------
+    rndata :
+        
+
+    Returns
+    -------
+
+    """
     rn = rndata["rn"]
     pcset = rndata["pcset"]
     pitchNames = rndata["pitchNames"]
@@ -258,17 +370,27 @@ def _correctRomanNumeral(rndata):
 
 def _harmonicRhythmPostprocessing(a_harmonicRhythm):
     """This is a new approach for harmonic rhythm to balance the classes.
-
+    
     Instead of providing 'is_onset' True/False kind of annotations,
     log the duration elapsed since the last chord.
-
+    
     0 - this is a chord onset
     1 - a 32nd note has passed since the last chord
     2 - a 16th note has passed since the last chord
     3 - an eighth note has passed since the last chord
     4 - a quarter note has passed since the last chord
     5 - a half note has passed since the last chord
-    6 - a whole note has passed since the last chord"""
+    6 - a whole note has passed since the last chord
+
+    Parameters
+    ----------
+    a_harmonicRhythm :
+        
+
+    Returns
+    -------
+
+    """
     template = [1, 2, 2, 3, 3, 3, 3] + ([4] * 8) + ([5] * 16) + ([6] * 32)
     hr = a_harmonicRhythm.to_list()
     t = 62
@@ -283,14 +405,25 @@ def _harmonicRhythmPostprocessing(a_harmonicRhythm):
 
 def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
     """Reindexes a dataframe according to a fixed note-value.
-
+    
     It could be said that the DataFrame produced by parseScore
     is a "salami-sliced" version of the score. This is intuitive
     for humans, but does not really work in machine learning.
-
+    
     What works, is to slice the score in fixed note intervals,
     for example, a sixteenth note. This reindex function does
     exactly that.
+
+    Parameters
+    ----------
+    df :
+        
+    fixedOffset :
+         (Default value = FIXEDOFFSET)
+
+    Returns
+    -------
+
     """
     firstRow = df.head(1)
     lastRow = df.tail(1)
@@ -311,10 +444,23 @@ def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
 
 def parseAnnotation(f, fixedOffset=FIXEDOFFSET, eventBased=False):
     """Generates the DataFrame from a RomanText file.
-
+    
     Parses the file using music21. Creates an initial DataFrame
     with every onset event of the music21 stream. Finally,
     does the sampling at symbolically regular durations fixedOffset.
+
+    Parameters
+    ----------
+    f :
+        
+    fixedOffset :
+         (Default value = FIXEDOFFSET)
+    eventBased :
+         (Default value = False)
+
+    Returns
+    -------
+
     """
     # Step 0: Use music21 to parse the score
     s = _m21Parse(f)

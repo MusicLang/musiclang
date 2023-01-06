@@ -22,7 +22,7 @@ tokens = tokenizer.tokenize(chord_progression)
 
 # Predict next two chords
 for i in range(10):
-    predicted_token = predictor.predict(tokens, temperature=0.0)
+    predicted_token = predictor.predict(tokens)
     tokens.append(predicted_token)
 
 print(tokens)

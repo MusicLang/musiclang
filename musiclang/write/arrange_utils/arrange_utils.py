@@ -13,6 +13,19 @@ from .skyline_algorithm import SkylineSolution
 
 
 def reduce_one(sequence, high=True):
+    """
+
+    Parameters
+    ----------
+    sequence :
+        
+    high :
+         (Default value = True)
+
+    Returns
+    -------
+
+    """
     sequence = sequence.copy()
     SILENCE_ABS_VAL = 2000
     silence_value = -SILENCE_ABS_VAL if high else SILENCE_ABS_VAL
@@ -44,6 +57,17 @@ def reduce_one(sequence, high=True):
 
 
 def recalculate_pitch(row):
+    """
+
+    Parameters
+    ----------
+    row :
+        
+
+    Returns
+    -------
+
+    """
     from musiclang.write.chord import Chord
     from musiclang.write.tonality import Tonality
     from musiclang.write.note import Note
@@ -53,11 +77,22 @@ def recalculate_pitch(row):
     return chord.to_pitch(note)
 
 def reduce(score, n_voices=4, start_low=False, instruments=None):
-    """
-    Arrange a score to sum it up of 4 voices
-    :param score:
-    :param n_voices:
-    :return:
+    """Arrange a score to sum it up of 4 voices
+
+    Parameters
+    ----------
+    score :
+        param n_voices:
+    n_voices :
+         (Default value = 4)
+    start_low :
+         (Default value = False)
+    instruments :
+         (Default value = None)
+
+    Returns
+    -------
+
     """
 
     from ..note import Silence

@@ -26,11 +26,18 @@ OFF = 0
 
 
 def parse_midi(filename, **kwargs):
-    """
-    Parse a midi files and returns array of notes, instruments and the tempo
-    :param filename:
-    :param kwargs:
-    :return:
+    """Parse a midi files and returns array of notes, instruments and the tempo
+
+    Parameters
+    ----------
+    filename :
+        param kwargs:
+    **kwargs :
+        
+
+    Returns
+    -------
+
     """
     notes, config = _load_midi(filename, **kwargs)
     instruments = config['instruments']
@@ -43,14 +50,25 @@ Below, some loader helpers :
 """
 
 class MusicLangIgnoreException(Exception):
+    """ """
     pass
 
 
 def _load_midi(filename, ignore_file_with_bar_change=False, **kwargs):
-    """
-    Create a note array from a midi file
-    :param filename:
-    :return:
+    """Create a note array from a midi file
+
+    Parameters
+    ----------
+    filename :
+        return:
+    ignore_file_with_bar_change :
+         (Default value = False)
+    **kwargs :
+        
+
+    Returns
+    -------
+
     """
     notes, config = _parse(filename)
     if len(config['bar_durations']) > 1 and ignore_file_with_bar_change:
@@ -63,6 +81,19 @@ def _load_midi(filename, ignore_file_with_bar_change=False, **kwargs):
 
 
 def _parse(filename, **kwargs):
+    """
+
+    Parameters
+    ----------
+    filename :
+        
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     from fractions import Fraction as frac
 
     mf = MidiFile(filename)
@@ -96,9 +127,19 @@ def _parse(filename, **kwargs):
 
 
 def _get_notes_in_beats(df, ticks_per_beats):
-    """
-    By default notes are stored in ticks from midi file, convert it to beats
+    """By default notes are stored in ticks from midi file, convert it to beats
     :return:
+
+    Parameters
+    ----------
+    df :
+        
+    ticks_per_beats :
+        
+
+    Returns
+    -------
+
     """
     df = df.copy()
     df[START_TIME] /= ticks_per_beats
@@ -107,9 +148,17 @@ def _get_notes_in_beats(df, ticks_per_beats):
     return df
 
 def _get_notes_dataframe(notes):
-    """
-    Convert note_on, note_off events to a note dataframe
+    """Convert note_on, note_off events to a note dataframe
     :return:
+
+    Parameters
+    ----------
+    notes :
+        
+
+    Returns
+    -------
+
     """
     from itertools import product
     events = pd.DataFrame(notes, columns=[TYPE, TIME, NOTE, VEL, CHANNEL, TRACK])
@@ -135,6 +184,17 @@ def _get_notes_dataframe(notes):
 
 
 def _infer_instruments(mf):
+    """
+
+    Parameters
+    ----------
+    mf :
+        
+
+    Returns
+    -------
+
+    """
     from musiclang.write.out.constants import REVERSE_INSTRUMENT_DICT
     channel_inst = {}
     for track in mf.tracks:

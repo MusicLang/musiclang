@@ -9,6 +9,27 @@ LICENSE file in the root directory of this source tree.
 from .constants import *
 
 class Melody:
+    """
+    Main class to write a melody in MusicLang. A melody is a serie of notes
+
+    Examples
+    --------
+
+    For example here is an example of a melody that plays the seven note of a scale :
+
+    >>> from musiclang.write.library import *
+    >>> melody =  s0 + s1 + s2 + s3 + s4 + s5 + s6
+    >>> melody
+    s0 + s1 + s2 + s3 + s4 + s5 + s6
+
+    You can also create it using the melody class :
+
+    >>> from musiclang import Melody
+    >>> melody = Melody([s0, s1, s2, s3, s4, s5, s6])
+    >>> melody
+    s0 + s1 + s2 + s3 + s4 + s5 + s6
+
+    """
     def __init__(self, notes):
         from .note import Note
         if isinstance(notes, Note):
@@ -38,6 +59,23 @@ class Melody:
         return isinstance(other, Melody) and str(other) == str(self)
 
     def get_pitches(self, chord, track_idx, time, last_note_array=None):
+        """
+
+        Parameters
+        ----------
+        chord :
+            
+        track_idx :
+            
+        time :
+            
+        last_note_array :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         pitches = []
         for note in self.notes:
             result = note.pitch(chord, track_idx, time, last_note_array)
@@ -48,9 +86,23 @@ class Melody:
         return pitches
 
     def decompose_duration(self):
+        """ """
         return Melody([note.decompose_duration() for note in self.notes])
 
     def replace_pitch(self, to_replace, new_note):
+        """
+
+        Parameters
+        ----------
+        to_replace :
+            
+        new_note :
+            
+
+        Returns
+        -------
+
+        """
 
         new_melody = []
         for note in self.notes:
@@ -62,9 +114,19 @@ class Melody:
         return sum(new_melody, None)
 
     def to_sequence(self, chord, inst):
-        """
-        Transform in a list of [(start_time, end_time, pitch, self)]
+        """Transform in a list of [(start_time, end_time, pitch, self)]
         :return:
+
+        Parameters
+        ----------
+        chord :
+            
+        inst :
+            
+
+        Returns
+        -------
+
         """
         time = 0
         sequence = []
@@ -78,14 +140,17 @@ class Melody:
 
 
     def to_code(self):
+        """ """
         return " + ".join([n.to_code() for n in self.notes])
 
     @property
     def is_continuation(self):
+        """ """
         return all([n.is_continuation for n in self.notes])
 
     @property
     def starts_with_absolute_note(self):
+        """ """
         if len(self.notes) > 0:
             return self.notes[0].starts_with_absolute_note
         else:
@@ -93,10 +158,12 @@ class Melody:
 
     @property
     def had_absolute_note(self):
+        """ """
         return any([n.starts_with_absolute_note for n in self.notes])
 
     @property
     def starts_with_absolute_or_silence(self):
+        """ """
         if len(self.notes) > 0:
             return self.notes[0].starts_with_absolute_or_silence
         else:
@@ -104,16 +171,29 @@ class Melody:
 
     @property
     def starts_with_note(self):
+        """ """
         if len(self.notes) > 0:
             return self.notes[0].starts_with_note
         else:
             return False
 
     def augment(self, value):
+        """
+
+        Parameters
+        ----------
+        value :
+            
+
+        Returns
+        -------
+
+        """
         return Melody([n.augment(value) for n in self.notes])
 
     @property
     def duration(self):
+        """ """
         return sum([n.duration for n in self.notes])
 
     def __iter__(self):
@@ -147,6 +227,17 @@ class Melody:
         return len(self.notes)
 
     def o(self, octave):
+        """
+
+        Parameters
+        ----------
+        octave :
+            
+
+        Returns
+        -------
+
+        """
         return Melody([n.o(octave) for n in self.notes])
 
     def __hasattr__(self, item):
@@ -164,6 +255,7 @@ class Melody:
             raise AttributeError("")
 
     def copy(self):
+        """ """
         return Melody([s.copy() for s in self.notes])
 
     def __repr__(self):

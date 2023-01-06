@@ -28,11 +28,35 @@ J_LISTTYPE_COLUMNS = (
 
 
 def _measureAlignmentScore(df):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+
+    Returns
+    -------
+
+    """
     df["measureMisalignment"] = df.s_measure != df.a_measure
     return df
 
 
 def from_tsv(tsv, sep="\t"):
+    """
+
+    Parameters
+    ----------
+    tsv :
+        
+    sep :
+         (Default value = "\t")
+
+    Returns
+    -------
+
+    """
     df = pd.read_csv(tsv, sep=sep)
     df.set_index("j_offset", inplace=True)
     for col in J_LISTTYPE_COLUMNS:
@@ -41,6 +65,17 @@ def from_tsv(tsv, sep="\t"):
 
 
 def _qualityMetric(df):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+
+    Returns
+    -------
+
+    """
     df["qualityScoreNotes"] = np.nan
     df["qualityNonChordTones"] = np.nan
     df["qualityMissingChordTones"] = np.nan
@@ -77,6 +112,17 @@ def _qualityMetric(df):
 
 
 def _inversionMetric(df):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+
+    Returns
+    -------
+
+    """
     df["incongruentBass"] = np.nan
     annotationIndexes = df[
         df.a_harmonicRhythm == 0
@@ -107,11 +153,26 @@ def parseAnnotationAndScore(
     a, s, qualityAssessment=True, fixedOffset=FIXEDOFFSET
 ):
     """Process a RomanText and score files simultaneously.
-
+    
     a is a RomanText file
     s is a .mxl|.krn|.musicxml file
-
+    
     Create the dataframes of both. Generate a new, joint, one.
+
+    Parameters
+    ----------
+    a :
+        
+    s :
+        
+    qualityAssessment :
+         (Default value = True)
+    fixedOffset :
+         (Default value = FIXEDOFFSET)
+
+    Returns
+    -------
+
     """
     # Parse each file
     adf = annotation_parser.parseAnnotation(a, fixedOffset=fixedOffset)
@@ -135,10 +196,25 @@ def parseAnnotationAndAnnotation(
     a, qualityAssessment=True, fixedOffset=FIXEDOFFSET, texturize=True
 ):
     """Synthesize a RomanText file to treat it as both analysis and score.
-
+    
     a is a RomanText file
-
+    
     When synthesizing the file, texturize it if `texturize=True`
+
+    Parameters
+    ----------
+    a :
+        
+    qualityAssessment :
+         (Default value = True)
+    fixedOffset :
+         (Default value = FIXEDOFFSET)
+    texturize :
+         (Default value = True)
+
+    Returns
+    -------
+
     """
     adf = annotation_parser.parseAnnotation(a, fixedOffset=fixedOffset)
     sdf = score_parser.parseAnnotationAsScore(
@@ -156,6 +232,17 @@ def parseAnnotationAndAnnotation(
 
 
 def reverseJointToAnnotation(dfj):
+    """
+
+    Parameters
+    ----------
+    dfj :
+        
+
+    Returns
+    -------
+
+    """
     columns = list(annotation_parser.A_COLUMNS)
     columns.remove("a_offset")
     adf = dfj[columns]
@@ -164,6 +251,17 @@ def reverseJointToAnnotation(dfj):
 
 
 def reverseJointToScore(dfj):
+    """
+
+    Parameters
+    ----------
+    dfj :
+        
+
+    Returns
+    -------
+
+    """
     columns = list(score_parser.S_COLUMNS)
     columns.remove("s_offset")
     sdf = dfj[dfj.a_harmonicRhythm == 0]
@@ -174,7 +272,17 @@ def reverseJointToScore(dfj):
 
 
 def retexturizeSynthetic(dfj):
-    """Given a synthetic joint dataframe, retexturize it."""
+    """Given a synthetic joint dataframe, retexturize it.
+
+    Parameters
+    ----------
+    dfj :
+        
+
+    Returns
+    -------
+
+    """
     adf = reverseJointToAnnotation(dfj)
     sdf = reverseJointToScore(dfj)
     sdf = score_parser._recursiveTexturization(sdf)

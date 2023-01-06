@@ -7,6 +7,7 @@ import tensorflow as tf
 
 
 def tensorflowGPUHack():
+    """ """
     # https://github.com/tensorflow/tensorflow/issues/37942
     gpu_devices = tf.config.experimental.list_physical_devices("GPU")
     for device in gpu_devices:
@@ -14,11 +15,27 @@ def tensorflowGPUHack():
 
 
 def disableGPU():
+    """ """
     # Disabling the GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 def padToSequenceLength(arr, sequenceLength, value=0):
+    """
+
+    Parameters
+    ----------
+    arr :
+        
+    sequenceLength :
+        
+    value :
+         (Default value = 0)
+
+    Returns
+    -------
+
+    """
     frames, features = arr.shape
     featuresPerSequence = sequenceLength * features
     featuresInExample = frames * features
@@ -30,6 +47,7 @@ def padToSequenceLength(arr, sequenceLength, value=0):
 
 
 class DynamicArray:
+    """ """
     def __init__(
         self,
         shape=(0,),
@@ -56,6 +74,17 @@ class DynamicArray:
         self.dtype = dtype
 
     def update(self, x):
+        """
+
+        Parameters
+        ----------
+        x :
+            
+
+        Returns
+        -------
+
+        """
         if self.size == self.capacity:
             self.capacity = int(self.capacity * self.growth_factor)
             if self.memmap:
@@ -74,4 +103,5 @@ class DynamicArray:
         self.size += 1
 
     def finalize(self):
+        """ """
         return self.data[: self.size]

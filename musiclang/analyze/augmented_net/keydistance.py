@@ -54,7 +54,19 @@ TRANSPOSITION = np.array((2, 3))
 
 
 def weberEuclidean(k1, k2):
-    """A measurement of key distance based on the Weber tonal chart."""
+    """A measurement of key distance based on the Weber tonal chart.
+
+    Parameters
+    ----------
+    k1 :
+        
+    k2 :
+        
+
+    Returns
+    -------
+
+    """
     i1, i2 = WEBERDIAGONAL.index(k1), WEBERDIAGONAL.index(k2)
     flatterkey, sharperkey = sorted((i1, i2))
     coord1 = np.array((flatterkey, flatterkey))
@@ -70,7 +82,21 @@ def weberEuclidean(k1, k2):
 
 
 def getTonicizationScaleDegree(localKey, tonicizedKey):
-    """Return the Roman numeral degree of a tonicization (denominator)."""
+    """
+
+    Parameters
+    ----------
+    localKey :
+        
+    tonicizedKey :
+        
+
+    Returns
+    -------
+    type
+        
+
+    """
     tonic, _, third, _, fifth, _, _, _ = music21.key.Key(tonicizedKey).pitches
     c1 = music21.chord.Chord([tonic, third, fifth])
     # TODO: Use harmalysis to solve this problem, not romanNumeralFromChord

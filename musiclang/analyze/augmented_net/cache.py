@@ -17,7 +17,19 @@ _getTonicizationScaleDegree = {}
 
 
 def weberEuclidean(k1, k2):
-    """A cached version of keydistance.weberEuclidean."""
+    """A cached version of keydistance.weberEuclidean.
+
+    Parameters
+    ----------
+    k1 :
+        
+    k2 :
+        
+
+    Returns
+    -------
+
+    """
     duple = (k1, k2)
     if duple in _weberEuclidean:
         return _weberEuclidean[duple]
@@ -27,7 +39,19 @@ def weberEuclidean(k1, k2):
 
 
 def getTonicizationScaleDegree(localKey, tonicizedKey):
-    """A cached version of keydistance.weberEuclidean."""
+    """A cached version of keydistance.weberEuclidean.
+
+    Parameters
+    ----------
+    localKey :
+        
+    tonicizedKey :
+        
+
+    Returns
+    -------
+
+    """
     duple = (localKey, tonicizedKey)
     if duple in _getTonicizationScaleDegree:
         return _getTonicizationScaleDegree[duple]
@@ -37,7 +61,19 @@ def getTonicizationScaleDegree(localKey, tonicizedKey):
 
 
 def forceTonicization(localKey, candidateKeys):
-    """Forces a tonicization of candidateKey that exist in vocabulary."""
+    """Forces a tonicization of candidateKey that exist in vocabulary.
+
+    Parameters
+    ----------
+    localKey :
+        
+    candidateKeys :
+        
+
+    Returns
+    -------
+
+    """
     tonicizationDistance = 1337
     tonicization = ""
     for candidateKey in candidateKeys:
@@ -56,7 +92,19 @@ def forceTonicization(localKey, candidateKeys):
 
 
 def TransposeKey(key, interval):
-    """Transposes a key based on an interval string (e.g., 'm3')."""
+    """Transposes a key based on an interval string (e.g., 'm3').
+
+    Parameters
+    ----------
+    key :
+        
+    interval :
+        
+
+    Returns
+    -------
+
+    """
     duple = (key, interval)
     if duple in _transposeKey:
         return _transposeKey[duple]
@@ -67,7 +115,19 @@ def TransposeKey(key, interval):
 
 
 def TransposePitch(pitch, interval):
-    """Transposes a pitch based on an interval string (e.g., 'm3')."""
+    """Transposes a pitch based on an interval string (e.g., 'm3').
+
+    Parameters
+    ----------
+    pitch :
+        
+    interval :
+        
+
+    Returns
+    -------
+
+    """
     duple = (pitch, interval)
     if duple in _transposePitch:
         return _transposePitch[duple]
@@ -78,7 +138,19 @@ def TransposePitch(pitch, interval):
 
 
 def TransposePcSet(pcset, interval):
-    """Transposes a pcset based on an interval string (e.g., 'm3')."""
+    """Transposes a pcset based on an interval string (e.g., 'm3').
+
+    Parameters
+    ----------
+    pcset :
+        
+    interval :
+        
+
+    Returns
+    -------
+
+    """
     duple = (pcset, interval)
     if duple in _transposePcSet:
         return _transposePcSet[duple]
@@ -90,7 +162,17 @@ def TransposePcSet(pcset, interval):
 
 
 def m21IntervalStr(interval):
-    """A cached interval object, based on the string (e.g., 'm3')."""
+    """A cached interval object, based on the string (e.g., 'm3').
+
+    Parameters
+    ----------
+    interval :
+        
+
+    Returns
+    -------
+
+    """
     if interval in _intervalObj:
         return _intervalObj[interval]
     intervalObj = Interval(interval)
@@ -99,7 +181,19 @@ def m21IntervalStr(interval):
 
 
 def m21Interval(pitch1, pitch2):
-    """A cached interval object, computed from two pitches."""
+    """A cached interval object, computed from two pitches.
+
+    Parameters
+    ----------
+    pitch1 :
+        
+    pitch2 :
+        
+
+    Returns
+    -------
+
+    """
     duple = (pitch1, pitch2)
     if duple in _intervalObj:
         return _intervalObj[duple]
@@ -110,7 +204,17 @@ def m21Interval(pitch1, pitch2):
 
 
 def m21Key(key):
-    """A cached key object, based on a string (e.g., 'c#')."""
+    """A cached key object, based on a string (e.g., 'c#').
+
+    Parameters
+    ----------
+    key :
+        
+
+    Returns
+    -------
+
+    """
     if key in _keyObj:
         return _keyObj[key]
     keyObj = Key(key)
@@ -119,7 +223,17 @@ def m21Key(key):
 
 
 def m21Pitch(pitch):
-    """A cached pitch object, based on a string (e.g., 'C#')."""
+    """A cached pitch object, based on a string (e.g., 'C#').
+
+    Parameters
+    ----------
+    pitch :
+        
+
+    Returns
+    -------
+
+    """
     if pitch in _pitchObj:
         return _pitchObj[pitch]
     pitchObj = Pitch(pitch)

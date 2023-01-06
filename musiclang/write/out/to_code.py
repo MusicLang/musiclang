@@ -9,8 +9,18 @@ LICENSE file in the root directory of this source tree.
 import autopep8
 
 def chord_serie_to_code(chord_serie, **kwargs):
-    """
-    Export a string with all the generated python code
+    """Export a string with all the generated python code
+
+    Parameters
+    ----------
+    chord_serie :
+        
+    **kwargs :
+        
+
+    Returns
+    -------
+
     """
     result = []
     result += get_import_lines()
@@ -49,15 +59,42 @@ def chord_serie_to_code(chord_serie, **kwargs):
     return result
 
 def line_return():
+    """ """
     return ['']
 
 def get_score(chord_serie_result):
+    """
+
+    Parameters
+    ----------
+    chord_serie_result :
+        
+
+    Returns
+    -------
+
+    """
     score_value = " + ".join(chord_serie_result)
     score = [f"score = {score_value}"]
     return score
 
 
 def get_chord_variable(chord_idx, chord, chord_result):
+    """
+
+    Parameters
+    ----------
+    chord_idx :
+        
+    chord :
+        
+    chord_result :
+        
+
+    Returns
+    -------
+
+    """
     chord_variable_name = f"chord_{chord_idx}"
     code_inside_chord = ""
     for code_part, part_variable_name, part_name in chord_result:
@@ -73,6 +110,21 @@ def get_chord_variable(chord_idx, chord, chord_result):
 
 
 def get_part_variables(part, chord_idx, part_name):
+    """
+
+    Parameters
+    ----------
+    part :
+        
+    chord_idx :
+        
+    part_name :
+        
+
+    Returns
+    -------
+
+    """
     variable_name = part_name + '_' + str(chord_idx)
 
     code = part.to_code()
@@ -83,10 +135,26 @@ def get_part_variables(part, chord_idx, part_name):
 
 
 def get_end_result():
+    """ """
     result = ["score.to_midi(FILENAME, tempo=TEMPO)"]
     return result
 
 def get_initial_variable_declaration(tempo=120, filename="", **kwargs):
+    """
+
+    Parameters
+    ----------
+    tempo :
+         (Default value = 120)
+    filename :
+         (Default value = "")
+    **kwargs :
+        
+
+    Returns
+    -------
+
+    """
     result = [
         "### GLOBAL SCORE VARIABLES",
         "",
@@ -98,6 +166,7 @@ def get_initial_variable_declaration(tempo=120, filename="", **kwargs):
     return result
 
 def get_import_lines():
+    """ """
     result =[
             "from musiclang.write.library import *",
             "from fractions import Fraction as frac"

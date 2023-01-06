@@ -20,6 +20,19 @@ from .utils import padToSequenceLength, DynamicArray
 
 
 def _getTranspositions(df, transpositionKeys=TRANSPOSITIONKEYS):
+    """
+
+    Parameters
+    ----------
+    df :
+        
+    transpositionKeys :
+         (Default value = TRANSPOSITIONKEYS)
+
+    Returns
+    -------
+
+    """
     tonicizedKeys = df.a_localKey.to_list() + df.a_tonicizedKey.to_list()
     tonicizedKeys = set(tonicizedKeys)
     ret = []
@@ -33,7 +46,19 @@ def _getTranspositions(df, transpositionKeys=TRANSPOSITIONKEYS):
 
 
 def initializeArrays(inputRepresentations, outputRepresentations):
-    """Each array becomes a dict entry with the name of the input/output"""
+    """Each array becomes a dict entry with the name of the input/output
+
+    Parameters
+    ----------
+    inputRepresentations :
+        
+    outputRepresentations :
+        
+
+    Returns
+    -------
+
+    """
     outputArrays = {}
     for split in ["training", "validation"]:
         for x in inputRepresentations:
@@ -44,7 +69,21 @@ def initializeArrays(inputRepresentations, outputRepresentations):
 
 
 def scrutinize(df, qualityThresh=0.75, bassThresh=0.8):
-    """Filter 'bad quality' annotations."""
+    """Filter 'bad quality' annotations.
+
+    Parameters
+    ----------
+    df :
+        
+    qualityThresh :
+         (Default value = 0.75)
+    bassThresh :
+         (Default value = 0.8)
+
+    Returns
+    -------
+
+    """
     originalIndex = len(df.index)
     df = df[
         (df.qualitySquaredSum < qualityThresh)
@@ -56,7 +95,19 @@ def scrutinize(df, qualityThresh=0.75, bassThresh=0.8):
 
 
 def correctSplit(split, testSetOn):
-    """Correct the split of this file according to 'testSetOn' parameter."""
+    """Correct the split of this file according to 'testSetOn' parameter.
+
+    Parameters
+    ----------
+    split :
+        
+    testSetOn :
+        
+
+    Returns
+    -------
+
+    """
     if testSetOn:
         if split == "validation":
             return "training"
@@ -80,6 +131,41 @@ def generateDataset(
     npzOutput,
     transpositionKeys,
 ):
+    """
+
+    Parameters
+    ----------
+    synthetic :
+        
+    texturizeEachTransposition :
+        
+    noTransposition :
+        
+    collections :
+        
+    testCollections :
+        
+    inputRepresentations :
+        
+    outputRepresentations :
+        
+    sequenceLength :
+        
+    scrutinizeData :
+        
+    testSetOn :
+        
+    tsvDir :
+        
+    npzOutput :
+        
+    transpositionKeys :
+        
+
+    Returns
+    -------
+
+    """
     outputArrays = {}
     training = ["training", "validation"] if testSetOn else ["training"]
     validation = ["test"] if testSetOn else ["validation"]

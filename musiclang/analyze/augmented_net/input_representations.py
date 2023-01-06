@@ -20,12 +20,24 @@ from .feature_representation import (
 
 
 class MeasureOnset7(FeatureRepresentationTI):
+    """ """
     features = len(NOTEDURATIONS)
     pattern = [list(reversed(f"{x:06b}0")) for x in range(64)]
     pattern = [[int(n) for n in arr] for arr in pattern]
     pattern[0][0] = 1
 
     def run(self, transposition=None):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         prev_measure = -1
         idx = 0
@@ -40,6 +52,17 @@ class MeasureOnset7(FeatureRepresentationTI):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -50,7 +73,19 @@ class MeasureOnset7(FeatureRepresentationTI):
 
 
 class NoteOnset7(MeasureOnset7):
+    """ """
     def run(self, transposition=None):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         idx = 0
         for frame, onset in enumerate(self.df.s_isOnset):
@@ -63,6 +98,17 @@ class NoteOnset7(MeasureOnset7):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -73,10 +119,22 @@ class NoteOnset7(MeasureOnset7):
 
 
 class MeasureNoteOnset14(FeatureRepresentationTI):
+    """ """
     features = MeasureOnset7.features + NoteOnset7.features
     pattern = MeasureOnset7.pattern
 
     def run(self, transposition=None):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         self.measure7 = MeasureOnset7(self.df).run(transposition)
         self.note7 = NoteOnset7(self.df).run(transposition)
         array = np.concatenate((self.measure7, self.note7), axis=1)
@@ -84,15 +142,38 @@ class MeasureNoteOnset14(FeatureRepresentationTI):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         measure7 = MeasureOnset7.decode(array[:, : MeasureOnset7.features])
         note7 = NoteOnset7.decode(array[:, MeasureOnset7.features :])
         return [(tuple(mm), tuple(n)) for mm, n in zip(measure7, note7)]
 
 
 class Bass12(FeatureRepresentation):
+    """ """
     features = len(PITCHCLASSES)
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, notes in enumerate(self.df.s_notes):
             bass = notes[0]
@@ -104,6 +185,17 @@ class Bass12(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -114,9 +206,21 @@ class Bass12(FeatureRepresentation):
 
 
 class Bass7(FeatureRepresentation):
+    """ """
     features = len(NOTENAMES)
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, notes in enumerate(self.df.s_notes):
             bass = notes[0]
@@ -129,6 +233,17 @@ class Bass7(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -139,9 +254,21 @@ class Bass7(FeatureRepresentation):
 
 
 class Bass19(FeatureRepresentation):
+    """ """
     features = Bass12.features + Bass7.features
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         self.letter = Bass7(self.df).run(transposition)
         self.pc = Bass12(self.df).run(transposition)
@@ -150,15 +277,38 @@ class Bass19(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         letters = Bass7.decode(array[:, : Bass7.features])
         pcs = Bass12.decode(array[:, Bass7.features :])
         return [(l, pc) for l, pc in zip(letters, pcs)]
 
 
 class Chromagram12(FeatureRepresentation):
+    """ """
     features = len(PITCHCLASSES)
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, notes in enumerate(self.df.s_notes):
             for note in notes:
@@ -170,6 +320,17 @@ class Chromagram12(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -180,9 +341,21 @@ class Chromagram12(FeatureRepresentation):
 
 
 class Chromagram7(FeatureRepresentation):
+    """ """
     features = len(NOTENAMES)
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, notes in enumerate(self.df.s_notes):
             for note in notes:
@@ -195,6 +368,17 @@ class Chromagram7(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -205,9 +389,21 @@ class Chromagram7(FeatureRepresentation):
 
 
 class Chromagram19(FeatureRepresentation):
+    """ """
     features = Chromagram12.features + Chromagram7.features
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         self.letter = Chromagram7(self.df).run(transposition)
         self.pc = Chromagram12(self.df).run(transposition)
@@ -216,15 +412,28 @@ class Chromagram19(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         letters = Chromagram7.decode(array[:, : Chromagram7.features])
         pcs = Chromagram12.decode(array[:, Chromagram7.features :])
         return [(l, pc) for l, pc in zip(letters, pcs)]
 
 
 class Intervals19(FeatureRepresentationTI):
+    """ """
     features = len(NOTENAMES) + len(PITCHCLASSES)
 
     def run(self):
+        """ """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, intervals in enumerate(self.df.s_intervals):
             for interval in intervals:
@@ -237,6 +446,17 @@ class Intervals19(FeatureRepresentationTI):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -248,9 +468,11 @@ class Intervals19(FeatureRepresentationTI):
 
 
 class Intervals39(FeatureRepresentationTI):
+    """ """
     features = len(INTERVALCLASSES)
 
     def run(self):
+        """ """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, intervals in enumerate(self.df.s_intervals):
             for interval in intervals:
@@ -260,6 +482,17 @@ class Intervals39(FeatureRepresentationTI):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != cls.features:
             raise IndexError("Strange array shape.")
         ret = []
@@ -270,9 +503,21 @@ class Intervals39(FeatureRepresentationTI):
 
 
 class Bass35(FeatureRepresentation):
+    """ """
     features = len(SPELLINGS)
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, notes in enumerate(self.df.s_notes):
             bass = re.sub(r"\d", "", notes[0])
@@ -284,15 +529,38 @@ class Bass35(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != len(SPELLINGS):
             raise IndexError("Strange array shape.")
         return [SPELLINGS[np.argmax(onehot)] for onehot in array]
 
 
 class Chromagram35(FeatureRepresentation):
+    """ """
     features = len(SPELLINGS)
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, notes in enumerate(self.df.s_notes):
             notes = [re.sub(r"\d", "", n) for n in notes]
@@ -305,6 +573,17 @@ class Chromagram35(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         if len(array.shape) != 2 or array.shape[1] != len(SPELLINGS):
             raise IndexError("Strange array shape.")
         ret = []
@@ -315,9 +594,21 @@ class Chromagram35(FeatureRepresentation):
 
 
 class BassChromagram70(FeatureRepresentation):
+    """ """
     features = Bass35.features + Chromagram35.features
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         self.bass35 = Bass35(self.df).run(transposition)
         self.chromagram35 = Chromagram35(self.df).run(transposition)
         array = np.concatenate((self.bass35, self.chromagram35), axis=1)
@@ -325,15 +616,38 @@ class BassChromagram70(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         bass35 = Bass35.decode(array[:, : Bass35.features])
         chromagram35 = Chromagram35.decode(array[:, Bass35.features :])
         return [(b, ch) for b, ch in zip(bass35, chromagram35)]
 
 
 class BassChromagram38(FeatureRepresentation):
+    """ """
     features = Bass19.features + Chromagram19.features
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         # super().__init__(df)
         self.bass19 = Bass19(self.df).run(transposition)
         self.chromagram19 = Chromagram19(self.df).run(transposition)
@@ -342,15 +656,38 @@ class BassChromagram38(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         bass19 = Bass19.decode(array[:, : Bass19.features])
         chromagram19 = Chromagram19.decode(array[:, Bass19.features :])
         return [(b[0], b[1], c[0], c[1]) for b, c in zip(bass19, chromagram19)]
 
 
 class BassIntervals58(FeatureRepresentation):
+    """ """
     features = Bass19.features + Intervals39.features
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         self.bass19 = Bass19(self.df).run(transposition)
         self.intervals39 = Intervals39(self.df).run()
         array = np.concatenate((self.bass19, self.intervals39), axis=1)
@@ -358,15 +695,38 @@ class BassIntervals58(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         bass19 = Bass19.decode(array[:, : Bass19.features])
         intervals39 = Intervals39.decode(array[:, Bass19.features :])
         return [(b[0], b[1], i) for b, i in zip(bass19, intervals39)]
 
 
 class BassChromagramIntervals77(FeatureRepresentation):
+    """ """
     features = BassChromagram38.features + Intervals39.features
 
     def run(self, transposition="P1"):
+        """
+
+        Parameters
+        ----------
+        transposition :
+             (Default value = "P1")
+
+        Returns
+        -------
+
+        """
         self.bassChroma38 = BassChromagram38(self.df).run(transposition)
         self.intervals39 = Intervals39(self.df).run()
         array = np.concatenate((self.bassChroma38, self.intervals39), axis=1)
@@ -374,6 +734,17 @@ class BassChromagramIntervals77(FeatureRepresentation):
 
     @classmethod
     def decode(cls, array):
+        """
+
+        Parameters
+        ----------
+        array :
+            
+
+        Returns
+        -------
+
+        """
         bassChroma38 = BassChromagram38.decode(
             array[:, : BassChromagram38.features]
         )

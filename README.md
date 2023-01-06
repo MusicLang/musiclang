@@ -1,6 +1,8 @@
 Musiclang
 =========
 
+![MusicLang logo](documentation/images/MusicLang.png "MusicLang")
+
 
 MusicLang is a Python framework to write, analyze, transform and predict music. 
 

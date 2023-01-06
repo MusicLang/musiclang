@@ -31,7 +31,8 @@ import lightgbm
 print('Number of examples : ', str(len(data)))
 print('Training ...')
 clf = RandomForestClassifier(n_estimators=30, max_depth=None, n_jobs=1)
-predictor = WindowedPredictor(clf, memory=2, vector_size=24, window=3)
+print(clf)
+predictor = WindowedPredictor(clf, memory=3, vector_size=15, window=3)
 import numpy as np
 print(np.mean(predictor.cross_val_score(data, cv=2)))
 #exit()

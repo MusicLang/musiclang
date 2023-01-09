@@ -1,6 +1,6 @@
 """
-Writing Mozart "Alla turca"
-===========================
+1. Writing Mozart "Alla turca"
+==============================
 
 In this short example we will write the first four bars of Mozart rondo alla turca with MusicLang.
 It will show you the basic of writing a simple score with MusicLang

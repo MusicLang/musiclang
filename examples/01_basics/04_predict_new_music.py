@@ -1,6 +1,6 @@
 """
-Predict New Music
-=================
+4. Predict New Music
+====================
 
 Today we are gonna see how we can use the predict module to extends an already existing chord progression
 - We will create a small chord progression

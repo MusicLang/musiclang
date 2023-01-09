@@ -1,6 +1,6 @@
 """
-Transform Bach prelude in C-major
-=================================
+2. Transform Bach prelude in C-major
+===================================
 
 In this example we will play a little bit with a score already written
 

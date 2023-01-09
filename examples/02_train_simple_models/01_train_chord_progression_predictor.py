@@ -1,6 +1,6 @@
 """
-Train a model to predict the next chord of a chord progression
-==============================================================
+1. Train a model to predict the next chord of a chord progression
+=================================================================
 
 In this tutorial we will train our first machine learning model that will be able to predict the next chord of a song.
 If you want to fully understand this example it is strongly advised to have some basic knowledge on machine learning

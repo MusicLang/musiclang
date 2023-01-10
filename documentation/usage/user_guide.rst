@@ -3,18 +3,22 @@
 User's guide
 ============
 
+This guide is here to help you write music with musiclang.
 
 
 General considerations
 ----------------------
 
 - All the object in musiclang are immutable, a method call on an object will return a new instance of the object.
+- Each part can only play a monophonic melody
+- The string representation of a score fully determines it. It means that if you import the library : ``eval(str(score))==score``
 - There are many already instantiated object that you can call on the ``musiclang.library`` module. It stores for example chords and notes symbols
 - Played notes are always relative to a chord scale
-- Each part can only play a monophonic melody
 
-Example 1 : Write a scale
-``````````````````````````
+To illustrate these two last points :
+
+Example : Write a scale
+````````````````````````
 
 Here is a simple script to show the C-major scale in musiclang ::
 
@@ -27,7 +31,7 @@ Here is a simple script to show the C-major scale in musiclang ::
 
 .. image:: ../images/c_major_scale.png
   :width: 600
-  :alt: MusicLang logo
+  :alt: C major scale
 
 To write the Eb major scale we could have done ::
 
@@ -40,7 +44,7 @@ To write the Eb major scale we could have done ::
 
 .. image:: ../images/eb_major_scale.png
   :width: 600
-  :alt: MusicLang logo
+  :alt: E flat major scale
 
 
 If we wanted to write this time the (harmonic) minor scale of D ::
@@ -55,7 +59,10 @@ If we wanted to write this time the (harmonic) minor scale of D ::
 
 .. image:: ../images/d_minor_scale.png
   :width: 600
-  :alt: MusicLang logo
+  :alt: D harmonic minor scale
+
+
+
 
 
 
@@ -129,7 +136,17 @@ You can specify a note continuation using the ``l`` notation in the library, oth
 Mode
 ''''
 
-You can force a mode on a note that bypass the mode of the chord scale
+You can force a mode on a note that bypass the mode of the chord scale (same as tonalities modes)
+
+For example ::
+    from musiclang.library import s0, s1, s2, s3, s4, I
+    score = (I%I.M)(piano=s0 + s1 + s2 + s3.lydian + s4)
+
+    score.show()
+
+.. image:: ../images/lydian.png
+  :width: 600
+  :alt: Lydian mode in musiclang
 
 Examples
 ''''''''
@@ -236,10 +253,6 @@ You can use any instrument of the general midi list (https://en.wikipedia.org/wi
 
 
 
-Write score
-````````````
-
-
 Output
 ``````
 
@@ -255,13 +268,19 @@ You can output a score to midi using the ``to_midi`` method ::
 
 
 
-Analyze music
--------------
+Read an existing file (Analyze music)
+--------------------------------------
 
 The score loader is decomposed in two parts :
 
 - A chord analyzer that split the music in relevant chord scales
 - A parts analyzer that split the music in different monophonic parts
+
+Here is a script that allows you to read a midi file called music.mid ::
+
+    from musiclang import Score
+
+    score = Score.from_midi('music.mid')
 
 
 Transform music
@@ -273,7 +292,7 @@ Transform music
 Predict music
 -------------
 
-.. warning:: As of this time, the predict library is only partially released.
+.. warning:: As of this time, the predict library is only partially released. You can train a model but you cannot use an already trained one.
 
 The ``musiclang.predict`` module will store many classes that will help you predict some
 aspect of an already existing MusicLang score using models trained on a variety of musical data.

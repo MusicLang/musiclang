@@ -20,6 +20,8 @@ an assistant that is able to automate some tasks that would normally be tedious 
 It is naturally good at analyzing and manipulating existing
 pieces of music in musicxml or midi format.
 
+[Read our documentation](https://musiclang.readthedocs.io/en/latest).
+
 
 How to install
 -------------

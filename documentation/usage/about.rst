@@ -11,7 +11,7 @@ What is MusicLang ?
 --------------------
 
 MusicLang which simply stands for "music language" is a Python framework
-that allows composers to write symbolic music in a condensed and high level manner.
+that allows composers to write symbolic music in a simple, condensed and high level manner.
 This framework is not only another notation software but also
 an assistant that is able to automate some tasks that would normally be tedious for a composer.
 It is well suited to write new music or to manipulate existing music.
@@ -40,7 +40,7 @@ Here is a simple example to write a C-major chord in musiclang and save it to mi
     from musiclang.library import *
 
     # Write A C major chord
-    score = (I % I.M)(piano__0=s0, piano__1=s2, piano__3=s4)
+    score = (I % I.M)(s0, s2, s4)
 
     # Store it to midi
     score.to_midi('c_major.mid')

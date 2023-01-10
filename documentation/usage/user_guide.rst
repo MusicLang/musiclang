@@ -77,8 +77,8 @@ two ingredients :
 - Define the chords scale of your song
 - Define which part (with instrument name) plays which monophonic melody
 
-This ensure that you write music with context
-
+This feature ensures that you write your music with as much context as possible. In that way you can really use
+advanced manipulations on your music.
 
 
 Write notes

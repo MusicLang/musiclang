@@ -253,10 +253,17 @@ You can use any instrument of the general midi list (https://en.wikipedia.org/wi
 
 
 
-Output
-``````
+Output a musiclang score into another format
+------------------------------
 
-You can output a score to midi using the ``to_midi`` method ::
+You can output a MusicLang score in various ways. There are four main methods on the ``Score`` object :
+
+- ``to_pickle`` : Save the score to a pickle object
+- ``to_midi`` : Save the score to a midi object
+- ``to_mxl``: Save the score to a musicxml format (For example for musescore)
+- ``show``: This is for the time being a wrapper for the music21 show method
+
+For example the ``to_midi`` method ::
 
  from musiclang.library import *
 

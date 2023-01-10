@@ -28,11 +28,6 @@ Welcome to MusicLang's documentation!
 
    ./usage/module_reference.rst
 
-.. toctree::
-   :maxdepth: 2
-
-   ./usage/developer_guide.rst
-
 
 See the :ref:`examples-gallery`.
 

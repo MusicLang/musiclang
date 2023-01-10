@@ -32,8 +32,8 @@ Or use this repo for the latest version ::
     pip install git+https://github.com/MusicLang/musiclang
 
 
-Example
--------
+A first example
+----------------
 
 Here is a simple example to write a C-major chord in musiclang and save it to midi ::
 
@@ -51,3 +51,14 @@ Learn MusicLang
 ---------------
 
 To learn MusicLang we strongly advise to read the :ref:`user-guide`.
+
+
+Contributing to MusicLang
+-------------------------
+
+MusicLang is a very recent library and is moving fast. Now it's quite exciting times because the roadmap
+is still opened to change. Don't hesitate to `contact me <fgardin.pro@gmail.com>`.
+We are very interested to get in touch with composers,
+musicologists, programmers, data scientists and any other people who want to help us.
+We will regularly update issues on our `github repository <https://github.com/MusicLang/musiclang/issues>`.
+Don't hesitate to submit your own pull request if it makes sense for you and reflect your usage of musiclang.

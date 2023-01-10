@@ -17,15 +17,16 @@ def parse_to_musiclang(input_file: str):
 
     Parameters
     ----------
-    input_file :
-        return: musiclang.Score, Dict of score configuration
-    input_file: str :
+    input_file : str
+        Input filepath
         
-
     Returns
     -------
-    type
-        musiclang.Score, Dict of score configuration
+    score: musiclang.Score
+        Parsed score
+
+    config: dict
+        Dict of score configuration
 
     """
     extension = input_file.split('.')[-1]
@@ -43,15 +44,16 @@ def parse_midi_to_musiclang(input_file: str):
 
     Parameters
     ----------
-    input_file :
-        return: musiclang.Score, Dict of score configuration
-    input_file: str :
-        
+    input_file : str
+        Input midi filepath
 
     Returns
     -------
-    type
-        musiclang.Score, Dict of score configuration
+    score: musiclang.Score
+        Parsed score
+
+    config: dict
+     Dict of score configuration
 
     """
     import tempfile
@@ -71,19 +73,19 @@ def parse_midi_to_musiclang(input_file: str):
 def parse_mxl_to_musiclang(input_file: str):
     """Parse a music xml input file into a musiclang Score
     - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
-    - Get voice separation and parsing
+    - Separate into monophonic voice with the proper instrument
 
     Parameters
     ----------
-    input_file :
-        return: musiclang.Score, Dict of score configuration
     input_file: str :
-        
+            Filepath of the input
 
     Returns
     -------
-    type
-        musiclang.Score, Dict of score configuration
+    score : musiclang.Score
+
+    config: dict
+        Dict of score configuration
 
     """
 
@@ -105,15 +107,16 @@ def parse_directory_to_musiclang(directory: str):
 
     Parameters
     ----------
-    directory :
-        return: Score, Dict of score configuration
-    directory: str :
-        
+    directory : str
+        Directory with a "data.mid" file and a "data_annotated.rntxt" annotation file
 
     Returns
     -------
-    type
-        Score, Dict of score configuration
+    score: Score
+        MusicLang score parsed
+
+    config: dict
+        Dict of score configuration
 
     """
     import os
@@ -136,12 +139,19 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
     Parameters
     ----------
     midi_file: str :
+        Filepath to the midi file to parse
         
     annotation_file: str :
+        Filepath to the anotation file to parse
         
 
     Returns
     -------
+    score: Score
+        MusicLang score parsed
+
+    tempo: int
+        Tempo of the score
 
     """
 
@@ -167,6 +177,7 @@ def parse_tonality(element):
         key_tonic : Degree of the key (in 0-12)
 
     """
+
     DICT_MODE = {'major': 'M', 'minor': 'm'}
     if element.secondaryRomanNumeralKey is not None:
         key_tonic = element.secondaryRomanNumeralKey.tonic.pitchClass
@@ -177,11 +188,11 @@ def parse_tonality(element):
     if 'N' in element.primaryFigure:
         key_tonic += 1
         key_mode = 'M'
-    if 'Ger' in element.primaryFigure:
+    elif 'Ger' in element.primaryFigure:
         key_tonic += 1  # For musiclang it will be a V % II.b.M
         key_mode = 'M'
     elif 'It' in element.primaryFigure:
-        key_tonic += 1  # For musiclang it will be a V % II.b.M
+        key_tonic += 1  # For musiclang it will be a I % II.b.M
         key_mode = 'M'
     elif 'Fr' in element.primaryFigure:
         key_tonic += 3
@@ -199,8 +210,7 @@ def get_degree(element):
 
     Returns
     -------
-    type
-        degree : int,
+    degree : int
 
     """
     degree = element.scaleDegree - 1
@@ -267,13 +277,12 @@ def get_chords_from_mxl(input_file):
 
     Parameters
     ----------
-    input_file :
-        return: musiclang.Score
+    input_file : str
+        MusicXML file to parse
 
     Returns
     -------
-    type
-        musiclang.Score
+    score: musiclang.Score
 
     """
     import shutil
@@ -293,15 +302,13 @@ def get_chords_from_analysis(analysis):
 
     Parameters
     ----------
-    input_file :
-        return: musiclang.Score
-    analysis :
+    analysis : str,
+        Filepath of analysis file (.rntxt) format
         
 
     Returns
     -------
-    type
-        musiclang.Score
+    score: musiclang.Score
 
     """
     import music21

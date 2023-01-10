@@ -18,20 +18,19 @@
 .. _sphx_glr_auto_examples_01_basics_04_predict_new_music.py:
 
 
-Predict New Music
-=================
+4. Predict New Music
+====================
 
-Today we are gonna see how we can use the predict module to extends an already existing chord progression
+In this example we are gonna see how we can use the predict module to extends an already existing chord progression
 - We will create a small chord progression
 - We will use an already trained WindowedPredictor to predict the next three chords of our song
 
-.. GENERATED FROM PYTHON SOURCE LINES 10-38
+.. GENERATED FROM PYTHON SOURCE LINES 10-37
 
 .. code-block:: default
 
 
 
-    from musiclang import Score
     from musiclang.predict.predictors import WindowedPredictor
     from musiclang.predict.tokenizers import ChordTokenizer, ChordDetokenizer
     from musiclang.write.library import *

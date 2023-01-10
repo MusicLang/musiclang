@@ -18,8 +18,8 @@
 .. _sphx_glr_auto_examples_01_basics_01_writing_mozart_alla_turca.py:
 
 
-Writing Mozart "Alla turca"
-===========================
+1. Writing Mozart "Alla turca"
+==============================
 
 In this short example we will write the first four bars of Mozart rondo alla turca with MusicLang.
 It will show you the basic of writing a simple score with MusicLang

@@ -4,11 +4,9 @@ import itertools
 
 CHORD_REGEX = re.compile(r'\([^)]+%[^)]+\)')
 
+
 class ChordTokenizer:
     """Chord tokenizer transforms a score in text format to a list of tokens"""
-
-    def __init__(self):
-        pass
 
     def tokenize(self, text):
         """Tokenize a text (or score) to extract chord tokens
@@ -20,8 +18,8 @@ class ChordTokenizer:
 
         Returns
         -------
-        type
-            List of tokens
+        tokens: List[str]
+                List of tokens
 
         """
         chords = re.findall(CHORD_REGEX, str(text))
@@ -40,8 +38,8 @@ class ChordTokenizer:
 
         Returns
         -------
-        type
-            List of List of tokens
+        tokens_list: List[List[str]]
+            A list of token per text
 
         """
         data = []
@@ -51,15 +49,17 @@ class ChordTokenizer:
         return data
 
     def tokenize_file(self, file):
-        """
+        """Tokenize one file
 
         Parameters
         ----------
-        file :
-            
+        file : str
+            Filepath where to get the tokens
 
         Returns
         -------
+        tokens: List[str]
+                List of tokens
 
         """
         with open(file, 'r') as f:
@@ -67,14 +67,19 @@ class ChordTokenizer:
 
     def tokenize_directory(self, directory):
         """
+        Tokenize a directory, call the tokenize_file method for each text in the directory.
 
         Parameters
         ----------
-        directory :
+        directory : str
+            Directory to tokenize
             
 
         Returns
         -------
+
+        data: List[List[tokens]]
+             A list of token per text
 
         """
         import os
@@ -94,6 +99,7 @@ class ChordDetokenizer:
 
     def detokenize(self, tokens):
         """
+        Convert a tokens list to a musiclang score.
 
         Parameters
         ----------
@@ -102,6 +108,8 @@ class ChordDetokenizer:
 
         Returns
         -------
+        score: musiclang.Score
+               Score detokenized (only chords)
 
         """
         from musiclang.write.library import I, II, III, IV, V, VI, VII

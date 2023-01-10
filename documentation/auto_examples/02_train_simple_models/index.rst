@@ -19,13 +19,13 @@ Train chord predictors
 .. only:: html
 
   .. image:: /auto_examples/02_train_simple_models/images/thumb/sphx_glr_01_train_chord_progression_predictor_thumb.png
-    :alt: Train a model to predict the next chord of a chord progression
+    :alt: 1. Train a model to predict the next chord of a chord progression
 
   :ref:`sphx_glr_auto_examples_02_train_simple_models_01_train_chord_progression_predictor.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Train a model to predict the next chord of a chord progression</div>
+      <div class="sphx-glr-thumbnail-title">1. Train a model to predict the next chord of a chord progression</div>
     </div>
 
 

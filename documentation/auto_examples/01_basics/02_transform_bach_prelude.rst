@@ -18,8 +18,8 @@
 .. _sphx_glr_auto_examples_01_basics_02_transform_bach_prelude.py:
 
 
-Transform Bach prelude in C-major
-=================================
+2. Transform Bach prelude in C-major
+===================================
 
 In this example we will play a little bit with a score already written
 

@@ -1,15 +1,14 @@
 """
-Predict New Music
-=================
+4. Predict New Music
+====================
 
-Today we are gonna see how we can use the predict module to extends an already existing chord progression
+In this example we are gonna see how we can use the predict module to extends an already existing chord progression
 - We will create a small chord progression
 - We will use an already trained WindowedPredictor to predict the next three chords of our song
 
 """
 
 
-from musiclang import Score
 from musiclang.predict.predictors import WindowedPredictor
 from musiclang.predict.tokenizers import ChordTokenizer, ChordDetokenizer
 from musiclang.write.library import *

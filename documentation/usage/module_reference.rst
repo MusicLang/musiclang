@@ -1,19 +1,9 @@
-Module's references
+MusicLang's references
 ===================
 
 
+:ref:`write`.
 
-.. currentmodule:: musiclang
+:ref:`analyze`.
 
-.. autosummary::
-   musiclang.Note
-   musiclang.Continuation
-   musiclang.Silence
-   musiclang.Tonality
-   musiclang.Chord
-   musiclang.Score
-
-
-.. automodule:: musiclang
-   :members:
-   :special-members:
+:ref:`predict`.

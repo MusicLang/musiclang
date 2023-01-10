@@ -8,10 +8,6 @@ from sklearn.preprocessing import LabelEncoder
 
 class WindowedPredictor:
     """Simple next word predictor using a context window
-    - using a Word2Vec embeding
-    - A random forest regressor trained on a embedded chord window of size memory to predict the next chord embeding
-    - The predicted chord will be the closest vector in the Word2Vec space
-
     """
     _vector_size = 10
     _window = 3
@@ -25,7 +21,7 @@ class WindowedPredictor:
 
         clf:
         vector_size: int
-                Size of Word2Vec embedding (default=3)
+                Size of Word2Vec embedding (default=10)
         window: int
                 Window size used for Word2Vec, (default=3)
         memory: int
@@ -96,6 +92,14 @@ class WindowedPredictor:
         scorer = 'accuracy'
         return cross_val_score(self.clf, X, y, scoring=scorer, **kwargs)
 
+    def eval(self, data):
+        from sklearn.metrics import accuracy_score
+        X, Y = self.transform(data, train=False)
+        y_true = Y
+        y_pred = self.encoder.inverse_transform(self.clf.predict(X))
+        return accuracy_score(y_true, y_pred)
+
+
     def filter(self, data):
         """Filter some data by default before training, it can help to reduce the vocab size
 
@@ -122,11 +126,39 @@ class WindowedPredictor:
         -------
 
         """
-        # Pad with START TOKEN
-        data = [['START'] * self.memory + self.filter(d) for d in data]  # Pad with a start token
+        data = self._pad_data(data)
+        self._train_embedding(data)
+        data_transformed = self._embed(data)
+        return data_transformed, data
+
+
+    def _train_embedding(self, data):
         model = gensim.models.Word2Vec(data, min_count=1, vector_size=self.vector_size, window=self.window)
         self.wv = model.wv
-        data_transformed = [[self.wv[chord] for chord in song] for song in data]
+
+    def _pad_data(self, data):
+        # Pad with START TOKEN
+        data = [['START'] * self.memory + self.filter(d) for d in data]
+        return data
+
+    def _embed(self, data):
+        data_transformed = [[self.wv.vectors[self.wv.get_index(chord, default=self.wv.get_index('START'))] for chord in song] for song in data]
+        return data_transformed
+
+    def embed(self, data):
+        """
+
+        Parameters
+        ----------
+        data
+
+        Returns
+        -------
+
+        """
+
+        data = self._pad_data(data)
+        data_transformed = self._embed(data)
         return data_transformed, data
 
     def fit(self, data):
@@ -146,7 +178,7 @@ class WindowedPredictor:
         self.clf.fit(X, y)
         return self
 
-    def transform(self, data):
+    def transform(self, data, train=True):
         """
 
         Parameters
@@ -159,7 +191,10 @@ class WindowedPredictor:
 
         """
         from sklearn.utils import shuffle
-        data_transformed, filtered_data = self.train_embeding(data)
+        if train:
+            data_transformed, filtered_data = self.train_embeding(data)
+        else:
+            data_transformed, filtered_data = self.embed(data)
         # Create X, Y dataset
         X = [np.asarray(song[chord_idx:chord_idx + self.memory]).ravel() for song in data_transformed
              for chord_idx, chord in enumerate(song[self.memory:])

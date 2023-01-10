@@ -14,18 +14,18 @@ Basics
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Today we are gonna see how we can use the predict module to extends an already existing chord p...">
+    <div class="sphx-glr-thumbcontainer" tooltip="In this example we are gonna see how we can use the predict module to extends an already existi...">
 
 .. only:: html
 
   .. image:: /auto_examples/01_basics/images/thumb/sphx_glr_04_predict_new_music_thumb.png
-    :alt: Predict New Music
+    :alt: 4. Predict New Music
 
   :ref:`sphx_glr_auto_examples_01_basics_04_predict_new_music.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Predict New Music</div>
+      <div class="sphx-glr-thumbnail-title">4. Predict New Music</div>
     </div>
 
 
@@ -36,13 +36,13 @@ Basics
 .. only:: html
 
   .. image:: /auto_examples/01_basics/images/thumb/sphx_glr_03_analyze_beethoven_moonlight_sonata_thumb.png
-    :alt: Analyze Beethoven Moonlight Sonata
+    :alt: 3. Analyze Beethoven Moonlight Sonata
 
   :ref:`sphx_glr_auto_examples_01_basics_03_analyze_beethoven_moonlight_sonata.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Analyze Beethoven Moonlight Sonata</div>
+      <div class="sphx-glr-thumbnail-title">3. Analyze Beethoven Moonlight Sonata</div>
     </div>
 
 
@@ -53,13 +53,13 @@ Basics
 .. only:: html
 
   .. image:: /auto_examples/01_basics/images/thumb/sphx_glr_02_transform_bach_prelude_thumb.png
-    :alt: Transform Bach prelude in C-major
+    :alt: 2. Transform Bach prelude in C-major
 
   :ref:`sphx_glr_auto_examples_01_basics_02_transform_bach_prelude.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Transform Bach prelude in C-major</div>
+      <div class="sphx-glr-thumbnail-title">2. Transform Bach prelude in C-major</div>
     </div>
 
 
@@ -70,13 +70,13 @@ Basics
 .. only:: html
 
   .. image:: /auto_examples/01_basics/images/thumb/sphx_glr_01_writing_mozart_alla_turca_thumb.png
-    :alt: Writing Mozart "Alla turca"
+    :alt: 1. Writing Mozart "Alla turca"
 
   :ref:`sphx_glr_auto_examples_01_basics_01_writing_mozart_alla_turca.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Writing Mozart "Alla turca"</div>
+      <div class="sphx-glr-thumbnail-title">1. Writing Mozart "Alla turca"</div>
     </div>
 
 

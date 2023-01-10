@@ -18,8 +18,8 @@
 .. _sphx_glr_auto_examples_01_basics_03_analyze_beethoven_moonlight_sonata.py:
 
 
-Analyze Beethoven Moonlight Sonata
-===================================
+3. Analyze Beethoven Moonlight Sonata
+=====================================
 
 In this tutorial we will read an existing midi file and let MusicLang perform an automatic transcription
 We will then explore this transcription

@@ -4,6 +4,8 @@ Musiclang
 ![MusicLang logo](documentation/images/MusicLang.png "MusicLang")
 
 
+[![Documentation Status](https://readthedocs.org/projects/musiclang/badge/?version=latest)](https://musiclang.readthedocs.io/en/latest/?badge=latest)
+
 The Python framework to write, analyze, transform and predict music.
 
 

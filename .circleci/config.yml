@@ -27,7 +27,9 @@ jobs:
       - run: git config user.name "MusicLang bot"
       - run: pip install bumpversion
       - run: bumpversion patch
-      - run: git add --all; git commit -m "New version [ci skip]"; git push
+      - run: git add --all
+      - run: git commit -m "New version [ci skip]"
+      - run: git push
       - python/dist
       - run: pip install twine && twine upload dist/* --non-interactive
 

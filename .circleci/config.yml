@@ -23,6 +23,8 @@ jobs:
     executor: python/default
     steps:
       - checkout
+      - run: git config user.email $EMAIL
+      - run: git config user.name "MusicLang bot"
       - run: pip install bumpversion
       - run: bumpversion patch
   publish:

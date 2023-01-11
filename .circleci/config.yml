@@ -39,10 +39,5 @@ workflows:
   build-and-test:
     jobs:
       - test
-      - increase-version:
-        type: approval
-      - publish:
-        filters:
-          branches:
-            only:
-              - main
+      - increase-version
+      - publish

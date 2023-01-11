@@ -19,11 +19,18 @@ jobs:
           root: ~/project
           paths:
             - .
+  publish:
+    executor: python/default
+    steps:
+      - checkout
+      - python/dist
+      - run: pip install twine && python -m build && twine upload dist/* --non-interactive
 
 workflows:
   build-and-test:
     jobs:
-      - test:
+      - test
+      - publish:
         filters:
           branches:
             only:

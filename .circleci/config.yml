@@ -29,7 +29,8 @@ jobs:
       - run: bumpversion patch
       - run: git push
       - python/dist
-      - run: pip install twine && twine upload dist/* --non-interactive
+      - run: ls dist/
+      - run: pip install twine && twine upload dist/* --non-interactive --verbose
 
 
 workflows:

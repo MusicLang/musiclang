@@ -32,17 +32,17 @@ jobs:
       - python/dist
       - run: pip install twine && twine upload dist/* --non-interactive
 
-
 workflows:
-  build-and-test:
+  version: 2
+  build-test-and-deploy:
     jobs:
       - test
-      - increaseversion
+      - increaseversion:
           requires:
             - test
-      - publish
-        requires:
-          - increase-version
-        filters:
-          branches:
-            only: main
+      - publish:
+          requires:
+            - increaseversion
+          filters:
+            branches:
+              only: main

@@ -12,7 +12,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="",
     project_urls={
-        "Bug Tracker": "",
+        'Documentation': 'https://musiclang.readthedocs.io/en/latest/',
+        'Source': 'https://github.com/MusicLang/musiclang/',
+        'Tracker': 'https://github.com/MusicLang/musiclang/issues',
     },
     classifiers=[
         "Programming Language :: Python :: 3",

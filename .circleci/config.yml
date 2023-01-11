@@ -6,10 +6,9 @@ jobs:
     docker:
     # Primary container image where all steps run
      - image: cimg/python:3.10.0
-    filters:
-      branches:
-        only:
-          - main
+    branches:
+      only:
+        - main
     steps:
       - run: echo "Say hello to YAML!"
 

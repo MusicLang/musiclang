@@ -37,8 +37,11 @@ workflows:
   build-test-and-deploy:
     jobs:
       - test
-      - increaseversion:
+      - approval-step:
           type: approval
+      - increaseversion:
+          requires:
+            - approval-step
       - publish:
           requires:
             - increaseversion

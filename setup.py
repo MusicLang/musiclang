@@ -10,7 +10,6 @@ setuptools.setup(
                 ),
     long_description="A python package for music notation and generation",
     long_description_content_type="text/markdown",
-    url="",
     project_urls={
         'Documentation': 'https://musiclang.readthedocs.io/en/latest/',
         'Source': 'https://github.com/MusicLang/musiclang/',

@@ -4,8 +4,6 @@ version: 2.1
 
 orbs:
   python: circleci/python@2.1.1
-  base: dialogue/base@1.15.1
-  release: dialogue/release@2.9.1
 
 jobs:
   test: # this can be any name you choose
@@ -25,8 +23,8 @@ jobs:
     executor: python/default
     steps:
       - checkout
-      - base/setup
-      - release/bump_version
+      - pip install bumpversion
+      - bumpversion patch
   publish:
     executor: python/default
     steps:

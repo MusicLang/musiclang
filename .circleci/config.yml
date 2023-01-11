@@ -1,0 +1,12 @@
+# CircleCI configuration file
+
+version: 2.1
+
+jobs:
+  build:
+    docker:
+    # Primary container image where all steps run
+     - image: cimg/python:3.10.0
+
+    steps:
+      - run: echo "Say hello to YAML!"

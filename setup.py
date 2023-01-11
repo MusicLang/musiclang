@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="musiclang",
-    version="0.5.1",
+    version="0.5.2",
     author="Florian GARDIN",
     author_email="fgardin.pro@gmail.com",
     description=("A python package for music notation and generation"
@@ -49,7 +49,7 @@ setuptools.setup(
         "urllib3==1.26.13",
         "wcwidth==0.2.5",
         "webcolors==1.12",
-        "webencodings==0.5.1",
+        "webencodings==0.5.2",
         "websocket-client==1.4.2",
         "Werkzeug==2.2.2",
         "widgetsnbextension==4.0.3",
@@ -57,7 +57,7 @@ setuptools.setup(
         "xmlschema==2.1.1",
         "zipp==3.11.0",
         "torch==1.13.0",
-        "torchdata==0.5.1",
+        "torchdata==0.5.2",
         "torchtext==0.14.0"
                       ],
     packages=setuptools.find_packages(include='*'),

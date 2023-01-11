@@ -23,8 +23,8 @@ jobs:
     executor: python/default
     steps:
       - checkout
-      - pip install bumpversion
-      - bumpversion patch
+      - run: pip install bumpversion
+      - run: bumpversion patch
   publish:
     executor: python/default
     steps:

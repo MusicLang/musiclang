@@ -43,7 +43,7 @@ workflows:
         type: approval
         requires:
           - test
-      - publish:
+      - publish
         requires:
           - increase-version
         filters:

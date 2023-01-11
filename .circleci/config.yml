@@ -6,28 +6,28 @@ workflows:
   build-and-test:
     jobs:
       - init:
-        docker:
-          # Primary container image where all steps run
-          - image: cimg/python:3.10.0
-        filters:
-          branches:
-            only:
-              - main
-        steps:
-          - run: echo "Say hello to YAML!"
+          docker:
+            # Primary container image where all steps run
+            - image: cimg/python:3.10.0
+          filters:
+            branches:
+              only:
+                - main
+          steps:
+            - run: echo "Say hello to YAML!"
 
       - build_and_test: # this can be any name you choose
-        docker:
-          # Primary container image where all steps run
-          - image: cimg/python:3.10.0
-        steps:
-          - checkout # checkout source code
-          - python/install-packages:
-              pkg-manager: pip
-          - run:
-              name: Run tests
-              command: python -m pytest
-          - persist_to_workspace:
-              root: ~/project
-              paths:
-                - .
+          docker:
+            # Primary container image where all steps run
+            - image: cimg/python:3.10.0
+          steps:
+            - checkout # checkout source code
+            - python/install-packages:
+                pkg-manager: pip
+            - run:
+                name: Run tests
+                command: python -m pytest
+            - persist_to_workspace:
+                root: ~/project
+                paths:
+                  - .

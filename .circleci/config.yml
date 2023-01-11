@@ -40,11 +40,8 @@ workflows:
     jobs:
       - test
       - increase-version:
-        requires:
-          - test
+        type: approval
       - publish:
-        requires:
-          - increase-version
         filters:
           branches:
             only:

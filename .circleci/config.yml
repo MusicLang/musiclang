@@ -19,7 +19,7 @@ jobs:
           root: ~/project
           paths:
             - .
-  increaseversion:
+  deploy-on-pypi:
     executor: python/default
     steps:
       - checkout
@@ -38,11 +38,16 @@ workflows:
   build-test-and-deploy:
     jobs:
       - test
-      - approval-step:
-          type: approval
-      - increaseversion:
+      - approve-deployment:
           requires:
-            - approval-step
+            - test
+          type: approval
+          filters:
+            branches:
+              only: main
+      - deploy-on-pypi:
+          requires:
+            - approve-deployment
           filters:
             branches:
               only: main

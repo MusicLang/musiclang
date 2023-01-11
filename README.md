@@ -1,7 +1,7 @@
 Musiclang
 =========
 
-![MusicLang logo](documentation/images/MusicLang.png "MusicLang")
+![MusicLang logo](https://github.com/MusicLang/musiclang/documentation/images/MusicLang.png "MusicLang")
 
 
 [![Documentation Status](https://readthedocs.org/projects/musiclang/badge/?version=latest)](https://musiclang.readthedocs.io/en/latest/?badge=latest)

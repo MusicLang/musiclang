@@ -22,3 +22,4 @@ musiclang.egg-info/
 documentation/build/
 documentation/_build/
 *.pickle
+dist/

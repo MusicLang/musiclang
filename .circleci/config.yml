@@ -37,10 +37,10 @@ workflows:
   build-and-test:
     jobs:
       - test
-      - increaseversion:
+      - increaseversion
           requires:
             - test
-      - publish:
+      - publish
         requires:
           - increase-version
         filters:

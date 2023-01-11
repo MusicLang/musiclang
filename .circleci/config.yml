@@ -40,7 +40,6 @@ workflows:
     jobs:
       - test
       - increase-version:
-        type: approval
         requires:
           - test
       - publish:

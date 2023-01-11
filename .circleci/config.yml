@@ -27,12 +27,10 @@ jobs:
       - run: git config user.name "MusicLang bot"
       - run: pip install bumpversion
       - run: bumpversion patch
-  publish:
-    executor: python/default
-    steps:
-      - checkout
+      - run: git add --all; git commit -m "New version [ci skip]"; git push
       - python/dist
       - run: pip install twine && twine upload dist/* --non-interactive
+
 
 workflows:
   version: 2
@@ -44,9 +42,6 @@ workflows:
       - increaseversion:
           requires:
             - approval-step
-      - publish:
-          requires:
-            - increaseversion
           filters:
             branches:
               only: main

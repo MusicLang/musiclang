@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="musiclang",
-    version="0.4.1",
+    version="0.5.0",
     author="Florian GARDIN",
     author_email="fgardin.pro@gmail.com",
     description=("A python package for music notation and generation"

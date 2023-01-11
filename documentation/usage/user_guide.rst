@@ -33,6 +33,20 @@ Here is a simple script to show the C-major scale in musiclang ::
   :width: 600
   :alt: C major scale
 
+If we wanted to write the V of C-major (note that the first note is the root of the chord) ::
+
+
+    from musiclang.library import *
+
+    score = (V % I.M)(piano__0=s0 + s1 + s2 + s3 + s4 + s5 + s6 + s0.o(1))
+
+    score.show()
+
+
+.. image:: ../images/fifth_of_c_major.png
+  :width: 600
+  :alt: G myxolydian scale
+
 To write the Eb major scale we could have done ::
 
     from musiclang.library import *
@@ -60,8 +74,6 @@ If we wanted to write this time the (harmonic) minor scale of D ::
 .. image:: ../images/d_minor_scale.png
   :width: 600
   :alt: D harmonic minor scale
-
-
 
 
 
@@ -111,9 +123,9 @@ Rythm
 
 You can spcify a rythm to a note using properties
 
-- ``h=half, w=whole, q=quarter, e=eight, s=sixteenth, t=thirty-seconds``
-- You can use n-uplet ``(3, 5, 7)`` : for example s0.e3 is s0 with a duration of a triolet etc ...
-- You can use dots with ``d`` : For example s0.qd has a dotter quarter duration. You can use double dots
+- ``h=half, w=whole, q=quarter, e=eight, s=sixteenth, t=thirty-seconds``. By default the duration is a quarter so ``s0==s0.q``
+- You can use n-uplet ``(3, 5, 7)`` : for example ``s0.e3`` is s0 with a duration of a triolet etc ...
+- You can use dots with ``d`` : For example s0.qd has a dotter quarter duration. You can use double dots. eg : ``s0.ed`` for a dotted eight note
 - You can use the :func:`~Note.augment` method if you want a custom duration that can't be notated easily. For example ``s0.augment(8)`` for a duration of two whole notes)
 
 .. note:: You must use the builtin python `fractions.Fraction` object to create duration otherwise you will get rounding errors when exporting to midi.
@@ -226,9 +238,6 @@ General structure of a chord
 
 A chord is structured the following way : ``<degree> % <tonality>``
 The chord can have an octave with the ``o`` method.
-
-Degrees
-'''''''
 
 
 Modulation

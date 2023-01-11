@@ -4,6 +4,8 @@ version: 2.1
 
 orbs:
   python: circleci/python@2.1.1
+  base: dialogue/base@1.15.1
+  release: dialogue/release@2.9.1
 
 jobs:
   test: # this can be any name you choose
@@ -19,18 +21,31 @@ jobs:
           root: ~/project
           paths:
             - .
+  increase-version:
+    executor: python/default
+    steps:
+      - checkout
+      - base/setup
+      - release/bump_version
   publish:
     executor: python/default
     steps:
       - checkout
       - python/dist
-      - run: pip install twine && python -m build && twine upload dist/* --non-interactive
+      - run: pip install twine && twine upload dist/* --non-interactive
+
 
 workflows:
   build-and-test:
     jobs:
       - test
+      - increase-version:
+        type: approval
+        requires:
+          - test
       - publish:
+        requires:
+          - increase-version
         filters:
           branches:
             only:

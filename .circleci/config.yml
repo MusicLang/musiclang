@@ -19,7 +19,7 @@ jobs:
           root: ~/project
           paths:
             - .
-  increase-version:
+  increaseversion:
     executor: python/default
     steps:
       - checkout
@@ -37,7 +37,7 @@ workflows:
   build-and-test:
     jobs:
       - test
-      - increase-version:
+      - increaseversion:
           requires:
             - test
       - publish:

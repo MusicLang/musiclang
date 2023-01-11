@@ -1,5 +1,8 @@
 import setuptools
 
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 setuptools.setup(
     name="musiclang",
@@ -8,7 +11,7 @@ setuptools.setup(
     author_email="fgardin.pro@gmail.com",
     description=("A python package for music notation and generation"
                 ),
-    long_description="A python package for music notation and generation",
+    long_description=long_description,
     long_description_content_type="text/markdown",
     project_urls={
         'Documentation': 'https://musiclang.readthedocs.io/en/latest/',

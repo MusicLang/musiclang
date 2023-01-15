@@ -57,7 +57,7 @@ class Chord:
 
     EXCLUDED_ITEMS = ['__array_struct__']
 
-    def __init__(self, element, extension='5', tonality=None, score=None, octave=0):
+    def __init__(self, element, extension='5', tonality=None, score=None, octave=0, tags=None):
         """
 
         Parameters
@@ -77,6 +77,69 @@ class Chord:
         self.tonality = tonality
         self.octave = octave
         self.score = {} if score is None else score
+        self.tags = set(tags) if tags is not None else set()
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def parse(self, pitch):
         """
@@ -679,7 +742,8 @@ class Chord:
                      extension=self.extension,
                      tonality=self.tonality.copy() if self.tonality is not None else None,
                      score={k: s.copy() for k, s in self.score.items()} if self.score is not None else None,
-                     octave=self.octave
+                     octave=self.octave,
+                     tags=set(self.tags)
                      )
 
     @staticmethod

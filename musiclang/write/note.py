@@ -104,7 +104,7 @@ class Note:
 
     """
 
-    def __init__(self, type, val, octave, duration, mode=None, amp=80):
+    def __init__(self, type, val, octave, duration, mode=None, amp=80, tags=None):
         self.type = type
         self.val = val
         self.octave = octave
@@ -112,6 +112,69 @@ class Note:
         self.amp = amp
         self.mode = mode
         self.properties = self.init_properties()
+        self.tags = tags if tags is not None else set()
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this note
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def __iter__(self):
         return [self].__iter__()
@@ -196,7 +259,7 @@ class Note:
 
     def copy(self):
         """ """
-        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, amp=self.amp)
+        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, amp=self.amp, tags=set(self.tags))
 
     def set_duration(self, value):
         """
@@ -584,12 +647,12 @@ class Silence(Note):
     Only takes a duration as a parameter
     """
 
-    def __init__(self, duration):
-        super().__init__("r", 0, 0, duration)
+    def __init__(self, duration, tags=None):
+        super().__init__("r", 0, 0, duration, tags=tags)
 
     def copy(self):
         """ """
-        return Silence(self.duration)
+        return Silence(self.duration, tags=set(self.tags))
 
 
 class Continuation(Note):
@@ -599,9 +662,9 @@ class Continuation(Note):
     Only takes a duration as a parameter
     """
 
-    def __init__(self, duration):
-        super().__init__("l", 0, 0, duration)
+    def __init__(self, duration, tags=None):
+        super().__init__("l", 0, 0, duration, tags=tags)
 
     def copy(self):
         """ """
-        return Continuation(self.duration)
+        return Continuation(self.duration, tags=set(self.tags))

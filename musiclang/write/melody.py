@@ -30,11 +30,74 @@ class Melody:
     s0 + s1 + s2 + s3 + s4 + s5 + s6
 
     """
-    def __init__(self, notes):
+    def __init__(self, notes, tags=None):
         from .note import Note
         if isinstance(notes, Note):
             notes = []
         self.notes = notes
+        self.tags = set(tags) if tags is not None else set()
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        melody: Melody
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        melody: Melody
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        melody: Melody
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        melody: Melody
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def __getstate__(self):
         return self.__dict__
@@ -256,7 +319,7 @@ class Melody:
 
     def copy(self):
         """ """
-        return Melody([s.copy() for s in self.notes])
+        return Melody([s.copy() for s in self.notes], tags=set(self.tags))
 
     def __repr__(self):
         return self.to_code()

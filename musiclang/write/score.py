@@ -12,7 +12,7 @@ class Score:
 
 
     """
-    def __init__(self, chords=None, config=None):
+    def __init__(self, chords=None, config=None, tags=None):
         self.chords = chords
         self.config = config
         if self.chords is None:
@@ -20,6 +20,69 @@ class Score:
         if self.config is None:
             self.config = {'annotation': "", "tempo": 120}
 
+        self.tags = set(tags) if tags is not None else set()
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def to_chords(self):
         """ """
@@ -27,24 +90,43 @@ class Score:
         return res
 
     def copy(self):
-        """ """
-        return Score([c.copy() for c in self.chords], config=self.config.copy())
+        """
+        Copy the score
+        """
+        return Score([c.copy() for c in self.chords], config=self.config.copy(), tags=set(self.tags))
 
     def o(self, val):
         """
+        Apply octave to the score.
 
         Parameters
         ----------
-        val :
+        val : int
+            Nb octave to transpose
             
 
         Returns
         -------
+        score: Score
+            Octaved score
 
         """
         return Score([c.o_melody(val) for c in self], config=self.config.copy())
 
     def __add__(self, other):
+        """
+        Add another score, or a chord to the current score
+        Returns A copy of the score
+
+        Parameters
+        ----------
+        other: Store or Chord
+
+        Returns
+        -------
+        score: Score
+
+        """
         from .chord import Chord
         if isinstance(other, Chord):
             return Score(self.copy().chords + [other], config=self.config.copy())

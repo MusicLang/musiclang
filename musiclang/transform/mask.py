@@ -114,7 +114,7 @@ class NotMask(Mask):
         return not self.other(element)
 
     def __repr__(self):
-        return f"~ {self.other}"
+        return f"~ ({self.other})"
 
 
 class HasMask(Mask):

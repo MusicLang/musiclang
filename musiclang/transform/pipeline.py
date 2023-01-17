@@ -2,15 +2,15 @@ import pickle
 import logging
 
 
-class Pipeline:
+class ConcatPipeline:
     """
     Pipeline object represents a sequence of steps that will lead to a concatenation of score
     You can pass parameters to pipelines because you use named steps :
 
-    >>> pipeline =Pipeline(steps=[('partA', ActionWithArgs), ('partB', Action2WithArgs)])
+    >>> pipeline =ConcatPipeline(steps=[('partA', ActionWithArgs), ('partB', Action2WithArgs)])
     >>> score = pipeline(partA=someArgs, partB=someArgs2)
     You can nest pipelines in the steps and we use arguments unpacking to nest the arguments :
-    >>> pipeline =Pipeline(steps=[('p1', Pipeline([('partA': ActionWithArgs), ('partB': ActionWithArgs)])), ('partC', Action2WithArgs)])
+    >>> pipeline =ConcatPipeline(steps=[('p1', Pipeline([('partA': ActionWithArgs), ('partB': ActionWithArgs)])), ('partC', Action2WithArgs)])
     >>> pipeline(p1__partA=someArgs, p1__partB=someOtherArgs, partC=args)
     """
     def __init__(self, steps):
@@ -26,7 +26,6 @@ class Pipeline:
 
     def __repr__(self):
         return "Pipeline({})".format(self.steps.__repr__())
-
 
     def get_params(self, **params):
         pass
@@ -50,7 +49,7 @@ class Pipeline:
             new_pipeline = self
         for param, value in params.items():
             to_modify = new_pipeline.dict_steps[param]
-            if isinstance(to_modify, Pipeline):
+            if isinstance(to_modify, ConcatPipeline):
                 new_pipeline.dict_steps[param] = to_modify.set_params(_copy=False, **value)
 
             else:
@@ -76,7 +75,7 @@ class Pipeline:
         return new_pipeline
 
     def unpack_args(self, step, f, kwargs):
-        if isinstance(f, Pipeline):
+        if isinstance(f, ConcatPipeline):
             print(kwargs)
             args = {k.split('__')[1]: kwargs[k] for k in kwargs.keys() if k.startswith(step + '__')}
             return args
@@ -105,13 +104,13 @@ class Pipeline:
     @staticmethod
     def load(filepath):
         with open(filepath, 'rb') as f:
-            return Pipeline(pickle.load(f))
+            return ConcatPipeline(pickle.load(f))
 
 
-class VerticalPipeline(Pipeline):
+class TransformPipeline(ConcatPipeline):
 
     def __repr__(self):
-        return "VerticalPipeline({})".format(self.steps.__repr__())
+        return "TransformPipeline({})".format(self.steps.__repr__())
 
     def __call__(self, score=None, **kwargs):
         for data in self.steps:
@@ -119,7 +118,6 @@ class VerticalPipeline(Pipeline):
             on = Mask()
             step, f = None, None
             if len(data) == 2:
-                from .mask import Mask
                 step, f = data
             elif len(data) == 3:
                 step, f, on = data
@@ -129,7 +127,7 @@ class VerticalPipeline(Pipeline):
                 score = f(score, on=on, **arguments)
 
             except Exception as e:
-                logging.error(f"Exception in VerticalPipeline step : {step}")
+                logging.error(f"Exception in TransformPipeline step : {step}")
                 logging.exception(e)
                 raise e
 

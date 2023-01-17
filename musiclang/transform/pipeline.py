@@ -65,22 +65,37 @@ class Pipeline:
 
     def copy(self):
         new_pipeline = self.__class__(steps=[])
-        for step, val in self.steps:
-            new_pipeline.steps.append((step, val.copy()))
+        for data in self.steps:
+            on = Mask()
+            if len(data) == 2:
+                from .mask import Mask
+                step, val = data
+            elif len(data) == 3:
+                step, val, on = data
+            new_pipeline.steps.append((step, val.copy(), on))
         return new_pipeline
 
     def unpack_args(self, step, f, kwargs):
         if isinstance(f, Pipeline):
+            print(kwargs)
             args = {k.split('__')[1]: kwargs[k] for k in kwargs.keys() if k.startswith(step + '__')}
             return args
         else:
             return kwargs
 
     def __call__(self, score=None, **kwargs):
-        for step, f in self.steps:
+        from .mask import Mask
+        for data in self.steps:
+            on = Mask()
+            step, f = None, None
+            if len(data) == 2:
+                from .mask import Mask
+                step, f = data
+            elif len(data) == 3:
+                step, f, on = data
             arguments = self.unpack_args(step, f, kwargs)
             try:
-                score += f(score, **arguments)
+                score += f(score, on=on, **arguments)
             except Exception as e:
                 logging.error(f"Exception in Pipeline: {step}")
                 logging.exception(e)
@@ -99,10 +114,19 @@ class VerticalPipeline(Pipeline):
         return "VerticalPipeline({})".format(self.steps.__repr__())
 
     def __call__(self, score=None, **kwargs):
-        for step, f in self.steps:
+        for data in self.steps:
+            from .mask import Mask
+            on = Mask()
+            step, f = None, None
+            if len(data) == 2:
+                from .mask import Mask
+                step, f = data
+            elif len(data) == 3:
+                step, f, on = data
+
             arguments = self.unpack_args(step, f, kwargs)
             try:
-                score = f(score, **arguments)
+                score = f(score, on=on, **arguments)
 
             except Exception as e:
                 logging.error(f"Exception in VerticalPipeline step : {step}")

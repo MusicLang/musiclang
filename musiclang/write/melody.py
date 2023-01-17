@@ -67,6 +67,44 @@ class Melody:
         cp.tags.add(tag)
         return cp
 
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        melody: Melody
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        melody: Melody
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
     def remove_tag(self, tag):
         """
         Remove a tag from this object
@@ -107,10 +145,12 @@ class Melody:
 
     def __add__(self, other):
         from .note import Note
+        if other is None:
+            return self.copy()
         if isinstance(other, Note):
-            return Melody(self.notes + [other])
+            return Melody(self.notes + [other], tags=set(self.tags))
         if isinstance(other, Melody):
-            return Melody(self.notes + other.notes)
+            return Melody(self.notes + other.notes, tags=set(self.tags).union(other.tags))
 
     def __hash__(self):
         return hash(self.__repr__())
@@ -150,7 +190,7 @@ class Melody:
 
     def decompose_duration(self):
         """ """
-        return Melody([note.decompose_duration() for note in self.notes])
+        return Melody([note.decompose_duration() for note in self.notes], tags=set(self.tags))
 
     def replace_pitch(self, to_replace, new_note):
         """
@@ -252,7 +292,7 @@ class Melody:
         -------
 
         """
-        return Melody([n.augment(value) for n in self.notes])
+        return Melody([n.augment(value) for n in self.notes], tags=set(self.tags))
 
     @property
     def duration(self):
@@ -270,19 +310,19 @@ class Melody:
             return self.copy()
 
     def __and__(self, other):
-        return Melody([n & other for n in self.notes])
+        return Melody([n & other for n in self.notes], tags=set(self.tags))
 
     def __matmul__(self, other):
         # Apply a function to each note
-        return Melody([n @ other for n in self.notes])
+        return Melody([n @ other for n in self.notes], tags=set(self.tags))
 
     def __mul__(self, other):
         from .note import Note
         if isinstance(other, int):
             melody_copy = self.copy()
-            return Melody(melody_copy.notes * other)
+            return Melody(melody_copy.notes * other, tags=set(self.tags))
         if isinstance(other, Note):
-            return self * Melody([other.copy()])
+            return self * Melody([other.copy()], tags=set(self.tags))
         else:
             raise Exception('Cannot multiply Melody and ' + str(type(other)))
 
@@ -301,7 +341,7 @@ class Melody:
         -------
 
         """
-        return Melody([n.o(octave) for n in self.notes])
+        return Melody([n.o(octave) for n in self.notes], tags=set(self.tags))
 
     def __hasattr__(self, item):
         try:
@@ -312,7 +352,7 @@ class Melody:
 
     def __getattr__(self, item):
         try:
-            res = Melody([getattr(n, item) for n in self.notes])
+            res = Melody([getattr(n, item) for n in self.notes], tags=set(self.tags))
             return res
         except:
             raise AttributeError("")

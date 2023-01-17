@@ -84,6 +84,44 @@ class Tonality:
         cp.tags.remove(tag)
         return cp
 
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        tonality: Tonality
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        tonality: Tonality
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
     def clear_tags(self):
         """
         Clear all tags from this object
@@ -207,7 +245,7 @@ class Tonality:
         delta_octave = new_abs_degree // 12
         new_degree = new_abs_degree % 12
         new_mode = other.mode
-        return Tonality(degree=new_degree, mode=new_mode, octave=new_octave + delta_octave)
+        return Tonality(degree=new_degree, mode=new_mode, octave=new_octave + delta_octave, tags=self.tags.union(other.tags))
 
     @property
     def abs_degree(self):

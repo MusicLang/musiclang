@@ -109,6 +109,44 @@ class Chord:
         cp.tags.add(tag)
         return cp
 
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        chord: Chord
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        chord: Chord
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
     def remove_tag(self, tag):
         """
         Remove a tag from this object
@@ -168,7 +206,15 @@ class Chord:
 
     def decompose_duration(self):
         """ """
-        return self(**{key: melody.decompose_duration() for key, melody in self.score.items()})
+        return self(**{key: melody.decompose_duration() for key, melody in self.score.items()}, tags=self.tags)
+
+    @property
+    def degree(self):
+        return self.element
+
+    @property
+    def mode(self):
+        return self.tonality.mode
 
     def change_mode(self, mode):
         """
@@ -621,7 +667,10 @@ class Chord:
         (I % I.M)(piano__0=s0) + (V % I.M)(piano__0=s0)
 
         """
+
         from .score import Score
+        if other is None:
+            return self.copy()
         if isinstance(other, Chord):
             return Score([self.copy(), other.copy()])
         if isinstance(other, Score):
@@ -699,7 +748,7 @@ class Chord:
         for part in self.score:
             new_parts[part] = self.score[part].o(octave)
 
-        return self(**new_parts)
+        return self(**new_parts, tags=self.tags)
 
     def o(self, octave):
         """Chord up or down the amount of octave in parameter, it will change the chord octave, not the melody
@@ -803,7 +852,7 @@ class Chord:
         if len(self.parts) == 0:
             raise AttributeError()
         try:
-            res = self(**{part: getattr(self.score[part], item) for part in self.parts})
+            res = self(**{part: getattr(self.score[part], item) for part in self.parts}, tags=self.tags)
             return res
         except Exception:
             raise AttributeError("Not existing attribute")

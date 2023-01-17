@@ -52,6 +52,44 @@ class Score:
         cp.tags.add(tag)
         return cp
 
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        score: Score
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
     def remove_tag(self, tag):
         """
         Remove a tag from this object
@@ -111,7 +149,7 @@ class Score:
             Octaved score
 
         """
-        return Score([c.o_melody(val) for c in self], config=self.config.copy())
+        return Score([c.o_melody(val) for c in self], config=self.config.copy(), tags=self.tags)
 
     def __add__(self, other):
         """
@@ -127,11 +165,14 @@ class Score:
         score: Score
 
         """
+
         from .chord import Chord
+        if other is None:
+            return self.copy()
         if isinstance(other, Chord):
-            return Score(self.copy().chords + [other], config=self.config.copy())
+            return Score(self.copy().chords + [other], config=self.config.copy(), tags=self.tags)
         if isinstance(other, Score):
-            return Score(self.copy().chords + other.copy().chords, config=self.config.copy())
+            return Score(self.copy().chords + other.copy().chords, config=self.config.copy(), tags=self.tags.union(other.tags))
         else:
             raise Exception('Cannot add to Score if not Chord or Score')
 
@@ -221,6 +262,22 @@ class Score:
             self.to_midi(midi_file, **kwargs)
             score = music21.converter.parse(midi_file)
             return score.show(*args)
+
+
+    def apply_on(self, f, query, inplace=False):
+        """
+        FIXME : Call action
+
+        Parameters
+        ----------
+        f
+        query
+
+        Returns
+        -------
+
+        """
+        pass
 
 
     def __getitem__(self, item):
@@ -457,7 +514,7 @@ class Score:
         Decompose the duration in a note + continuations. It recursively call
         :func:`~Note.decompose_duration()`
         """
-        return Score([chord.decompose_duration() for chord in self.chords])
+        return Score([chord.decompose_duration() for chord in self.chords], tags=self.tags)
 
     def to_score(self):
         """ """
@@ -534,7 +591,7 @@ class Score:
     def __mod__(self, other):
         from .tonality import Tonality
         if isinstance(other, Tonality):
-            return Score([c % other for c in self.chords], config=self.config.copy())
+            return Score([c % other for c in self.chords], config=self.config.copy(), tags=self.tags)
         else:
             raise Exception('Following % should be a Tonality')
 

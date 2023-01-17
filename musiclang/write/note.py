@@ -144,6 +144,45 @@ class Note:
         cp.tags.add(tag)
         return cp
 
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        note: Note
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        note: Note
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
+
     def remove_tag(self, tag):
         """
         Remove a tag from this object
@@ -511,6 +550,8 @@ class Note:
 
         """
         from .melody import Melody
+        if other is None:
+            return self.copy()
         if isinstance(other, Note):
             return Melody([self, other])
         if isinstance(other, Melody):

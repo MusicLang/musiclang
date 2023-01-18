@@ -115,7 +115,7 @@ class ConcatPipeline:
         from .mask import Mask
         for data in self.steps:
             on = Mask()
-            step, f = None, None
+            step, f = '', None
             if len(data) == 2:
                 from .mask import Mask
                 step, f = data
@@ -123,7 +123,7 @@ class ConcatPipeline:
                 step, f, on = data
             arguments = self.unpack_args(step, f, kwargs)
             try:
-                score += f(score, on=on, **arguments)
+                score += f(score, on=on, **arguments).add_tag_children(f'step_{step}')
             except Exception as e:
                 logging.error(f"Exception in Pipeline: {step}")
                 logging.exception(e)
@@ -185,7 +185,7 @@ class TransformPipeline(ConcatPipeline):
 
             arguments = self.unpack_args(step, f, kwargs)
             try:
-                score = f(score, on=on, **arguments)
+                score = f(score, on=on, **arguments).add_tag_children(f'step_{step}')
 
             except Exception as e:
                 logging.error(f"Exception in TransformPipeline step : {step}")

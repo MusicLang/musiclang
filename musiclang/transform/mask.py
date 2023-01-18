@@ -135,6 +135,19 @@ class Mask:
 
 
     @classmethod
+    def OriginateFrom(cls, tags):
+        """
+        Check if a chord originate from a set of given pipeline step or one pipeline step
+
+        Parameters
+        ----------
+        tags: iterable[str] or str
+
+        """
+
+        return cls.Chord() > HasMask([f'step_{tag}' for tag in tags])
+
+    @classmethod
     def Has(cls, tags):
         """
         Check if an element has these tags (all of them)

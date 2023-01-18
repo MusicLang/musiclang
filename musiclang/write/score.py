@@ -71,6 +71,89 @@ class Score:
         cp.tags = cp.tags.union(set(tags))
         return cp
 
+    def add_tag_children(self, tag):
+        """
+        Add a tag to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        return Score([c.add_tag(tag) for c in self.chords], tags=self.tags)
+
+
+    def add_tags_children(self, tags):
+        """
+        Add several tags to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.add_tags(tags) for c in self.chords], tags=self.tags)
+
+    def remove_tags_children(self, tags):
+        """
+        Remove several tags to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.remove_tags(tags) for c in self.chords], tags=self.tags)
+
+    def remove_tag_children(self, tag):
+        """
+        Remove a tag to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.remove_tag(tag) for c in self.chords], tags=self.tags)
+
+    def clear_tags_children(self):
+        """
+        Clear all tags to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.clear_tags() for c in self.chords], tags=self.tags)
+
     def remove_tags(self, tags):
         """
         Remove several tags from the object.

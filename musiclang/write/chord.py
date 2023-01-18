@@ -57,7 +57,7 @@ class Chord:
 
     EXCLUDED_ITEMS = ['__array_struct__']
 
-    def __init__(self, element, extension='5', tonality=None, score=None, octave=0, tags=None):
+    def __init__(self, element, extension='', tonality=None, score=None, octave=0, tags=None):
         """
 
         Parameters
@@ -438,6 +438,12 @@ class Chord:
             return False
         return self.chord_equals(other) and self.score_equals(other)
 
+    def __and__(self, other):
+        if isinstance(other, int):
+            return self(**{part: melody & other for part, melody in self.score.items()})
+        else:
+            raise Exception(f'Not compatible type with & {other.__class__}')
+
     def __hash__(self):
         return hash(self.__repr__())
 
@@ -790,7 +796,7 @@ class Chord:
         return Chord(element=self.element,
                      extension=self.extension,
                      tonality=self.tonality.copy() if self.tonality is not None else None,
-                     score={k: s.copy() for k, s in self.score.items()} if self.score is not None else None,
+                     score={k: s.copy() for k, s in self.score.items() if s is not None} if self.score is not None else None,
                      octave=self.octave,
                      tags=set(self.tags)
                      )
@@ -836,9 +842,9 @@ class Chord:
 
             if (isinstance(named_melodies[key], list)):
                 for idx, melody in enumerate(named_melodies[key]):
-                    named_melodies_result[key_obj + '__' + str(number + idx)] = melody
+                    named_melodies_result[key_obj + '__' + str(number + idx)] = melody.to_melody()
             else:
-                named_melodies_result[key_obj + '__' + str(number)] = named_melodies[key]
+                named_melodies_result[key_obj + '__' + str(number)] = named_melodies[key].to_melody()
 
         return named_melodies_result
 
@@ -900,7 +906,7 @@ class Chord:
         """
         chord = self.copy()
         named_melodies_preparsed = self.preparse_named_melodies(named_melodies)
-        chord.score = {**{f'piano_{i}': melody for i, melody in enumerate(melodies)}, **named_melodies_preparsed}
+        chord.score = {**{f'piano_{i}': melody.to_melody() for i, melody in enumerate(melodies)}, **named_melodies_preparsed}
         return chord
 
     def melody_to_str(self):

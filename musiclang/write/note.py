@@ -523,6 +523,10 @@ class Note:
         from .melody import Melody
         return Melody([self]).to_sequence(chord, inst)
 
+    def to_melody(self):
+        from .melody import Melody
+        return Melody([self], tags=self.tags)
+
     def repr_mode(self):
         """ """
         if self.mode is not None:

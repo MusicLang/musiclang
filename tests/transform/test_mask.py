@@ -82,7 +82,7 @@ def test_mask_or_false():
 
 def test_mask_hasatleast_true():
 
-    mask = Mask.Chord() > (Mask.HasAtLeast(['ok1','ok2' ]))
+    mask = Mask.Chord() > (Mask.HasAtLeast(['ok1', 'ok2' ]))
     score = (I % I.M)().add_tags(['ok1'])
     assert mask(score)
 

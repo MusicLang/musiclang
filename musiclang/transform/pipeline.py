@@ -4,7 +4,9 @@ import logging
 
 class ConcatPipeline:
     """
-    Pipeline object represents a sequence of steps that will lead to a concatenation of score
+    Pipeline object represents a sequence of steps that will lead to a concatenation of successive transforms.
+    For each step :
+    score = score + transform(score)
     You can pass parameters to pipelines because you use named steps :
 
     >>> pipeline =ConcatPipeline(steps=[('partA', ActionWithArgs), ('partB', Action2WithArgs)])
@@ -12,6 +14,33 @@ class ConcatPipeline:
     You can nest pipelines in the steps and we use arguments unpacking to nest the arguments :
     >>> pipeline =ConcatPipeline(steps=[('p1', Pipeline([('partA': ActionWithArgs), ('partB': ActionWithArgs)])), ('partC', Action2WithArgs)])
     >>> pipeline(p1__partA=someArgs, p1__partB=someOtherArgs, partC=args)
+
+    Examples
+    ---------
+    Example applying a transpose only on chords that have an "ok" tag :
+
+    >>> from musiclang.library import *
+    >>> from musiclang.transform import ConcatPipeline
+    >>> transposer = Transpose(2)
+    >>> mask = Mask.Chord() > Mask.Has('ok')
+
+    >>> pipeline = ConcatPipeline([('transpose', transposer, mask)])
+    >>> score = (I % I.M)(piano=[s0, s2, s4]).add_tag('ok') + (V % I.M)(piano=[s0, s2, s4])
+    >>> new_score = pipeline(score)
+    >>> new_score
+    (I % I.M)(piano=[s0, s2, s4]) + (V % I.M)(piano=[s0, s2, s4]) + (I % I.M)(piano=[s2, s4, s6]) + (V % I.M)(piano=[s0, s2, s4])
+
+    Same example without the query :
+
+    >>> from musiclang.library import *
+    >>> from musiclang.transform import ConcatPipeline
+    >>> transposer = Transpose(2)
+    >>> pipeline = ConcatPipeline([('transpose', transposer)])
+    >>> score = (I % I.M)(piano=[s0, s2, s4]).add_tag('ok') + (V % I.M)(piano=[s0, s2, s4])
+    >>> new_score = pipeline(score)
+    >>> new_score
+    (I % I.M)(piano=[s0, s2, s4]) + (V % I.M)(piano=[s0, s2, s4]) + (I % I.M)(piano=[s2, s4, s6]) + (V % I.M)(piano=[s2, s4, s6])
+
     """
     def __init__(self, steps):
         self.steps = steps
@@ -108,6 +137,38 @@ class ConcatPipeline:
 
 
 class TransformPipeline(ConcatPipeline):
+    """
+    Pipeline object represents a sequence of steps that will lead to successive transforms.
+    For each step :
+    score = transform(score)
+    You can pass parameters to pipelines because you use named steps :
+
+    >>> pipeline =ConcatPipeline(steps=[('partA', ActionWithArgs), ('partB', Action2WithArgs)])
+    >>> score = pipeline(partA=someArgs, partB=someArgs2)
+    You can nest pipelines in the steps and we use arguments unpacking to nest the arguments :
+    >>> pipeline =ConcatPipeline(steps=[('p1', Pipeline([('partA': ActionWithArgs), ('partB': ActionWithArgs)])), ('partC', Action2WithArgs)])
+    >>> pipeline(p1__partA=someArgs, p1__partB=someOtherArgs, partC=args)
+
+
+    Examples
+    ---------
+    Example applying a transpose only on chords that have an "ok" tag :
+
+    >>> from musiclang.library import *
+    >>> from musiclang.transform import TransformPipeline
+    >>> transposer = Transpose(1)
+    >>> mask = Mask.Chord() > Mask.Has('ok')
+
+    >>> pipeline = TransformPipeline([('transpose', transposer, mask), ('transpose2', transposer)])
+    >>> score = (I % I.M)(piano=[s0, s2, s4]).add_tag('ok') + (V % I.M)(piano=[s0, s2, s4])
+    >>> new_score = pipeline(score)
+    >>> new_score
+    (I % I.M)(piano=[s2, s4, s6]) + (V % I.M)(piano=[s1, s3, s4])
+
+    The first chord with the tag is transposed twice (first transform match the mask)
+    The second one is transposed once
+
+    """
 
     def __repr__(self):
         return "TransformPipeline({})".format(self.steps.__repr__())

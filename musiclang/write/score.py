@@ -179,6 +179,13 @@ class Score:
     def __iter__(self):
         return self.chords.__iter__()
 
+    def __and__(self, other):
+        if isinstance(other, int):
+            return Score([c & other for c in self.chords], tags=self.tags)
+        else:
+            raise Exception(f'Not compatible type with & {other.__class__}')
+
+
     @property
     def instruments(self):
         """

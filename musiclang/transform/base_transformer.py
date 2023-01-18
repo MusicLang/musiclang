@@ -177,7 +177,21 @@ class Transformer:
 
     def apply_on_melody(self, element, on=Mask(), **kwargs):
         from musiclang import Melody
-        new_melody = [self.action(m, **kwargs) if on(m, **kwargs) else self.get_default(m) for m in element.notes]
+        beat = 0
+        idx = 0
+        last_note = None
+        new_melody = []
+        for m in element.notes:
+            note = self.action(m, beat=beat, idx=idx,
+                               last_note=last_note, **kwargs) if on(m, beat=beat, idx=idx,
+                                                                    last_note=last_note,
+                                                                    **kwargs) else self.get_default(m)
+            beat += m.duration
+            idx += 1
+            last_note = m
+            if note is not None:
+                new_melody.append(note)
+
         new_melody = [m for m in new_melody if m is not None]
         return Melody(new_melody, tags=element.tags)
 
@@ -185,17 +199,28 @@ class Transformer:
         from musiclang import Chord
         chord = Chord(element.element, extension=element.extension, tonality=element.tonality,
                       score={
-                          key: self(element.score[key], on=on.child(element), chord=element, instrument=key, **kwargs)
-                          if on(element.score[key]) else self.get_default(element.score[key]) for key in element.score},
+                          key: self(element.score[key], on=on.child(element, **kwargs), chord=element, instrument=key, **kwargs)
+                          if on(element.score[key], chord=element, instrument=key, **kwargs)
+                          else self.get_default(element.score[key]) for key in element.score},
                       octave=element.octave, tags=element.tags)
         # Filter None keys
         return chord(**{part: melody for part, melody in chord.score.items() if melody is not None})
 
     def apply_on_score(self, element, on=Mask(), **kwargs):
         from musiclang import Score
-        chords = [self(m, on=on.child(element), **kwargs) if on(m, **kwargs) else self.get_default(m) for m in
-                  element.chords]
-        chords = [chord for chord in chords if chord is not None]
+        beat = 0
+        idx = 0
+        last_chord = None
+        chords = []
+        for m in element.chords:
+            chord = self(m, on=on.child(element, **kwargs), chord_beat=beat, chord_idx=idx, last_chord=last_chord, **kwargs)\
+                if on(m, chord_beat=beat, chord_idx=idx, last_chord=last_chord, **kwargs) else self.get_default(m)
+            beat += m.duration
+            idx += 1
+            last_chord = m
+            if chord is not None:
+                chords.append(chord)
+
         return Score(chords, tags=element.tags)
 
     @staticmethod

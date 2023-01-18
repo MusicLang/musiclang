@@ -137,6 +137,9 @@ class Melody:
         cp.tags = set()
         return cp
 
+    def to_melody(self):
+        return self.copy()
+
     def __getstate__(self):
         return self.__dict__
 

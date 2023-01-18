@@ -3,6 +3,7 @@ import numpy as np
 from .base_transformer import Transformer
 from .mask import Mask
 
+
 class NoteTransformer(Transformer):
     TYPE = 'NOTE'
 
@@ -12,7 +13,7 @@ class NoteTransformer(Transformer):
     def __call__(self, element, on=Mask(), **kwargs):
         from musiclang import Score, Melody, Chord, Note
         if isinstance(element, Note):
-            return self.action(element, **kwargs) if on(element) else element.copy()
+            return self.action(element, **kwargs) if on(element, **kwargs) else element.copy()
         if isinstance(element, Melody):
             return self.apply_on_melody(element, on=on, **kwargs)
         elif isinstance(element, list):
@@ -29,6 +30,21 @@ class NoteFilterTransform(NoteTransformer):
 
     def get_default(self, element):
         return None
+
+
+class MaskFilter(NoteFilterTransform):
+
+    def __init__(self, on):
+        self.on = on
+
+    def action(self, note, chord=None, instrument=None, **kwargs):
+        return note
+
+    def __call__(self, element, on=Mask(), **kwargs):
+        return super().__call__(element, on=self.on & on, **kwargs)
+
+class NoteMaskFilter(MaskFilter):
+    pass
 
 
 class NoteFilter(NoteFilterTransform):
@@ -85,6 +101,18 @@ class MelodyFilter(MelodyFilterTransform):
         return super().__call__(element, on=query_filter & on, **kwargs)
 
 
+class MelodyMaskFilter(MelodyFilterTransform):
+
+    def __init__(self, on):
+        self.on = on
+
+    def action(self, note, chord=None, instrument=None, **kwargs):
+        return note
+
+    def __call__(self, element, on=Mask(), **kwargs):
+        return super().__call__(element, on=self.on & on, **kwargs)
+
+
 class ChordTransformer(Transformer):
     TYPE = 'CHORD'
 
@@ -119,6 +147,18 @@ class ChordFilter(ChordFilterTransform):
     def __call__(self, element, on=Mask(), **kwargs):
         query_filter = Mask.Chord() > Mask.Func(lambda x, **k: self.filter(x, **k))
         return super(ChordFilter, self).__call__(element, on=query_filter & on, **kwargs)
+
+
+class ChordMaskFilter(ChordFilterTransform):
+
+    def __init__(self, on):
+        self.on = on
+
+    def action(self, note, **kwargs):
+        return note
+
+    def __call__(self, element, on=Mask(), **kwargs):
+        return super().__call__(element, on=self.on & on, **kwargs)
 
 
 class DictTransformer(Transformer):

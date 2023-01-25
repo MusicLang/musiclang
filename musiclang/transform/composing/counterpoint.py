@@ -1,4 +1,4 @@
-from .project import project_on_rythm, project_on_one_chord,\
+from .project import project_on_rhythm, project_on_one_chord,\
     get_absolute_voices, reproject_on_multiple_chords, get_absolute_voice
 import numpy as np
 
@@ -155,7 +155,7 @@ def get_projections_on_voice(voices, reference):
     -------
 
     """
-    return [get_array_fixed(project_on_rythm(reference, voice)) for voice in voices]
+    return [get_array_fixed(project_on_rhythm(reference, voice)) for voice in voices]
 
 
 AUTHORIZED_INTERVALS = [0, 2, 3, 4, 5]

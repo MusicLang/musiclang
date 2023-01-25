@@ -1,1 +1,1 @@
-from .basics import CircularPermutationMelody, InvertMelody, ReverseMelody, SelectRangeMelody, ReverseMelodyWithoutRythm
+from .basics import CircularPermutationMelody, InvertMelody, ReverseMelody, SelectRangeMelody, ReverseMelodyWithoutRhythm

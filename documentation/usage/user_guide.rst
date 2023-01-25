@@ -94,7 +94,7 @@ advanced manipulations on your music.
 
 
 Write notes
-```````````
+````````````
 
 **The specificity of MusicLang is that notes are always represented relatively to a chord inside a tonality.**
 
@@ -161,7 +161,7 @@ For example ::
   :alt: Lydian mode in musiclang
 
 Examples
-''''''''
+'''''''''
 >>> from musiclang.library import s0, s1, s2, I
 
 You can learn what pitch is associated to a note in the context of a chord :
@@ -263,7 +263,7 @@ You can use any instrument of the general midi list (https://en.wikipedia.org/wi
 
 
 Output a musiclang score into another format
-------------------------------
+----------------------------------------------
 
 You can output a MusicLang score in various ways. There are four main methods on the ``Score`` object :
 
@@ -317,7 +317,7 @@ See the :ref:`examples-gallery` for some detailed examples.
 
 
 Examples
---------
+---------
 
 See the :ref:`examples-gallery`.
 

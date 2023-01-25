@@ -1,6 +1,6 @@
 from musiclang import Melody
 from musiclang.transform import MelodyTransformer
-from musiclang.transform.composing.project import project_on_rythm
+from musiclang.transform.composing.project import project_on_rhythm
 
 
 class CircularPermutationMelody(MelodyTransformer):
@@ -69,7 +69,7 @@ class ReverseMelody(MelodyTransformer):
         return Melody(melody.notes[::-1], tags=melody.tags)
 
 
-class ReverseMelodyWithoutRythm(MelodyTransformer):
+class ReverseMelodyWithoutRhythm(MelodyTransformer):
     """
     Reverse the notes of a melody
 
@@ -78,13 +78,13 @@ class ReverseMelodyWithoutRythm(MelodyTransformer):
     Examples
     --------
 
-    >>> from musiclang.transform.library import ReverseMelodyWithoutRythm
+    >>> from musiclang.transform.library import ReverseMelodyWithoutRhythm
     >>> from musiclang.library import *
     >>> melody = s0 + s1 + s2.e
     >>> ReverseMelodyWithoutRythm(1)(melody)
     s2 + s1 + s0.e
 
-    >>> from musiclang.transform.library import ReverseMelodyWithoutRythm
+    >>> from musiclang.transform.library import ReverseMelodyWithoutRhythm
     >>> from musiclang.library import *
     >>> melody = (I % I.M)(s0 + s1.e, s1 + s2.e)
     >>> ReverseMelodyWithoutRythm(1)(melody)
@@ -92,7 +92,7 @@ class ReverseMelodyWithoutRythm(MelodyTransformer):
     """
 
     def action(self, melody, **kwargs):
-        return project_on_rythm(Melody(melody.notes[::-1], tags=melody.tags))
+        return project_on_rhythm(Melody(melody.notes[::-1], tags=melody.tags))
 
 
 class InvertMelody(MelodyTransformer):

@@ -265,7 +265,7 @@ def parse_relative_to_absolute(melody):
             new_note.type = "s"
             new_note.val = DICT_NOTES[new_note.val]
         else:
-            raise Exception('Could not handle type in project rythm : {}'.format(note.type))
+            raise Exception('Could not handle type in project rhythm : {}'.format(note.type))
 
     return result
 
@@ -322,12 +322,12 @@ def is_in_time(start, end, time):
     return (start <= time) and (end > time)
 
 
-def project_on_rythm(rythm, melody):
+def project_on_rhythm(rhythm, melody):
     """
 
     Parameters
     ----------
-    rythm :
+    rhythm :
         
     melody :
         
@@ -346,28 +346,28 @@ def project_on_rythm(rythm, melody):
     time = 0
     previous_note = None
 
-    for rythm_note in rythm.notes:
+    for rhythm_note in rhythm.notes:
         # Find first note
         candidates = [note for note, start, end in notes_times if is_in_time(start, end, time)]
         if len(candidates) > 0:
             candidate = candidates[0]
             if candidate.type == 'l':
                 if previous_note is None:
-                    to_add = Continuation(rythm_note.duration)
+                    to_add = Continuation(rhythm_note.duration)
                 else:
                     to_add = previous_note.copy()
-                    to_add.duration = rythm_note.duration
-            elif rythm_note.type == 'l':
-                to_add = Continuation(rythm_note.duration)
+                    to_add.duration = rhythm_note.duration
+            elif rhythm_note.type == 'l':
+                to_add = Continuation(rhythm_note.duration)
             else:
                 to_add = candidate.copy()
-                to_add.duration = rythm_note.duration
+                to_add.duration = rhythm_note.duration
             new_melody += to_add
             if to_add.type != 'l':
                 previous_note = to_add.copy()
         else:
-            new_melody += Silence(rythm_note.duration)
-        time = time + rythm_note.duration
+            new_melody += Silence(rhythm_note.duration)
+        time = time + rhythm_note.duration
 
     return new_melody
 
@@ -462,12 +462,12 @@ def note_distance(n1, n2):
     return n1.val - n2.val
 
 
-def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
+def get_nearest_note_in_context(rhythm_note, note, chord, dict_notes=None):
     """
 
     Parameters
     ----------
-    rythm_note :
+    rhythm_note :
         
     note :
         
@@ -482,7 +482,7 @@ def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
     """
     if dict_notes is None:
         dict_notes = {}
-    candidates = get_notes_candidate_in_context(rythm_note, chord, dict_notes=dict_notes)
+    candidates = get_notes_candidate_in_context(rhythm_note, chord, dict_notes=dict_notes)
     if len(candidates) == 0:
         return note
     elif note.is_note:
@@ -491,12 +491,12 @@ def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
         return note
 
 
-def get_notes_candidate_in_context(rythm_note, chord, dict_notes=None):
+def get_notes_candidate_in_context(rhythm_note, chord, dict_notes=None):
     """
 
     Parameters
     ----------
-    rythm_note :
+    rhythm_note :
         
     chord :
         
@@ -509,29 +509,29 @@ def get_notes_candidate_in_context(rythm_note, chord, dict_notes=None):
     """
     if dict_notes is None:
         dict_notes = {}
-    rythm_note = rythm_note.set_duration(Q)
-    if rythm_note in dict_notes.keys():
-        return dict_notes[rythm_note]
+    rhythm_note = rhythm_note.set_duration(Q)
+    if rhythm_note in dict_notes.keys():
+        return dict_notes[rhythm_note]
     else:
-        if rythm_note.val == CHORD_NOTE.val:
+        if rhythm_note.val == CHORD_NOTE.val:
             return chord.possible_notes
-        elif rythm_note.val == SCALE_NOTE.val:
+        elif rhythm_note.val == SCALE_NOTE.val:
             return chord.scale_notes
-        elif rythm_note.val == TONIC.val:
+        elif rhythm_note.val == TONIC.val:
             return [Note("s", 0, 0, 1)]
-        elif rythm_note.val == TONIC_OR_FIFTH.val:
+        elif rhythm_note.val == TONIC_OR_FIFTH.val:
             return [Note("s", 0, 0, 1), Note("s", 4, 0, 1)]
-        elif rythm_note.val == SCALE_DISSONNANCE.val:
+        elif rhythm_note.val == SCALE_DISSONNANCE.val:
             return chord.scale_dissonances
-    return [rythm_note]
+    return [rhythm_note]
 
 
-def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
+def get_nearest_note_in_context(rhythm_note, note, chord, dict_notes=None):
     """
 
     Parameters
     ----------
-    rythm_note :
+    rhythm_note :
         
     note :
         
@@ -546,7 +546,7 @@ def get_nearest_note_in_context(rythm_note, note, chord, dict_notes=None):
     """
     if dict_notes is None:
         dict_notes = {}
-    candidates = get_notes_candidate_in_context(rythm_note, chord, dict_notes=dict_notes)
+    candidates = get_notes_candidate_in_context(rhythm_note, chord, dict_notes=dict_notes)
     if len(candidates) == 0:
         return note
     elif note.is_note:

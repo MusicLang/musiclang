@@ -16,7 +16,7 @@ class Tonality:
 
 
     """
-    def __init__(self, degree, mode="M", octave=0):
+    def __init__(self, degree, mode="M", octave=0, tags=None):
         """
         Initialize the tonality.
         Usually you will use musiclang.library to instantiate the tonalities
@@ -35,6 +35,112 @@ class Tonality:
         self.degree = degree
         self.mode = mode
         self.octave = octave
+        self.tags = set(tags) if tags is not None else set()
+
+
+    def __hash__(self):
+        return hash(self.__repr__())
+
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        tonality: Tonality
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        tonality: Tonality
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        tonality: Tonality
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        tonality: Tonality
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        tonality: Tonality
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        tonality: Tonality
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def change_mode(self, mode):
         """
@@ -112,8 +218,10 @@ class Tonality:
         self.__dict__.update(d)
 
     def copy(self):
-        """ """
-        return Tonality(self.degree, self.mode, self.octave)
+        """
+        Returns a copy of the tonality
+        """
+        return Tonality(self.degree, self.mode, self.octave, tags=set(self.tags))
 
     def __radd__(self, other):
         if other is None:
@@ -123,10 +231,13 @@ class Tonality:
 
     def add(self, other):
         """
+        Add another tonality to this one
+        - The degree is added (modulo 12 with octave)
+        - The mode is the mode of the right tonality
 
         Parameters
         ----------
-        other :
+        other : Tonality
             
 
         Returns
@@ -138,12 +249,12 @@ class Tonality:
         delta_octave = new_abs_degree // 12
         new_degree = new_abs_degree % 12
         new_mode = other.mode
-        return Tonality(degree=new_degree, mode=new_mode, octave=new_octave + delta_octave)
+        return Tonality(degree=new_degree, mode=new_mode, octave=new_octave + delta_octave, tags=self.tags.union(other.tags))
 
     @property
     def abs_degree(self):
         """ """
-        return self.degree + + 12 * self.octave
+        return self.degree + 12 * self.octave
 
     def __add__(self, other):
         """
@@ -155,6 +266,26 @@ class Tonality:
             return self
         else:
             return self.add(other)
+
+    def __sub__(self, other):
+        """
+        Find the relative tonality to go from other to self
+        Parameters
+        ----------
+        other: Tonality
+
+        Returns
+        -------
+        tonality: Tonality
+
+        """
+        new_abs_degree = self.degree - other.degree
+        new_octave = self.octave - other.octave
+        delta_octave = new_abs_degree // 12
+        new_degree = new_abs_degree % 12
+        new_mode = self.mode
+        return Tonality(degree=new_degree, mode=new_mode, octave=new_octave + delta_octave,
+                        tags=self.tags.union(other.tags))
 
     @property
     def b(self):
@@ -247,14 +378,18 @@ class Tonality:
 
     def o(self, octave):
         """
+        Octave the tonality
+
+
 
         Parameters
         ----------
-        octave :
+        octave : int
             
 
         Returns
         -------
+        tonality: Tonality
 
         """
         tonality = self.copy()
@@ -269,7 +404,14 @@ class Tonality:
         return self.to_code()
 
     def to_code(self):
-        """ """
+        """
+        Represent the tonality in valid Python code
+
+        Returns
+        -------
+        tonality_code: str
+
+        """
         result = f"{self.degree_to_str()}.{self.mode}"
         if self.octave != 0:
             result += f".o({self.octave})"

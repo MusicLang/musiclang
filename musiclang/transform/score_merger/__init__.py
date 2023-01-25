@@ -1,0 +1,1 @@
+from .basics import ConcatWithPattern, ConcatScores, TakeLast, TakeFirst, TakeIdx, TakeSlice

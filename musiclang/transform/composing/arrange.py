@@ -1,5 +1,5 @@
 
-from .project import get_melody_between, project_on_rythm, get_absolute_voice, get_nearest_note_in_context
+from .project import get_melody_between, project_on_rhythm, get_absolute_voice, get_nearest_note_in_context
 
 def arrange_melody_with_chords(melody, patterns, score, inst):
     """
@@ -58,7 +58,7 @@ def modify_melody_to_be_on_chord(melody, rythm, chord, dict_notes=None):
         assert all([d.duration == 1 for d in dict_notes.keys()]), "Dict notes should be quarter notes in this method"
     new_melody = None
 
-    projected_rythm = project_on_rythm(melody, rythm)
+    projected_rythm = project_on_rhythm(melody, rythm)
     for note, rythm_note in zip(melody.notes, projected_rythm.notes):
         # Get note playing at
         # get nearest dict_notes

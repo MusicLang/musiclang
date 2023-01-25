@@ -12,7 +12,7 @@ class Score:
 
 
     """
-    def __init__(self, chords=None, config=None):
+    def __init__(self, chords=None, config=None, tags=None):
         self.chords = chords
         self.config = config
         if self.chords is None:
@@ -20,6 +20,190 @@ class Score:
         if self.config is None:
             self.config = {'annotation': "", "tempo": 120}
 
+        self.tags = set(tags) if tags is not None else set()
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def add_tag_children(self, tag):
+        """
+        Add a tag to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        return Score([c.add_tag(tag) for c in self.chords], tags=self.tags)
+
+
+    def add_tags_children(self, tags):
+        """
+        Add several tags to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.add_tags(tags) for c in self.chords], tags=self.tags)
+
+    def remove_tags_children(self, tags):
+        """
+        Remove several tags to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.remove_tags(tags) for c in self.chords], tags=self.tags)
+
+    def remove_tag_children(self, tag):
+        """
+        Remove a tag to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.remove_tag(tag) for c in self.chords], tags=self.tags)
+
+    def clear_tags_children(self):
+        """
+        Clear all tags to each chord composing the score (A score itself don't have tags)
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        score: Score
+
+        """
+        return Score([c.clear_tags() for c in self.chords], tags=self.tags)
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        score: Score
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def to_chords(self):
         """ """
@@ -27,34 +211,63 @@ class Score:
         return res
 
     def copy(self):
-        """ """
-        return Score([c.copy() for c in self.chords], config=self.config.copy())
+        """
+        Copy the score
+        """
+        return Score([c.copy() for c in self.chords], config=self.config.copy(), tags=set(self.tags))
 
     def o(self, val):
         """
+        Apply octave to the score.
 
         Parameters
         ----------
-        val :
+        val : int
+            Nb octave to transpose
             
 
         Returns
         -------
+        score: Score
+            Octaved score
 
         """
-        return Score([c.o_melody(val) for c in self], config=self.config.copy())
+        return Score([c.o_melody(val) for c in self], config=self.config.copy(), tags=self.tags)
 
     def __add__(self, other):
+        """
+        Add another score, or a chord to the current score
+        Returns A copy of the score
+
+        Parameters
+        ----------
+        other: Store or Chord
+
+        Returns
+        -------
+        score: Score
+
+        """
+
         from .chord import Chord
+        if other is None:
+            return self.copy()
         if isinstance(other, Chord):
-            return Score(self.copy().chords + [other], config=self.config.copy())
+            return Score(self.copy().chords + [other], config=self.config.copy(), tags=self.tags)
         if isinstance(other, Score):
-            return Score(self.copy().chords + other.copy().chords, config=self.config.copy())
+            return Score(self.copy().chords + other.copy().chords, config=self.config.copy(), tags=self.tags.union(other.tags))
         else:
             raise Exception('Cannot add to Score if not Chord or Score')
 
     def __iter__(self):
         return self.chords.__iter__()
+
+    def __and__(self, other):
+        if isinstance(other, int):
+            return Score([c & other for c in self.chords], tags=self.tags)
+        else:
+            raise Exception(f'Not compatible type with & {other.__class__}')
+
 
     @property
     def instruments(self):
@@ -375,7 +588,7 @@ class Score:
         Decompose the duration in a note + continuations. It recursively call
         :func:`~Note.decompose_duration()`
         """
-        return Score([chord.decompose_duration() for chord in self.chords])
+        return Score([chord.decompose_duration() for chord in self.chords], tags=self.tags)
 
     def to_score(self):
         """ """
@@ -452,9 +665,22 @@ class Score:
     def __mod__(self, other):
         from .tonality import Tonality
         if isinstance(other, Tonality):
-            return Score([c % other for c in self.chords], config=self.config.copy())
+            return Score([c % other for c in self.chords], config=self.config.copy(), tags=self.tags)
         else:
             raise Exception('Following % should be a Tonality')
+
+    def remove_accidents(self):
+        return Score([chord.remove_accidents() for chord in self.chords], tags=set(self.tags))
+
+
+    def __mul__(self, other):
+        """
+        If other is Integer, repeat the note other times
+        """
+        if isinstance(other, int):
+            return sum([self.copy() for i in range(other)], None)
+        else:
+            raise Exception('Cannot multiply Score and ' + str(type(other)))
 
     def __radd__(self, other):
         if other is None:

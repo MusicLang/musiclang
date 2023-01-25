@@ -140,6 +140,9 @@ class Melody:
     def to_melody(self):
         return self.copy()
 
+    def remove_accidents(self):
+        return Melody([n.remove_accidents() for n in self.notes], tags=set(self.tags))
+
     def __getstate__(self):
         return self.__dict__
 
@@ -358,7 +361,7 @@ class Melody:
             res = Melody([getattr(n, item) for n in self.notes], tags=set(self.tags))
             return res
         except:
-            raise AttributeError("")
+            raise AttributeError(f"Not existing property : {item}")
 
     def copy(self):
         """ """

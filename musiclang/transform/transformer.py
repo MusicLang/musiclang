@@ -196,7 +196,18 @@ class ScoreTransformer(Transformer):
         :param kwargs:
         :return:
         """
+        from musiclang import Chord
+        if isinstance(data, Chord):
+            data = data.to_score()
         return self.action(data, **kwargs)
+
+
+class FeatureExtractor(ScoreTransformer):
+    """
+    Take a score in input and can returns anything
+    """
+    TYPE = 'FEATURE'
+
 
 
 class Identity(ScoreTransformer):

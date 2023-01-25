@@ -1,27 +1,36 @@
-from .project import project_on_rythm, parse_relative_to_absolute, get_nearest_val, project_on_one_chord,\
+from .project import project_on_rythm, project_on_one_chord,\
     get_absolute_voices, reproject_on_multiple_chords, get_absolute_voice
-from .arrange import modify_melody_to_be_on_chord
-
-from ..write.library import *
 import numpy as np
-
 
 
 def create_counterpoint(fixed_voices, voices):
     """
+    Create a counterpoint given a list of fixed voices and voices to adapt.
+    It tries to maximize a score, greedily, note per note and voice per voice. This score uses the following rules :
+
+    - No consecutives fifths or octaves or unissons
+    - No hidden fifths or octaves
+    - No parallel dissonnances
+    - No triton (s3 and s6)
+    - Try to avoid moving a note too far appart
+
 
     Parameters
     ----------
-    fixed_voices :
+    fixed_voices : list[Melody]
+                   Voices that serves as cantus firmus
         
-    voices :
+    voices :  list[Melody]
+              Voices that will be modified to fit the cantus firmus.
+              Only the notes will be changed, never the rythm.
         
 
     Returns
     -------
+    result: list[Melody] shape of voices
+            The counterpointed voices
 
     """
-    result = []
 
     # Convert fixed_voices in absolute
     fixed_voices = get_absolute_voices(fixed_voices)
@@ -67,18 +76,23 @@ def create_counterpoint_on_chord(chord, subject_parts, counterpoint_parts):
 
 def create_counterpoint_after_chords(score, subject_parts, counterpoint_parts):
     """
+    Create a counterpoint given a list of fixed voices and voices to adapt.
+    It projects the score on one chord, get the counterpoint then reprojects on all the chords
 
     Parameters
     ----------
-    score :
+    score : Score
         
-    subject_parts :
+    subject_parts : list[int]
+                    Indexes of parts that are the subject
         
-    counterpoint_parts :
-        
+    counterpoint_parts : list[int]
+                    Indexes of parts that are the counterpoint
+
 
     Returns
     -------
+    score: Score
 
     """
     chord, idx_stops, offsets, melodies, chords = project_on_one_chord(score)

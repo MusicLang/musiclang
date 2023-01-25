@@ -38,6 +38,10 @@ class Tonality:
         self.tags = set(tags) if tags is not None else set()
 
 
+    def __hash__(self):
+        return hash(self.__repr__())
+
+
     def has_tag(self, tag):
         """
         Check if the tag exists for this object
@@ -262,6 +266,26 @@ class Tonality:
             return self
         else:
             return self.add(other)
+
+    def __sub__(self, other):
+        """
+        Find the relative tonality to go from other to self
+        Parameters
+        ----------
+        other: Tonality
+
+        Returns
+        -------
+        tonality: Tonality
+
+        """
+        new_abs_degree = self.degree - other.degree
+        new_octave = self.octave - other.octave
+        delta_octave = new_abs_degree // 12
+        new_degree = new_abs_degree % 12
+        new_mode = self.mode
+        return Tonality(degree=new_degree, mode=new_mode, octave=new_octave + delta_octave,
+                        tags=self.tags.union(other.tags))
 
     @property
     def b(self):

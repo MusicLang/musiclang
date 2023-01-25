@@ -6,4 +6,10 @@ MusicLang's references
 
 :ref:`analyze`.
 
+:ref:`transform`.
+
+:ref:`transform-library`.
+
 :ref:`predict`.
+
+

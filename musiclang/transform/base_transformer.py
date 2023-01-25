@@ -207,11 +207,10 @@ class Transformer:
         return chord(**{part: melody for part, melody in chord.score.items() if melody is not None})
 
     def apply_on_score(self, element, on=Mask(), **kwargs):
-        from musiclang import Score
         beat = 0
         idx = 0
         last_chord = None
-        chords = []
+        score = None
         for m in element.chords:
             chord = self(m, on=on.child(element, **kwargs), chord_beat=beat, chord_idx=idx, last_chord=last_chord, **kwargs)\
                 if on(m, chord_beat=beat, chord_idx=idx, last_chord=last_chord, **kwargs) else self.get_default(m)
@@ -219,105 +218,11 @@ class Transformer:
             idx += 1
             last_chord = m
             if chord is not None:
-                chords.append(chord)
+                score += chord
 
-        return Score(chords, tags=element.tags)
+        return score.add_tags(element.tags)
 
     @staticmethod
     def get_part(inst, voice, chord: 'Chord'):
         return chord.score.get(inst + '__' + voice, None)
 
-    def __mul__(self, other):
-        if isinstance(other, Transformer):
-            return TransformerParallel([self, other])
-        if isinstance(other, TransformerParallel):
-            return TransformerParallel([self] + other.actions)
-        if isinstance(other, TransformerSerie):
-            return TransformerSerie([self * action for action in other.actions])
-
-        else:
-            raise Exception(f'Cannot add Transformer {type(self)} and {type(other)}')
-
-
-class TransformerSerie:
-
-    def __init__(self, actions):
-        self.actions = actions
-
-    def __copy__(self):
-        return TransformerSerie([action.copy() for action in self.actions])
-
-    def __add__(self, other):
-        if isinstance(other, Transformer):
-            return TransformerSerie(self.actions + [other])
-        if isinstance(other, TransformerSerie):
-            return TransformerSerie(self.actions + other)
-        if isinstance(other, TransformerParallel):
-            return TransformerSerie(self.actions + [other])
-        else:
-            raise Exception(f'Cannot add Transformer {type(self)} and {type(other)}')
-
-    def __mul__(self, other):
-        if isinstance(other, Transformer):
-            return TransformerSerie([action * other for action in self.actions])
-
-        elif isinstance(other, TransformerParallel):
-            return TransformerSerie([action * other for action in self.actions])
-
-        else:
-            raise Exception(f'Cannot multiply Transformer {type(self)} and {type(other)}')
-
-    def __radd__(self, other):
-        if other is None:
-            return self
-        else:
-            raise Exception(f'Cannot add Transformer {type(self)} and {type(other)}')
-
-    def __call__(self, melody, **kwargs):
-        score = None
-        for action in self.actions:
-            if isinstance(action, TransformerParallel):
-                temp_score = melody.copy()
-                for action_parallel in action.actions:
-                    temp_score = action_parallel(temp_score, **kwargs)
-                score += temp_score
-            else:
-                score += action(melody, **kwargs)
-
-        return score
-
-
-class TransformerParallel:
-    def __init__(self, actions):
-        self.actions = actions
-
-    def __copy__(self):
-        return TransformerParallel([action.copy() for action in self.actions])
-
-    def __add__(self, other):
-        if isinstance(other, Transformer):
-            return TransformerSerie([self, other])
-        if isinstance(other, TransformerSerie):
-            return TransformerSerie([self] + other.actions)
-        if isinstance(other, TransformerParallel):
-            return TransformerSerie([self, other])
-        else:
-            raise Exception(f'Cannot add Transformer {type(self)} and {type(other)}')
-
-    def __mul__(self, other):
-        if isinstance(other, Transformer):
-            return TransformerParallel(self.actions + [other])
-        if isinstance(other, TransformerParallel):
-            return TransformerParallel(self.actions + other)
-        else:
-            raise Exception(f'Cannot multiply Transformer {type(self)} and {type(other)}')
-
-    def __call__(self, melody, **kwargs):
-        score = melody.copy()
-        for action_parallel in self.actions:
-            score = action_parallel(score, **kwargs)
-        return score
-
-    def __rmul__(self, other):
-        if other is None:
-            return self

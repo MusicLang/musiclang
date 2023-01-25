@@ -354,22 +354,6 @@ class Score:
             return score.show(*args)
 
 
-    def apply_on(self, f, query, inplace=False):
-        """
-        FIXME : Call action
-
-        Parameters
-        ----------
-        f
-        query
-
-        Returns
-        -------
-
-        """
-        pass
-
-
     def __getitem__(self, item):
         """
         If str return a score with only this voice
@@ -684,6 +668,19 @@ class Score:
             return Score([c % other for c in self.chords], config=self.config.copy(), tags=self.tags)
         else:
             raise Exception('Following % should be a Tonality')
+
+    def remove_accidents(self):
+        return Score([chord.remove_accidents() for chord in self.chords], tags=set(self.tags))
+
+
+    def __mul__(self, other):
+        """
+        If other is Integer, repeat the note other times
+        """
+        if isinstance(other, int):
+            return sum([self.copy() for i in range(other)], None)
+        else:
+            raise Exception('Cannot multiply Score and ' + str(type(other)))
 
     def __radd__(self, other):
         if other is None:

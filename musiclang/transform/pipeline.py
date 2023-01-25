@@ -5,15 +5,8 @@ import logging
 class ConcatPipeline:
     """
     Pipeline object represents a sequence of steps that will lead to a concatenation of successive transforms.
-    For each step :
-    score = score + transform(score)
-    You can pass parameters to pipelines because you use named steps :
 
-    >>> pipeline =ConcatPipeline(steps=[('partA', ActionWithArgs), ('partB', Action2WithArgs)])
-    >>> score = pipeline(partA=someArgs, partB=someArgs2)
-    You can nest pipelines in the steps and we use arguments unpacking to nest the arguments :
-    >>> pipeline =ConcatPipeline(steps=[('p1', Pipeline([('partA': ActionWithArgs), ('partB': ActionWithArgs)])), ('partC', Action2WithArgs)])
-    >>> pipeline(p1__partA=someArgs, p1__partB=someOtherArgs, partC=args)
+    For each step of the pipeline : ``score = score + transform(score)``
 
     Examples
     ---------
@@ -113,6 +106,7 @@ class ConcatPipeline:
 
     def __call__(self, score=None, **kwargs):
         from .mask import Mask
+        from musiclang import Score
         for data in self.steps:
             on = Mask()
             step, f = '', None
@@ -123,7 +117,11 @@ class ConcatPipeline:
                 step, f, on = data
             arguments = self.unpack_args(step, f, kwargs)
             try:
-                score += f(score, on=on, **arguments).add_tag_children(f'step_{step}')
+                to_add = f(score, on=on, **arguments)
+                if isinstance(score, Score):
+                    score += to_add.add_tag_children(f'step_{step}')
+                else:
+                    score += to_add
             except Exception as e:
                 logging.error(f"Exception in Pipeline: {step}")
                 logging.exception(e)
@@ -139,15 +137,8 @@ class ConcatPipeline:
 class TransformPipeline(ConcatPipeline):
     """
     Pipeline object represents a sequence of steps that will lead to successive transforms.
-    For each step :
-    score = transform(score)
-    You can pass parameters to pipelines because you use named steps :
 
-    >>> pipeline =ConcatPipeline(steps=[('partA', ActionWithArgs), ('partB', Action2WithArgs)])
-    >>> score = pipeline(partA=someArgs, partB=someArgs2)
-    You can nest pipelines in the steps and we use arguments unpacking to nest the arguments :
-    >>> pipeline =ConcatPipeline(steps=[('p1', Pipeline([('partA': ActionWithArgs), ('partB': ActionWithArgs)])), ('partC', Action2WithArgs)])
-    >>> pipeline(p1__partA=someArgs, p1__partB=someOtherArgs, partC=args)
+    For each step of the pipeline : ``score = transform(score)``
 
 
     Examples
@@ -174,6 +165,7 @@ class TransformPipeline(ConcatPipeline):
         return "TransformPipeline({})".format(self.steps.__repr__())
 
     def __call__(self, score=None, **kwargs):
+        from musiclang import Score
         for data in self.steps:
             from .mask import Mask
             on = Mask()
@@ -185,7 +177,9 @@ class TransformPipeline(ConcatPipeline):
 
             arguments = self.unpack_args(step, f, kwargs)
             try:
-                score = f(score, on=on, **arguments).add_tag_children(f'step_{step}')
+                score = f(score, on=on, **arguments)
+                if isinstance(score, Score):
+                    score = score.add_tag_children(f'step_{step}')
 
             except Exception as e:
                 logging.error(f"Exception in TransformPipeline step : {step}")

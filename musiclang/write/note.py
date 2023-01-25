@@ -74,7 +74,14 @@ class Note:
     Mode
     ----
 
-    You can force a mode on a note that bypass the mode of the chord scale
+    You can force a mode on a note that bypass the mode of the chord scale.
+
+    Accident
+    ---------
+
+    You can force an accident on a note choosing between : ['min', 'maj', 'dim', 'aug', 'natural']
+    It is used to force a specific interval that is robust to transposition, but keeping a diatonic value.
+    It is advised to be used in replacement of h-type notes because it is in general more compatible with transformations.
 
     Examples
     --------
@@ -104,12 +111,13 @@ class Note:
 
     """
 
-    def __init__(self, type, val, octave, duration, mode=None, amp=80, tags=None):
+    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=80, tags=None):
         self.type = type
         self.val = val
         self.octave = octave
         self.duration = duration
         self.amp = amp
+        self.accident = accident
         self.mode = mode
         self.properties = self.init_properties()
         self.tags = tags if tags is not None else set()
@@ -298,7 +306,12 @@ class Note:
 
     def copy(self):
         """ """
-        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, amp=self.amp, tags=set(self.tags))
+        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, accident=self.accident, amp=self.amp, tags=set(self.tags))
+
+    def set_val(self, val):
+        note = self.copy()
+        note.val = val
+        return note
 
     def set_duration(self, value):
         """
@@ -485,12 +498,24 @@ class Note:
             result += f".o({self.octave})"
         if self.mode is not None and self.is_note:
             result += f".{self.mode}"
+        if self.accident is not None and self.is_note:
+            result += f".{self.accident}"
         if self.is_note:
             amp_figure = self.amp_figure
             if amp_figure != 'mf':
                 result += f".{self.amp_figure}"
 
         return result
+
+
+    def remove_accidents(self):
+        new_note = self.copy()
+        new_note.accident = None
+        return new_note
+
+    @property
+    def has_accident(self):
+        return self.accident is not None
 
     def to_sequence(self, chord, inst):
         """
@@ -582,6 +607,8 @@ class Note:
         """
         if self.type in ['s', 'c', 'h']:
             return self.add_value(n, 0)
+        elif self.type in ['h']:
+            return self.add_value((12 * n) // 7, 0)
         else:
             return self.copy()
 
@@ -666,8 +693,6 @@ class Note:
     def __mul__(self, other):
         """
         If other is Integer, repeat the note other times
-        If other is note, create a vertical melody
-        If other is melody append note to vertical melody
         """
         from .melody import Melody
         if isinstance(other, int):

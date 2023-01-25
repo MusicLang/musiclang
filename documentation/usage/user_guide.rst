@@ -118,10 +118,10 @@ Octaves
 You can specify an octave using the :func:`~o` method of a note
 For example : ``s0.o(1)`` is ``s0`` up one octave, ``s0.o(-1)`` is ``s0`` down one octave
 
-Rythm
+Rhythm
 '''''''''''''
 
-You can spcify a rythm to a note using properties
+You can spcify a rhythm to a note using properties
 
 - ``h=half, w=whole, q=quarter, e=eight, s=sixteenth, t=thirty-seconds``. By default the duration is a quarter so ``s0==s0.q``
 - You can use n-uplet ``(3, 5, 7)`` : for example ``s0.e3`` is s0 with a duration of a triolet etc ...

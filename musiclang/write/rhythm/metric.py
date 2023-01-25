@@ -231,7 +231,7 @@ class Metric:
 
     def complementary(self):
         """
-        Get the complementary rythm of a given rythm
+        Get the complementary rhythm of a given rhythm
         eg : Complementary of [1, 0, 0, 0] = [0, 1, 1, 1]
         Keep the same tatum, nb_bars and signature
 
@@ -243,7 +243,7 @@ class Metric:
 
     def reversed(self):
         """
-        Get the reversed rythm of a given rythm
+        Get the reversed rhythm of a given rhythm
         eg : Reverse of [1, 0, 0, 0] = [0, 0, 0, 1]
         Keep the same tatum, nb_bars and signature
 
@@ -255,7 +255,7 @@ class Metric:
 
     def circular_shift(self, n):
         """
-        Get the shifted rythm of a given rythm by tatum value
+        Get the shifted rhythm of a given rhythm by tatum value
         eg : circular_shift(2) of [1, 0, 0, 0] = [0, 0, 1, 0]
         Keep the same tatum, nb_bars and signature
 
@@ -268,7 +268,7 @@ class Metric:
 
     def canon(self, n):
         """
-        Get the shifted rythm of a given rythm by tatum value, cut the end to fit the metric.
+        Get the shifted rhythm of a given rhythm by tatum value, cut the end to fit the metric.
         eg : canon(2) of [1, 0, 0, 0] = [0, 0, 1, 0]
         Keep the same tatum, nb_bars and signature
 
@@ -289,7 +289,7 @@ class Metric:
         for note in melody.notes:
             nb_tatums = note.duration / tatum
             if nb_tatums != int(nb_tatums):
-                raise ValueError('Could not find a tatum to determine the metric, use a composite rythm')
+                raise ValueError('Could not find a tatum to determine the metric, use a composite rhythm')
             nb_tatums = int(nb_tatums)
 
             if note.is_note:
@@ -327,20 +327,20 @@ class Metric:
 
         """
         from musiclang import Note
-        from musiclang.transform.composing.project import project_on_rythm
-        rythm = self.apply_to_melody(Note(0, 0, 0, 1))
-        projected_melody = project_on_rythm(rythm, melody)
+        from musiclang.transform.composing.project import project_on_rhythm
+        rhythm = self.apply_to_melody(Note(0, 0, 0, 1))
+        projected_melody = project_on_rhythm(rhythm, melody)
         return projected_melody
 
     def masked(self, mask):
         """
-        Get the masked rythm of a given rythm by tatum value
+        Get the masked rhythm of a given rhythm by tatum value
         eg : Mask of [1, 0, 1, 0] with [1, 0, 0, 0] is [1, 0, 0, 0]
 
         Parameters
         ---------
         mask : Metric | list[int]
-               Mask to apply to the rythm
+               Mask to apply to the rhythm
         Returns
         -------
         metric: Metric
@@ -353,13 +353,13 @@ class Metric:
 
     def add(self, mask):
         """
-        Add to rythm together
+        Add to rhythm together
         eg : Mask of [1, 0, 1, 0] with [1, 0, 0, 0] is [1, 0, 0, 0]
 
         Parameters
         ---------
         mask : Metric | list[int]
-               Mask to apply to the rythm
+               Mask to apply to the rhythm
         Returns
         -------
         metric: Metric

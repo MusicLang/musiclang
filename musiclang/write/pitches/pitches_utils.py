@@ -89,6 +89,22 @@ def get_relative_scale_value(note, last_pitch, scale_pitches):
         pass
 
 
+def get_value_to_scale_note_with_accident(note, chord):
+    """
+    Get the value of the note if there is an accident
+    Parameters
+    ----------
+    note
+    chord
+
+    Returns
+    -------
+
+    """
+    from musiclang.write.constants import ACCIDENTS_TO_NOTE
+    tonic = chord.scale_pitches[0]
+    return tonic + ACCIDENTS_TO_NOTE[(note.val, note.accident)] + 12 * note.octave
+
 def get_value_to_scale_note(value, scale_pitches):
     """
 
@@ -126,7 +142,9 @@ def note_to_pitch_result(note, chord, last_pitch=None):
 
     pitch_result = None
     if not note.is_relative:
-        if note.is_scale_note:
+        if note.has_accident:
+            pitch_result = get_value_to_scale_note_with_accident(note, real_chord)
+        elif note.is_scale_note:
             pitch_result = get_value_to_scale_note(note.val + 7 * note.octave, scale_pitches)
         elif note.is_chord_note:
             raise Exception('Chord notes parsing are not implemented yet')

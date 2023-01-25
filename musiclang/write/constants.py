@@ -406,6 +406,52 @@ INDEX_MODE = {
 }
 
 
+ACCIDENTS_TO_NOTE = {
+    (0, "min"): 0,
+    (0, "maj"): 0,
+    (0, "natural"): 0,
+    (0, "dim"): 0,
+    (0, "aug"): 1,
+
+    (1, "min"): 1,
+    (1, "maj"): 2,
+    (1, "natural"): 2,
+    (1, "dim"): 1,
+    (1, "aug"): 2,
+
+    (2, "min"): 3,
+    (2, "maj"): 4,
+    (2, "natural"): 4,
+    (2, "dim"): 3,
+    (2, "aug"): 4,
+
+    (3, "min"): 5,
+    (3, "maj"): 5,
+    (3, "natural"): 5,
+    (3, "dim"): 5,
+    (3, "aug"): 6,
+
+    (4, "min"): 7,
+    (4, "maj"): 7,
+    (4, "natural"): 7,
+    (4, "dim"): 6,
+    (4, "aug"): 7,
+
+    (5, "min"): 8,
+    (5, "maj"): 9,
+    (5, "natural"): 9,
+    (5, "dim"): 8,
+    (5, "aug"): 9,
+
+    (6, "min"): 10,
+    (6, "maj"): 11,
+    (6, "natural"): 11,
+    (6, "dim"): 10,
+    (6, "aug"): 11,
+}
+
+
+
 def construct_index_tonality():
     """ """
     result = {}

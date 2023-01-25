@@ -42,10 +42,10 @@ class Note:
     You can specify an octave using the :func:`~o` method of a note
     For example : ``s0.o(1)`` is ``s0`` up one octave, ``s0.o(-1)`` is ``s0`` down one octave
 
-    Rythm
-    -----
+    Rhythm
+    -------
 
-    You can spcify a rythm to a note using properties
+    You can spcify a rhythm to a note using properties
 
     - ``h=half, w=whole, q=quarter, e=eight, s=sixteenth, t=thirty-seconds``
     - You can use n-uplet ``(3, 5, 7)`` : for example s0.e3 is s0 with a duration of a triolet etc ...
@@ -74,7 +74,14 @@ class Note:
     Mode
     ----
 
-    You can force a mode on a note that bypass the mode of the chord scale
+    You can force a mode on a note that bypass the mode of the chord scale.
+
+    Accident
+    ---------
+
+    You can force an accident on a note choosing between : ['min', 'maj', 'dim', 'aug', 'natural']
+    It is used to force a specific interval that is robust to transposition, but keeping a diatonic value.
+    It is advised to be used in replacement of h-type notes because it is in general more compatible with transformations.
 
     Examples
     --------
@@ -104,14 +111,117 @@ class Note:
 
     """
 
-    def __init__(self, type, val, octave, duration, mode=None, amp=80):
+    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=80, tags=None):
         self.type = type
         self.val = val
         self.octave = octave
         self.duration = duration
         self.amp = amp
+        self.accident = accident
         self.mode = mode
         self.properties = self.init_properties()
+        self.tags = tags if tags is not None else set()
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this note
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        note: Note
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        note: Note
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        note: Note
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def __iter__(self):
         return [self].__iter__()
@@ -196,7 +306,12 @@ class Note:
 
     def copy(self):
         """ """
-        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, amp=self.amp)
+        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, accident=self.accident, amp=self.amp, tags=set(self.tags))
+
+    def set_val(self, val):
+        note = self.copy()
+        note.val = val
+        return note
 
     def set_duration(self, value):
         """
@@ -383,12 +498,24 @@ class Note:
             result += f".o({self.octave})"
         if self.mode is not None and self.is_note:
             result += f".{self.mode}"
+        if self.accident is not None and self.is_note:
+            result += f".{self.accident}"
         if self.is_note:
             amp_figure = self.amp_figure
             if amp_figure != 'mf':
                 result += f".{self.amp_figure}"
 
         return result
+
+
+    def remove_accidents(self):
+        new_note = self.copy()
+        new_note.accident = None
+        return new_note
+
+    @property
+    def has_accident(self):
+        return self.accident is not None
 
     def to_sequence(self, chord, inst):
         """
@@ -421,6 +548,10 @@ class Note:
         from .melody import Melody
         return Melody([self]).to_sequence(chord, inst)
 
+    def to_melody(self):
+        from .melody import Melody
+        return Melody([self], tags=self.tags)
+
     def repr_mode(self):
         """ """
         if self.mode is not None:
@@ -448,6 +579,8 @@ class Note:
 
         """
         from .melody import Melody
+        if other is None:
+            return self.copy()
         if isinstance(other, Note):
             return Melody([self, other])
         if isinstance(other, Melody):
@@ -474,6 +607,8 @@ class Note:
         """
         if self.type in ['s', 'c', 'h']:
             return self.add_value(n, 0)
+        elif self.type in ['h']:
+            return self.add_value((12 * n) // 7, 0)
         else:
             return self.copy()
 
@@ -558,8 +693,6 @@ class Note:
     def __mul__(self, other):
         """
         If other is Integer, repeat the note other times
-        If other is note, create a vertical melody
-        If other is melody append note to vertical melody
         """
         from .melody import Melody
         if isinstance(other, int):
@@ -584,12 +717,12 @@ class Silence(Note):
     Only takes a duration as a parameter
     """
 
-    def __init__(self, duration):
-        super().__init__("r", 0, 0, duration)
+    def __init__(self, duration, tags=None):
+        super().__init__("r", 0, 0, duration, tags=tags)
 
     def copy(self):
         """ """
-        return Silence(self.duration)
+        return Silence(self.duration, tags=set(self.tags))
 
 
 class Continuation(Note):
@@ -599,9 +732,9 @@ class Continuation(Note):
     Only takes a duration as a parameter
     """
 
-    def __init__(self, duration):
-        super().__init__("l", 0, 0, duration)
+    def __init__(self, duration, tags=None):
+        super().__init__("l", 0, 0, duration, tags=tags)
 
     def copy(self):
         """ """
-        return Continuation(self.duration)
+        return Continuation(self.duration, tags=set(self.tags))

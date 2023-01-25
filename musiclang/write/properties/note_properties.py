@@ -17,13 +17,15 @@ class NoteProperties:
     def notes(self):
         """ """
         from ..melody import Melody
-        return Melody([self.note]).notes
+        return Melody([self.note], tags=self.note.tags).notes
 
     @property
     def scale_pitch(self):
         """ """
         if self.note.type == "s":
             return self.note.val + 7 * self.note.octave
+        elif self.note.type == "h":
+            return (7 * self.note.val//12) + 7 * self.note.octave
         else:
             raise Exception(f'Not well defined pitch for type {self.note.type}')
 
@@ -242,4 +244,40 @@ class NoteProperties:
         """ """
         new_note = self.note.copy()
         new_note.mode = "locrian"
+        return new_note
+
+    @property
+    def dim(self):
+        """ """
+        new_note = self.note.copy()
+        new_note.accident = "dim"
+        return new_note
+
+    @property
+    def min(self):
+        """ """
+        new_note = self.note.copy()
+        new_note.accident = "dim"
+        return new_note
+
+    @property
+    def natural(self):
+        """ """
+        new_note = self.note.copy()
+        new_note.accident = "natural"
+        return new_note
+
+    @property
+    def maj(self):
+        """ """
+        new_note = self.note.copy()
+        new_note.accident = "maj"
+        return new_note
+
+
+    @property
+    def aug(self):
+        """ """
+        new_note = self.note.copy()
+        new_note.accident = "aug"
         return new_note

@@ -57,7 +57,7 @@ class Chord:
 
     EXCLUDED_ITEMS = ['__array_struct__']
 
-    def __init__(self, element, extension='5', tonality=None, score=None, octave=0):
+    def __init__(self, element, extension='', tonality=None, score=None, octave=0, tags=None):
         """
 
         Parameters
@@ -77,6 +77,107 @@ class Chord:
         self.tonality = tonality
         self.octave = octave
         self.score = {} if score is None else score
+        self.tags = set(tags) if tags is not None else set()
+
+    def has_tag(self, tag):
+        """
+        Check if the tag exists for this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        return tag in self.tags
+
+    def add_tag(self, tag):
+        """
+        Add a tag to this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.add(tag)
+        return cp
+
+    def add_tags(self, tags):
+        """
+        Add several tags to the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+        tags to add
+
+        Returns
+        -------
+        chord: Chord
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags.union(set(tags))
+        return cp
+
+    def remove_tags(self, tags):
+        """
+        Remove several tags from the object.
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        tags: List[str]
+
+        Returns
+        -------
+        chord: Chord
+
+
+        """
+        cp = self.copy()
+        cp.tags = cp.tags - set(tags)
+        return cp
+
+    def remove_tag(self, tag):
+        """
+        Remove a tag from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags.remove(tag)
+        return cp
+
+    def clear_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        cp.tags = set()
+        return cp
 
     def parse(self, pitch):
         """
@@ -105,7 +206,26 @@ class Chord:
 
     def decompose_duration(self):
         """ """
-        return self(**{key: melody.decompose_duration() for key, melody in self.score.items()})
+        return self(**{key: melody.decompose_duration() for key, melody in self.score.items()}, tags=self.tags)
+
+    @property
+    def degree(self):
+        return self.element
+
+    def get_note_degree_accident(self, note):
+        from .constants import DEGREE_TO_SCALE_DEGREE
+        if note.type == 's':
+            return note.val
+        elif note.type in ['l', 'r']:
+            return (None, None)
+        elif note.type == 'h':
+            pass
+
+
+
+    @property
+    def mode(self):
+        return self.tonality.mode
 
     def change_mode(self, mode):
         """
@@ -182,6 +302,14 @@ class Chord:
         return frozenset({s % 12 for s in self.chord_pitches})
 
     @property
+    def pitch_dict(self):
+        chromatic_dict = {self.to_pitch(note): note for note in self.chromatic_scale_notes}
+        diatonic_dict = {self.to_pitch(note): note for note in self.scale_notes}
+
+        return {**chromatic_dict, **diatonic_dict}
+
+
+    @property
     def scale_set(self):
         """
         Get a frozenset of :func:`~Chord.scale_pitches`
@@ -214,6 +342,10 @@ class Chord:
         max_res = [scale_pitches[i] for i in [0, 2, 4, 6, 1, 3, 5]]
         id = len(self.possible_notes)
         return max_res[:id]
+
+    def remove_accidents(self):
+        return Chord({key: val.remove_accidents() for key, val in self.score.items()}, tags=set(self.tags))
+
 
     @property
     def scale_pitches(self):
@@ -329,6 +461,12 @@ class Chord:
             return False
         return self.chord_equals(other) and self.score_equals(other)
 
+    def __and__(self, other):
+        if isinstance(other, int):
+            return self(**{part: melody & other for part, melody in self.score.items()})
+        else:
+            raise Exception(f'Not compatible type with & {other.__class__}')
+
     def __hash__(self):
         return hash(self.__repr__())
 
@@ -371,6 +509,19 @@ class Chord:
         """
         from .note import Note
         return [Note("s", i, 0, 1) for i in range(7)]
+
+    @property
+    def chromatic_scale_notes(self):
+        """
+        List the chromatic notes that belong to the chord scale
+
+        Returns
+        -------
+        notes: List[Note]
+               The list of possible chromatic notes for the chord scale
+        """
+        from .note import Note
+        return [Note("h", i, 0, 1) for i in range(12)]
 
     @property
     def scale_dissonances(self):
@@ -489,6 +640,16 @@ class Chord:
         from .score import Score
         return Score([self]).chords
 
+    def __mul__(self, other):
+        """
+        If other is Integer, repeat the note other times
+        """
+        from .score import Score
+        if isinstance(other, int):
+            return Score([self.copy() for i in range(other)])
+        else:
+            raise Exception('Cannot multiply Chord and ' + str(type(other)))
+
     def __mod__(self, other):
         """
         Modulate to another tonality relative to the current tonality
@@ -549,7 +710,7 @@ class Chord:
                Create a new score concatenating this and the other object
 
         Examples
-        --------
+        ---------
 
         >>> from musiclang.library import *
         >>> chord1 = (I % I.M)(piano__0=s0)
@@ -558,7 +719,10 @@ class Chord:
         (I % I.M)(piano__0=s0) + (V % I.M)(piano__0=s0)
 
         """
+
         from .score import Score
+        if other is None:
+            return self.copy()
         if isinstance(other, Chord):
             return Score([self.copy(), other.copy()])
         if isinstance(other, Score):
@@ -633,10 +797,10 @@ class Chord:
 
         """
         new_parts = {}
-        for part in self.score:
+        for part in self.score.keys():
             new_parts[part] = self.score[part].o(octave)
 
-        return self(**new_parts)
+        return self(**new_parts).add_tags(self.tags)
 
     def o(self, octave):
         """Chord up or down the amount of octave in parameter, it will change the chord octave, not the melody
@@ -678,8 +842,9 @@ class Chord:
         return Chord(element=self.element,
                      extension=self.extension,
                      tonality=self.tonality.copy() if self.tonality is not None else None,
-                     score={k: s.copy() for k, s in self.score.items()} if self.score is not None else None,
-                     octave=self.octave
+                     score={k: s.copy() for k, s in self.score.items() if s is not None} if self.score is not None else None,
+                     octave=self.octave,
+                     tags=set(self.tags)
                      )
 
     @staticmethod
@@ -723,9 +888,9 @@ class Chord:
 
             if (isinstance(named_melodies[key], list)):
                 for idx, melody in enumerate(named_melodies[key]):
-                    named_melodies_result[key_obj + '__' + str(number + idx)] = melody
+                    named_melodies_result[key_obj + '__' + str(number + idx)] = melody.to_melody()
             else:
-                named_melodies_result[key_obj + '__' + str(number)] = named_melodies[key]
+                named_melodies_result[key_obj + '__' + str(number)] = named_melodies[key].to_melody()
 
         return named_melodies_result
 
@@ -739,12 +904,12 @@ class Chord:
         if len(self.parts) == 0:
             raise AttributeError()
         try:
-            res = self(**{part: getattr(self.score[part], item) for part in self.parts})
+            res = self(**{part: getattr(self.score[part], item) for part in self.parts}, tags=self.tags)
             return res
         except Exception:
-            raise AttributeError("Not existing attribute")
+            raise AttributeError(f"Not existing attribute {item}")
 
-    def __call__(self, *melodies, **named_melodies):
+    def __call__(self, *melodies, tags=None, **named_melodies):
         """
         Method that allows to assign melodies and instruments to a chord
 
@@ -786,8 +951,10 @@ class Chord:
              piano__2= s2 + s4)
         """
         chord = self.copy()
+        if tags is not None:
+            chord = chord.add_tags(tags)
         named_melodies_preparsed = self.preparse_named_melodies(named_melodies)
-        chord.score = {**{f'piano_{i}': melody for i, melody in enumerate(melodies)}, **named_melodies_preparsed}
+        chord.score = {**{f'piano_{i}': melody.to_melody() for i, melody in enumerate(melodies)}, **named_melodies_preparsed}
         return chord
 
     def melody_to_str(self):

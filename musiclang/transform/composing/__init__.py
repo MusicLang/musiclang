@@ -1,0 +1,1 @@
+from .counterpoint import create_counterpoint, create_counterpoint_after_chords, create_counterpoint_on_chord

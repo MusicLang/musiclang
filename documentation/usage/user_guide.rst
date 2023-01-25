@@ -316,8 +316,6 @@ aspect of an already existing MusicLang score using models trained on a variety 
 See the :ref:`examples-gallery` for some detailed examples.
 
 
-
-
 Examples
 --------
 

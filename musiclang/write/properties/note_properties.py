@@ -40,73 +40,82 @@ class NoteProperties:
             raise Exception(f'Not well defined delta value for type {self.note.type}')
 
     @property
+    def amp_normalized(self):
+        return self.note.amp / 120
+
+    @property
     def ppp(self):
         """ """
         note = self.note.copy()
-        note.amp = 20
+        note.amp = 120 * 0.15
         return note
 
     @property
     def pp(self):
         """ """
         note = self.note.copy()
-        note.amp = 40
+        note.amp = 120 * 0.25
         return note
 
     @property
     def p(self):
         """ """
         note = self.note.copy()
-        note.amp = 60
+        note.amp = 120 * 0.35
         return note
 
     @property
     def mf(self):
         """ """
         note = self.note.copy()
-        note.amp = 80
+        note.amp = 120 * 0.55
         return note
 
     @property
     def f(self):
         """ """
         note = self.note.copy()
-        note.amp = 100
+        note.amp = 120 * 0.7
         return note
 
     @property
     def ff(self):
         """ """
         note = self.note.copy()
-        note.amp = 110
+        note.amp = 120 * 0.85
         return note
 
     @property
     def fff(self):
         """ """
         note = self.note.copy()
-        note.amp = 120
+        note.amp = 120 * 0.9
         return note
 
     @property
     def amp_figure(self):
         """ """
-        note = self.note.copy()
-        if note.amp <= 20:
+        n = self.note.amp_normalized
+        if n is None or n <= 0:
+            return 'n'
+        elif n < 0.11:
+            return 'pppp'
+        elif n < 0.16:
             return 'ppp'
-        elif note.amp <= 40:
+        elif n < 0.26:
             return 'pp'
-        elif note.amp <= 60:
+        elif n < 0.36:
             return 'p'
-        elif note.amp <= 80:
+        elif n < 0.5:
+            return 'mp'
+        elif n < 0.65:
             return 'mf'
-        elif note.amp <= 100:
+        elif n < 0.8:
             return 'f'
-        elif note.amp <= 110:
+        elif n < 0.9:
             return 'ff'
         else:
             return 'fff'
-
 
     @property
     def is_up(self):

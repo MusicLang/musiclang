@@ -6,6 +6,7 @@ import numpy as np
 def create_counterpoint(fixed_voices, voices):
     """
     Create a counterpoint given a list of fixed voices and voices to adapt.
+    You should provide all the melodies, the counterpoint only mutate existing voices to fit best the fixed voices.
     It tries to maximize a score, greedily, note per note and voice per voice. This score uses the following rules :
 
     - No consecutives fifths or octaves or unissons
@@ -51,6 +52,53 @@ def create_counterpoint(fixed_voices, voices):
         # Convert back to melody
 
     return result
+
+
+def create_counterpoint_on_score(score, fixed_parts, counterpoint_parts=None):
+    """
+    Create a counterpoint on parts for a score
+    - Put everything on the same chord
+    - Call :func:`~create_counterpoint` on melodies
+    - Put everything back in the original chord progression
+
+    You should provide all the melodies, the counterpoint only mutate existing voices to fit best the fixed voices.
+    It tries to maximize a score, greedily, note per note and voice per voice. This score uses the following rules :
+
+    - No consecutives fifths or octaves or unissons
+    - No hidden fifths or octaves
+    - No parallel dissonnances
+    - No triton (s3 and s6)
+    - Try to avoid moving a note too far appart
+
+    Parameters
+    ----------
+    score: Score
+    fixed_parts: list[str]
+    Name of parts that are fixed  (eg: piano__0)
+    counterpoint_parts: list[str] or None
+        Name of parts that will move (eg: piano__1)
+        If None, all the remaining voices will be applied a counterpoint on the fixed_parts
+
+    Returns
+    -------
+    score: Score
+           Resulting score
+
+    """
+    from musiclang import Score
+    if counterpoint_parts is None:
+        counterpoint_parts = set(score.instruments) - set(fixed_parts)
+    chord, _, chords_offsets, _, chords = project_on_one_chord(score)
+    fixed_voices = [chord.score[part] for part in fixed_parts]
+    moving_voices = [chord.score[part] for part in counterpoint_parts]
+    moving_voices = create_counterpoint(fixed_voices, moving_voices)
+    for voice, part in zip(moving_voices, counterpoint_parts):
+        chord.score[part] = voice
+
+    projection = chord.to_score().project_on_score(score, keep_score=False)
+    projection = Score([s & (-i) for s, i in zip(projection.chords, chords_offsets)])
+    return projection
+
 
 def create_counterpoint_on_chord(chord, subject_parts, counterpoint_parts):
     """
@@ -333,7 +381,7 @@ def scorer(subject_notes, note, delta, last_intervals):
     NB_PARALLEL_DISSONNANCES = nb_parallel_dissonnances(last_intervals[-1], subject_notes, candidate)
     NB_TRITON = sum([1 * is_triton(candidate, s) for s in not_silenced_subject_notes])
     DISTANCE = abs(delta)
-    return 10 - 2 * NB_DISSONNANCES - 2 * NB_FORBIDDEN_PARALLELS - 2 * NB_PARALLEL_DISSONNANCES - 0.2 * DISTANCE - 0.2 * NB_TRITON
+    return 10 - 4 * NB_DISSONNANCES - 4 * NB_FORBIDDEN_PARALLELS - 4 * NB_PARALLEL_DISSONNANCES - 0.2 * DISTANCE - 0.2 * NB_TRITON
 
 def get_counterpoint_for_one_note(subjects_notes, note, last_intervals, delta=0):
     """
@@ -360,10 +408,9 @@ def get_counterpoint_for_one_note(subjects_notes, note, last_intervals, delta=0)
 
     best_delta = deltas[max_score_idx]
     chosen_candidate = note + best_delta
-
     assert len(subjects_notes) == len(last_intervals[-1]), "{} {}".format(len(subjects_notes), len(last_intervals[-1]))
     last_intervals.append([interval(s, chosen_candidate, replace=old_inter) for s, old_inter in zip(subjects_notes, last_intervals[-1])])
-    return chosen_candidate, last_intervals
+    return chosen_candidate, last_intervals, max_score
 
 
 
@@ -426,12 +473,14 @@ def get_counterpoint(subjects, to_fix):
     subjects = np.asarray(subjects)
     last_intervals = [[None for s in subjects]]
     result = []
+    total_score = 0
     for i, n in enumerate(to_fix):
         if n is None:
             result.append(None)
         else:
-            new_note, last_intervals = get_counterpoint_for_one_note(subjects[:, i].tolist(), n, last_intervals)
+            new_note, last_intervals, max_score = get_counterpoint_for_one_note(subjects[:, i].tolist(), n, last_intervals)
             result.append(new_note)
+            total_score += max_score
 
         last_intervals = clear_list_intervals(last_intervals)
 

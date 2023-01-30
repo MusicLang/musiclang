@@ -15,48 +15,97 @@ def offset_between_chords(c1, c2):
     -------
 
     """
+    from musiclang.write.constants import DEGREE_TO_SCALE_DEGREE
     offset_degrees = c2.element - c1.element
 
     c1_degree = c1.tonality.degree if c1.tonality is not None else 0
     c2_degree = c2.tonality.degree if c2.tonality is not None else 0
     c1_octave = c1.tonality.octave if c1.tonality is not None else 0
     c2_octave = c2.tonality.octave if c2.tonality is not None else 0
-    offset_tonalities = c2_degree - c1_degree
+    offset_tonalities = int(np.sign(c2_degree - c1_degree) * DEGREE_TO_SCALE_DEGREE[abs(c2_degree - c1_degree)])
     offset_octave = c2_octave - c1_octave
     offset_octave_chords = c2.octave - c1.octave
 
     return offset_degrees + offset_tonalities + 7 * (offset_octave + offset_octave_chords)
 
 
+def project_on_several_chord(score, chords):
+    """
 
-def project_on_one_chord(chord_serie):
+    Parameters
+    ----------
+    score
+    chords
+
+    Returns
+    -------
+
+    """
+    from musiclang import Score
+    chord, _, _, _, _ = project_on_one_chord(score)
+    _, _, chords_offsets, _, _ = project_on_one_chord(chords)
+
+    projection = chord.to_score().project_on_score(chords, keep_score=False)
+    projection = Score([s & (-i) for s, i in zip(projection.chords, chords_offsets)])
+    return projection
+
+def project_on_score_keep_notes(score1, score2):
+    """
+    Project the score1 on the score2 keping the notes as close as possible to the original score
+    For example:
+
+    Parameters
+    ----------
+    score1: Score
+            Score to project
+    score2: Score
+            Score on which to project (the resulting score will have the same chord progression)
+    Returns
+    -------
+
+    """
+    from musiclang import Score
+    chord, _, _, _, chords = project_on_one_chord(score1)
+    _, _, chords_offsets, _, _ = project_on_one_chord(score2)
+    projection = chord.to_score().project_on_score(score2, keep_score=False)
+    projection = Score([s & (-i) for s, i in zip(projection.chords, chords_offsets)])
+    return projection
+
+
+def project_on_one_chord(score):
     """Clever projection of a score in several chords into the first chord
     :return:
 
     Parameters
     ----------
-    chord_serie :
+    score :
         
 
     Returns
     -------
 
     """
-    chords = chord_serie.chords
+    chords = score.chords
     first_chord = chords[0]
-    all_parts = list(dict.fromkeys([part for chord in chord_serie.chords for part in chord.parts]))
-    assert all_parts == first_chord.parts, 'Parts should be equal for all chords'
+    all_parts = list(dict.fromkeys([part for chord in score.chords for part in chord.parts]))
     idx_stops = {part: [] for part in all_parts}
     melodies = {part: None for part in all_parts}
     offsets = []
     for chord in chords:
         offset = offset_between_chords(first_chord, chord)
         offsets.append(offset)
-        for part in chord.parts:
-            start = idx_stops[part][-1][-1] if len(idx_stops[part]) > 0 else 0
-            stop = start + chord.score[part].duration
-            idx_stops[part].append((start, stop))
-            melodies[part] += chord.score[part] & offset
+        for part in all_parts:
+            if part in chord.score.keys():
+                start = idx_stops[part][-1][-1] if len(idx_stops[part]) > 0 else 0
+                stop = start + chord.score[part].duration
+                idx_stops[part].append((start, stop))
+                melodies[part] += chord.score[part] & offset
+            else:
+                start = idx_stops[part][-1][-1] if len(idx_stops[part]) > 0 else 0
+                stop = start + chord.duration
+                idx_stops[part].append((start, stop))
+                melodies[part] += Silence(chord.duration)
+
     chord = first_chord(**melodies)
     return chord, idx_stops, offsets, melodies, chords
 

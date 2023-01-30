@@ -111,7 +111,7 @@ class Note:
 
     """
 
-    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=80, tags=None):
+    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=66, tags=None):
         self.type = type
         self.val = val
         self.octave = octave

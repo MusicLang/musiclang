@@ -283,6 +283,15 @@ class Chord:
         """
         return self.to_score().show(*args, **kwargs)
 
+
+    def to_musicxml(self, *args, **kwargs):
+        return self.to_score().to_musicxml(*args, **kwargs)
+
+
+    def to_music21(self, *args, **kwargs):
+        return self.to_score().to_music21(*args, **kwargs)
+
+
     @property
     def scale_degree(self):
         """
@@ -954,7 +963,7 @@ class Chord:
         if tags is not None:
             chord = chord.add_tags(tags)
         named_melodies_preparsed = self.preparse_named_melodies(named_melodies)
-        chord.score = {**{f'piano_{i}': melody.to_melody() for i, melody in enumerate(melodies)}, **named_melodies_preparsed}
+        chord.score = {**{f'piano__{i}': melody.to_melody() for i, melody in enumerate(melodies)}, **named_melodies_preparsed}
         return chord
 
     def melody_to_str(self):

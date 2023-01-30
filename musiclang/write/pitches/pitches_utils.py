@@ -135,6 +135,8 @@ def note_to_pitch_result(note, chord, last_pitch=None):
 
     Returns
     -------
+    pitch: int
+           Resulting pitch
 
     """
     real_chord = note.real_chord(chord)

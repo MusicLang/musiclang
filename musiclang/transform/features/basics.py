@@ -8,8 +8,12 @@ class ExtractMainTonality(FeatureExtractor):
     """
 
     def action(self, score, **kwargs):
-        tonalities = [chord.tonality for chord in score]
-        tonality = Counter(tonalities).most_common(1)[0][0]
+        d_res = {}
+        for idx, chord in enumerate(score):
+            tone = chord.tonality
+            d_res[tone] = d_res.get(tone, 0) + chord.duration * (0.96 ** idx)
+
+        tonality = max(tuple(d_res.items()), key=lambda x: x[1])[0]
         return tonality
 
 

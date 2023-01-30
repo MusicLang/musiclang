@@ -58,11 +58,6 @@ def project_on_score(score, score2, keep_score=False):
     new_score = None
     #
     instruments1 = [(ins.split('__')[0], int(ins.split('__')[1])) for ins in score.instruments]
-    instruments2 = [(ins.split('__')[0], int(ins.split('__')[1])) for ins in score2.instruments]
-    # Rename all instruments to avoid collisions
-    offsets1 = {}
-    for ins in instruments1:
-        pass
 
     for idx, chord2 in enumerate(score2):
         # Get all segments of chord

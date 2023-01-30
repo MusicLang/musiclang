@@ -348,10 +348,8 @@ class Score:
         import tempfile
         import os
         with tempfile.TemporaryDirectory() as di:
-            midi_file = os.path.join(di, 'data.mid')
-            self.to_midi(midi_file, **kwargs)
-            score = music21.converter.parse(midi_file)
-            return score.show(*args)
+            m21_score = self.to_music21(**kwargs)
+            return m21_score.show(*args)
 
 
     def __getitem__(self, item):
@@ -737,9 +735,59 @@ class Score:
         with open(filepath, 'w') as f:
             f.write(code)
 
+    def to_musicxml(self, filepath, signature=(4, 4), tonality=None, tempo=120, **kwargs):
+        """
+        Transform a musiclang score into a musicxml file, readable by all the main notation software (musescore, finale ...)
+
+        Parameters
+        ----------
+        score: Score
+                MusicLang score to transform
+        filepath: str
+                Filepath of the musicxml file
+        signature: tuple (nom, den)
+                Time signature of the piece
+        tempo: int
+                Tempo of the piece
+        tonality: Tonality
+                Tonality of the piece if applicable
+        title: str
+            Title of the piece
+
+        """
+        # Convert score to midi
+        from .out.to_mxl import score_to_mxl
+
+        return score_to_mxl(self, filepath, signature=signature, tonality=tonality, tempo=tempo, **kwargs)
+
+    def to_music21(self, signature=(4, 4), tonality=None, tempo=120, **kwargs):
+        """
+        Transform a musiclang score into a Music21 score
+        Parameters
+        ----------
+        score: Score
+                MusicLang score to transform
+        signature: tuple (nom, den)
+                Time signature of the piece
+        tempo: int
+                Tempo of the piece
+        tonality: Tonality
+                Tonality of the piece if applicable
+        title: str
+            Title of the piece
+
+        Returns
+        -------
+        m21_score: music21.Score
+            Score transformed into a music21 object
+
+        """
+        from .out.to_mxl import score_to_music_21
+        return score_to_music_21(self, signature=signature, tonality=tonality, tempo=tempo, **kwargs)
 
     def to_midi(self, filepath, **kwargs):
         """
+        Save the score to midi
 
         Parameters
         ----------

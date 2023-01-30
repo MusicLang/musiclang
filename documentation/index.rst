@@ -14,6 +14,11 @@ Welcome to MusicLang's documentation!
    ./usage/about.rst
 
 .. toctree::
+   :maxdepth: 1
+
+   ./usage/changelog.rst
+
+.. toctree::
    :maxdepth: 2
 
    ./usage/user_guide.rst

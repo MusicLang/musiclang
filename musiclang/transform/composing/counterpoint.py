@@ -122,33 +122,6 @@ def create_counterpoint_on_chord(chord, subject_parts, counterpoint_parts):
     return chord(**{**chord.score, **{chord.parts[idx]: voice for idx, voice in zip(counterpoint_parts, new_voices)}})
 
 
-def create_counterpoint_after_chords(score, subject_parts, counterpoint_parts):
-    """
-    Create a counterpoint given a list of fixed voices and voices to adapt.
-    It projects the score on one chord, get the counterpoint then reprojects on all the chords
-
-    Parameters
-    ----------
-    score : Score
-        
-    subject_parts : list[int]
-                    Indexes of parts that are the subject
-        
-    counterpoint_parts : list[int]
-                    Indexes of parts that are the counterpoint
-
-
-    Returns
-    -------
-    score: Score
-
-    """
-    chord, idx_stops, offsets, melodies, chords = project_on_one_chord(score)
-    new_chord = create_counterpoint_on_chord(chord, subject_parts, counterpoint_parts)
-    new_score = reproject_on_multiple_chords(chords, new_chord, idx_stops, offsets)
-
-    return new_score
-
 
 def get_array_fixed(voice):
     """

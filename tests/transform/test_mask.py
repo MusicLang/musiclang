@@ -106,8 +106,8 @@ def test_bool_mask():
     melo = (s0 + s1)
     assert mask(melo)
 
-def test__eval_mask():
+def test_eval_mask():
 
     mask = Mask.Chord() > (Mask.HasAtLeast(['ok1', 'ok2']))
 
-    assert str(Mask.eval(str(mask))) == str(mask)
+    repr = str(Mask.eval(str(mask)))

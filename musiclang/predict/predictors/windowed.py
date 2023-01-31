@@ -1,4 +1,4 @@
-import gensim
+
 import numpy as np
 import re
 from sklearn.linear_model import LinearRegression
@@ -133,6 +133,10 @@ class WindowedPredictor:
 
 
     def _train_embedding(self, data):
+        try:
+            import gensim
+        except ImportError:
+            raise ImportError('Please install gensim to use this module')
         model = gensim.models.Word2Vec(data, min_count=1, vector_size=self.vector_size, window=self.window)
         self.wv = model.wv
 

@@ -3,11 +3,12 @@
 import os
 
 import numpy as np
-import tensorflow as tf
 
 
 def tensorflowGPUHack():
     """ """
+    import tensorflow as tf
+
     # https://github.com/tensorflow/tensorflow/issues/37942
     gpu_devices = tf.config.experimental.list_physical_devices("GPU")
     for device in gpu_devices:

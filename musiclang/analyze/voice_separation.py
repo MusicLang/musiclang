@@ -363,10 +363,10 @@ def logP_Ti(S, ni, wi):
     -------
 
     """
-    return np.log(P(S, ni, wi)) + np.log(order(S, ni, wi))
+    return np.log(P(S, ni, wi) + 1e-13) + np.log(order(S, ni, wi))
 
 def P_T(S, n, w):
-    """Log-probability of a state transition of notes n in voices w of S
+    """Probability of a state transition of notes n in voices w of S
 
     Parameters
     ----------

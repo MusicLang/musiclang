@@ -6,11 +6,9 @@ import music21
 import numpy as np
 import pandas as pd
 import re
-import tensorflow as tf
-from tensorflow import keras
+
 
 from . import __version__
-from . import cli
 from .chord_vocabulary import frompcset, cosineSimilarity
 from .cache import forceTonicization, getTonicizationScaleDegree
 from .score_parser import parseScore
@@ -86,7 +84,7 @@ def solveChordSegmentation(df):
     -------
 
     """
-    return df.dropna()[df.HarmonicRhythm7 == 0]
+    return df[df.HarmonicRhythm7 == 0].dropna()
 
 
 def resolveRomanNumeralCosine(b, t, a, s, pcs, key, numerator, tonicizedKey):
@@ -308,6 +306,7 @@ def predict(model, inputPath):
 
 
 def batch(inputPath, useGpu=False):
+    from tensorflow import keras
     """
 
     Parameters
@@ -340,9 +339,3 @@ def batch(inputPath, useGpu=False):
             filepath = os.path.join(root, f)
             predict(model, inputPath=filepath)
 
-
-if __name__ == "__main__":
-    parser = cli.inference()
-    args = parser.parse_args()
-    kwargs = vars(args)
-    batch(**kwargs)

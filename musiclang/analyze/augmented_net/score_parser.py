@@ -1,25 +1,17 @@
 """Turns a MusicXML file into a pandas DataFrame."""
 
-import io
-from itertools import combinations
-from fractions import Fraction
-
 import music21
-from music21.interval import Interval
-from music21.pitch import Pitch
-from music21.chord import Chord
 from music21.note import Rest
-from music21.meter import TimeSignature
 import numpy as np
 import pandas as pd
 
 from .cache import m21Interval
-from .common import FIXEDOFFSET, FLOATSCALE
-from .texturizers import (
-    applyTextureTemplate,
-    available_durations,
-    available_number_of_notes,
-)
+
+FLOATSCALE = 4
+
+# Sixteenth notes
+FRAMEBASENOTE = 32
+FIXEDOFFSET = round(4.0 / FRAMEBASENOTE, FLOATSCALE)
 
 S_COLUMNS = [
     "s_offset",
@@ -215,87 +207,6 @@ def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
     return df
 
 
-def _engraveScore(df, timeSignatures=None):
-    """Useful for debugging _texturizeAnnotationScore.
-
-    Parameters
-    ----------
-    df :
-        
-    timeSignatures :
-         (Default value = None)
-
-    Returns
-    -------
-
-    """
-    tss = timeSignatures or {0.0: "4/4"}
-    chords = music21.stream.Stream()
-    offset = 0.0
-    for row in df.itertuples():
-        if offset in tss:
-            chords.append(TimeSignature(tss[offset]))
-        if row.s_measure == 0:
-            offset += row.s_duration
-            continue
-        pitches = row.s_notes
-        duration = Fraction(row.s_duration).limit_denominator(2048)
-        chord = Chord(pitches, quarterLength=duration)
-        chords.append(chord)
-        offset += row.s_duration
-    return chords
-
-
-def _texturizeAnnotationScore(df, duration, numberOfNotes):
-    """
-
-    Parameters
-    ----------
-    df :
-        
-    duration :
-        
-    numberOfNotes :
-        
-
-    Returns
-    -------
-
-    """
-    # Preemptively, remove any notion of held notes in an annotation file
-    df["s_isOnset"] = df.s_isOnset.apply(lambda l: [True for _ in l])
-    outputdf = df.copy()
-    # A copy because we don't want these two temporary columns in the output
-    df["notesNumber"] = df.s_notes.apply(len)
-    df["allOnsets"] = df.s_isOnset.apply(all)
-    # Which block chords can we replace with a more complex texture
-    replaceable = df[
-        (df.s_duration == duration)
-        & (df.notesNumber == numberOfNotes)
-        & (df.allOnsets)
-    ]
-    for row in replaceable.itertuples():
-        offset = row.Index
-        measure = row.s_measure
-        notes = row.s_notes
-        intervals = [
-            Interval(Pitch(n1), Pitch(n2)).simpleName
-            for n1, n2 in combinations(notes, 2)
-        ]
-        texture = applyTextureTemplate(duration, notes, intervals)
-        textureF = io.StringIO(texture)
-        texturedf = pd.read_csv(textureF)
-        texturedf["s_offset"] += offset
-        texturedf["s_measure"] = measure
-        for col in S_LISTTYPE_COLUMNS:
-            texturedf[col] = texturedf[col].apply(eval)
-        texturedf.set_index("s_offset", inplace=True)
-        for index, row in texturedf.iterrows():
-            outputdf.loc[index] = row
-    outputdf.sort_index(inplace=True)
-    return outputdf
-
-
 def parseScore(f, fmt=None, fixedOffset=FIXEDOFFSET, eventBased=False):
     """
 
@@ -321,64 +232,4 @@ def parseScore(f, fmt=None, fixedOffset=FIXEDOFFSET, eventBased=False):
     # Step 2: Turn salami-slice into fixed-duration steps
     if not eventBased:
         df = _reindexDataFrame(df, fixedOffset=fixedOffset)
-    return df
-
-
-def _recursiveTexturization(df, fixedOffset=FIXEDOFFSET, eventBased=False):
-    """
-
-    Parameters
-    ----------
-    df :
-        
-    fixedOffset :
-         (Default value = FIXEDOFFSET)
-    eventBased :
-         (Default value = False)
-
-    Returns
-    -------
-
-    """
-    for duration in available_durations:
-        for numberOfNotes in available_number_of_notes:
-            df = _texturizeAnnotationScore(df, duration, numberOfNotes)
-    if not eventBased:
-        df = _reindexDataFrame(df, fixedOffset=fixedOffset)
-    return df
-
-
-def parseAnnotationAsScore(
-    f, texturize=False, fixedOffset=FIXEDOFFSET, eventBased=False
-):
-    """Generates a DataFrame from a synthesized RomanText file.
-
-    Parameters
-    ----------
-    f : string
-        The path to the input RomanText file.
-    texturize : bool
-        Texturize the synthetic score. Defaults to False.
-    fixedOffset : float
-        The sampling rate in quarter notes. Defaults to FIXEDOFFSET.
-    eventBased : bool
-        If True, no fixedOffset sampling is done. Defaults to False.
-
-    Returns
-    -------
-    DataFrame
-        The output DataFrame
-
-    """
-    fmt = "romantext"
-    if not texturize:
-        return parseScore(f, fmt=fmt, fixedOffset=fixedOffset)
-    # Step 0: Use music21 to parse the score
-    s = _m21Parse(f, fmt=fmt)
-    # Step 1: Parse and produce a salami-sliced dataset
-    df = _initialDataFrame(s, fmt=fmt)
-    # Step 2: Texturize the dataframe
-    df = _recursiveTexturization(
-        df, fixedOffset=fixedOffset, eventBased=eventBased
-    )
     return df

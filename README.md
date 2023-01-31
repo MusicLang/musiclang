@@ -76,7 +76,7 @@ score += (score % I.m).f
 score = (I % I.M)(violin__0=r.h) + score
 
 # Transform a bit the accompaniment by applying counterpoint rules automatically
-from musiclang.transform.composing import create_counterpoint_on_score
+from musiclang.transform.library import create_counterpoint_on_score
 score = create_counterpoint_on_score(score, fixed_parts=['violin__0'])
 
 # Save it to musicxml

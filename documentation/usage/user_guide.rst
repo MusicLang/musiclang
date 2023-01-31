@@ -151,6 +151,7 @@ Mode
 You can force a mode on a note that bypass the mode of the chord scale (same as tonalities modes)
 
 For example ::
+
     from musiclang.library import s0, s1, s2, s3, s4, I
     score = (I%I.M)(piano=s0 + s1 + s2 + s3.lydian + s4)
 
@@ -258,7 +259,7 @@ You can use any instrument of the general midi list (https://en.wikipedia.org/wi
 - with _ (underscores) instead of spaces.
 - In lowercase
 
-.. note:: To specify the part number of an instrument you can use the __<part_idx> notation. For example ``violin__0`` means the part 0 of the violin instrument.
+.. note:: To specify the part number of an instrument you can use the __<part_idx> notation. For example ``violin__0`` means the part 0 of the violin instrument. All the instruments will be associated with a part number even if you don't specify it.
 
 
 

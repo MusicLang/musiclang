@@ -1,5 +1,7 @@
 from music21 import note, stream, metadata, meter, tie, dynamics
 import music21
+from musiclang import Chord
+
 
 MUSESCORE_REPLACE_DICT = {
     'French horn': 'Horns in F'
@@ -8,7 +10,7 @@ MUSESCORE_REPLACE_DICT = {
 
 SCALES_MAJOR = {
     0: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
-    1: ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb'],
+    1: ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C'],
     2: ['D', 'E', 'F#', 'G', 'A', 'B', 'C#'],
     3: ['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'D'],
     4: ['E', 'F#', 'G#', 'A', 'B', 'C#', 'D#'],
@@ -24,7 +26,7 @@ SCALES_MAJOR = {
 
 SCALES_MINOR = {
     0: ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'B'],
-    1: ['C#', 'D#', 'E', 'F#', 'G#', 'B#'],
+    1: ['C#', 'D#', 'E', 'F#', 'G#', 'A', 'B#'],
     2: ['D', 'E', 'F', 'G', 'A', 'Bb', 'C#'],
     3: ['Eb', 'F', 'Gb', 'Ab', 'Bb', 'Cb', 'D'],
     4: ['E', 'F#', 'G', 'A', 'B', 'C', 'D#'],
@@ -55,6 +57,8 @@ def get_note_spelling(note, chord, last_pitch=None):
         note_spelling = SCALES[mode][tonality_degree][idx]
         # Correct octave
         octave = (pitch + 48) // 12
+        if note_spelling in ['B#']:
+            octave -= 1
         note_spelling = note_spelling + str(octave)
         new_note = music21.note.Note(note_spelling)
         new_note.duration = music21.duration.Duration(note.duration)
@@ -64,9 +68,6 @@ def get_note_spelling(note, chord, last_pitch=None):
         new_note.duration = music21.duration.Duration(note.duration)
 
     return new_note, pitch
-
-def find_bar_duration(score):
-    pass
 
 
 def tonality_to_music21_key(tonality):
@@ -78,17 +79,46 @@ def tonality_to_music21_key(tonality):
     key = music21.key.Key(tonalities[tonality_degree])
     return key
 
+
 def find_tonality(score):
     from musiclang.transform.features import ExtractMainTonality
     tonality = ExtractMainTonality()(score)
     return tonality_to_music21_key(tonality)
 
+
 def get_musescore_name(ins):
+    """
+    Get the name of the part as printed on the score
+    Parameters
+    ----------
+    ins: str
+        Raw instrument name
+
+    Returns
+    -------
+    result: str
+        Name
+    """
     res = ins.capitalize().replace('_', ' ')
 
     return MUSESCORE_REPLACE_DICT.get(res, res)
 
+
 def find_instruments(score):
+    """
+    Given a score return the list of instruments as printed on the score
+    Parameters
+    ----------
+    score
+
+    Returns
+    -------
+    parts_dict_names: dict
+        Dict of music21 part for each instrument, keyed by part name in musiclang
+    parts_dic: dict
+        Dict of music21 part for each instrument keyed by instrument name
+
+    """
     from music21 import instrument, stream
     from musiclang.write.out.constants import INSTRUMENTS_DICT
     from musiclang.write.constants import ALL_INST
@@ -111,14 +141,42 @@ def find_instruments(score):
     return parts_dict_names, parts_dict
 
 def score_instrument_to_notes(score, part_name, voice, voice_idx):
+    """
+    Given a score and a part name, returns the music21 voice with all the notes
+
+    Parameters
+    ----------
+    score: Score
+    part_name: str
+    voice: music21.Voice
+    voice_idx: int
+
+    Returns
+    -------
+    voice: music21.Voice
+
+    """
     for chord in score.chords:
         voice = chord_instrument_to_notes(chord, voice, part_name, voice_idx)
 
     return voice
 
-from musiclang import Chord
+
 def chord_to_musescore_lyric(chord: Chord):
+    """
+    Create the chord scale symbol on the score
+
+    Parameters
+    ----------
+    chord
+
+    Returns
+    -------
+    result: str
+        Chord scale symbol
+    """
     return "{} /{}".format(chord.element_to_str(), chord.tonality_to_str()).replace('%', '')
+
 
 def chord_instrument_to_notes(chord, voice, part_name, ins_idx):
     """

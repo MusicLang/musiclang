@@ -7,7 +7,7 @@ LICENSE file in the root directory of this source tree.
 """
 
 from .constants import *
-
+import re
 
 class Chord:
     """
@@ -333,6 +333,7 @@ class Chord:
         See Also
         --------
         :func:`~Tonality.scale_pitches`
+        :func:`~Tonality.chord_extension_pitches`
         :func:`~Chord.to_pitch()`
 
         Returns
@@ -346,14 +347,15 @@ class Chord:
         >>> (I % I.M).chord_pitches
         [0, 4, 7]
 
+        >>> from musiclang.library import *
+        >>> (I % I.M)['6'].chord_pitches
+        [0, 4, 7]
         """
-        scale_pitches = self.scale_pitches
-        max_res = [scale_pitches[i] for i in [0, 2, 4, 6, 1, 3, 5]]
-        id = len(self.possible_notes)
-        return max_res[:id]
+        notes = self.chord_notes
+        return [self.to_pitch(n) for n in notes]
 
     def remove_accidents(self):
-        return Chord({key: val.remove_accidents() for key, val in self.score.items()}, tags=set(self.tags))
+        return Chord(**{key: val.remove_accidents() for key, val in self.score.items()}, tags=set(self.tags))
 
 
     @property
@@ -391,6 +393,35 @@ class Chord:
     def chromatic_scale_pitches(self):
         """ """
         return [self.scale_pitches[0] + i for i in range(12)]
+
+    @property
+    def chord_extension_pitches(self):
+        """
+        Get the chord absolute pitches (integers) starting with the chord bass as indicated by the extension.
+
+        See Also
+        --------
+        :func:`~Tonality.chord_pitches`
+        :func:`~Chord.to_pitch()`
+
+        Returns
+        -------
+        res: List[int]
+
+        Examples
+        --------
+
+        >>> from musiclang.library import *
+        >>> (I % I.M)['6'].chord_extension_pitches
+        [4, 7, 12]
+
+        >>> from musiclang.library import *
+        >>> (I % I.M)['2[add6]'].chord_extension_pitches
+        [-1, 0, 2, 4, 9]
+        """
+
+        notes = self.extension_notes
+        return [self.to_pitch(n) for n in notes]
 
     @property
     def parts(self):
@@ -565,9 +596,12 @@ class Chord:
         item = str(item)
         res = self.copy()
         res.extension = str(item)
-        possible_extensions = ['5', '7', '9', '11', '13', '65', '43', '2', '6', '64', '']
-        if item not in possible_extensions:
-            raise Exception(f'Not valid chord extension : {item}, possible are : {possible_extensions}')
+        res.extension = res.normalize_extension()
+        try:
+            n = res.extension_notes
+        except:
+            raise ValueError(f'Could not parse extension : {item}')
+
         return res
 
     #
@@ -856,10 +890,13 @@ class Chord:
                      tags=set(self.tags)
                      )
 
-    @staticmethod
-    def preparse_named_melodies(named_melodies):
+
+
+
+    def preparse_named_melodies(self, named_melodies):
         """
-        Helper function to deal with dictionary of melodies that can contain a list of melodies for some parts
+        Helper function to deal with dictionary of melodies that can contain a list of melodies for some parts.
+        It will automatically convert drums melodies to drums track
 
         Parameters
         ----------
@@ -885,6 +922,8 @@ class Chord:
             }
 
         """
+        from musiclang import Melody
+
         named_melodies_result = {}
         for key in named_melodies.keys():
             key_obj = key.split('__')
@@ -897,11 +936,20 @@ class Chord:
 
             if (isinstance(named_melodies[key], list)):
                 for idx, melody in enumerate(named_melodies[key]):
-                    named_melodies_result[key_obj + '__' + str(number + idx)] = melody.to_melody()
+                    mel = melody.to_melody()
+                    if key_obj.startswith('drums'):
+                        mel = Melody([n.convert_to_drum_note(self) for n in mel.notes])
+                    named_melodies_result[key_obj + '__' + str(number + idx)] = mel
             else:
-                named_melodies_result[key_obj + '__' + str(number)] = named_melodies[key].to_melody()
+                mel = named_melodies[key].to_melody()
+                if key_obj.startswith('drums'):
+                    mel = Melody([n.convert_to_drum_note(self) for n in mel.notes])
+                named_melodies_result[key_obj + '__' + str(number)] = mel
 
         return named_melodies_result
+
+    def items(self):
+        return self.score.items()
 
     def __getstate__(self):
         return self.__dict__
@@ -909,7 +957,29 @@ class Chord:
     def __setstate__(self, d):
         self.__dict__ = d
 
+    def augment(self, duration):
+        from musiclang import Silence
+        if self.empty_score:
+            silence = Silence(duration)
+            return self(silence)
+        else:
+            return self(**{part: melody.augment(duration) for part, melody in self.score.items()}, tags=self.tags)
+
+    def set_duration(self, duration):
+        from musiclang import Silence
+        if self.empty_score:
+            silence = Silence(duration)
+            return self(silence)
+        else:
+            return self(**{part: melody.set_duration(duration) for part, melody in self.score.items()}, tags=self.tags)
+
     def __getattr__(self, item):
+        if item in STR_TO_DURATION.keys() and self.empty_score:
+            from musiclang import Silence
+            duration = STR_TO_DURATION[item]
+            silence = Silence(duration)
+            return self(silence)
+
         if len(self.parts) == 0:
             raise AttributeError()
         try:
@@ -979,6 +1049,116 @@ class Chord:
 
     def __repr__(self):
         return f"{self.to_code()}({self.melody_to_str()})"
+
+
+    def normalize_extension(self):
+        extension, replacements, additions, removals = self.get_extension_properties()
+        replacements = ''.join([f'({r})' for r in replacements])
+        additions = ''.join([f'[{a}]' for a in additions])
+        removals = ''.join(['{' + r + '}' for r in removals])
+        return extension + replacements + additions + removals
+
+    def get_extension_properties(self):
+        replacements = sorted(re.findall(r'\((.*?)\)', self.extension))
+        additions = sorted(re.findall(r'\[(.*?)\]', self.extension))
+        removals = sorted(re.findall(r'\{(.*?)\}', self.extension))
+        extension = self.extension.split('(')[0].split('[')[0].split('{')[0]
+        return extension, replacements, additions, removals
+
+
+    def _chord_notes_calc(self, extension, replacements, additions, removals):
+        from .library import BASE_EXTENSION_DICT, \
+            DICT_REPLACEMENT, DICT_ADDITION, DICT_REMOVAL
+        notes = BASE_EXTENSION_DICT[extension][:]
+        notes_without_octave = [n.o(-n.octave) for n in notes]
+        for addition in additions:
+            note_after, new_note = DICT_ADDITION[addition]
+            idx = notes_without_octave.index(note_after) + 1
+            new_note = new_note.o(note_after.octave)
+            notes.insert(idx, new_note)
+            notes_without_octave.insert(idx, new_note.o(-new_note.octave))
+
+        for replacement in replacements:
+            note_replaced, new_note = DICT_REPLACEMENT[replacement]
+            try:
+                idx = notes_without_octave.index(note_replaced)
+                notes[idx] = new_note.copy()
+                notes_without_octave[idx] = new_note.o(-new_note.octave)
+            except ValueError:
+                # make an addition instead
+                notes += [new_note.copy()]
+                notes_without_octave += [new_note.o(-new_note.octave)]
+
+        for removal in removals:
+            note_removed = DICT_REMOVAL[removal]
+            idx = len(notes) - notes_without_octave[::-1].index(note_removed) - 1
+            notes.pop(idx)
+            notes_without_octave.pop(idx)
+        # Sort per pitch
+        notes = list(sorted(notes, key=lambda x: self.to_pitch(x)))
+        return notes
+
+    @property
+    def chord_notes(self):
+        extension, replacements, additions, removals = self.get_extension_properties()
+        new_extension = ''
+        if extension in ['2', '65', '43', '7']:
+            new_extension = '7'
+        elif extension == '9':
+            new_extension = '9'
+        elif extension == '11':
+            new_extension = '11'
+        elif extension == '13':
+            new_extension = '13'
+
+        return self._chord_notes_calc(new_extension, replacements, additions, removals)
+
+    @property
+    def extension_notes(self):
+        # Try a composite with a match
+        extension, replacements, additions, removals = self.get_extension_properties()
+        return self._chord_notes_calc(extension, replacements, additions, removals)
+
+
+    def to_voicing(self, nb_voices=4, instruments=None):
+        """Convert score to a four voice voicing using the extensions provided in the chord.
+
+        It will remove the existing scores of each chord and create the associated voicings
+
+        Parameters
+        ----------
+        instruments : None or List[str] (Default value = ['piano__0', 'piano__1', 'piano__2', 'piano__3'])
+                      The list of instruments used to create the voicings.
+
+        Returns
+        -------
+
+        score: Score
+               The score with voicings corresponding to chords
+
+        """
+
+        if instruments is None:
+            instruments = [f'piano__{i}' for i in range(nb_voices)]
+
+        notes = self.extension_notes[:nb_voices]
+        if not self.empty_score:
+            notes = [n.set_duration(self.duration) for n in notes]
+        if len(notes) < nb_voices:
+            # Add to match octaves
+            for i in range(len(notes), nb_voices):
+                n = notes[i % len(notes)].copy()
+                oct = (i // len(notes))
+                n.octave += oct
+                notes.append(n)
+        chord = self(**{ins: notes[i].copy() for i, ins in enumerate(instruments)})
+
+        return chord
+
+
+    @property
+    def empty_score(self):
+        return len(self.score.keys()) == 0
 
     def to_code(self):
         """Export the code as python interpretable str.

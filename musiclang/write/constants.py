@@ -653,3 +653,25 @@ VELOCITY = 3
 TRACK = 4
 SILENCE = 5
 CONTINUATION = 6
+
+DRUMS_DICT = {
+    (0, -2):  'bd',
+    (1, -2): 'rs',
+    (2, -2): 'sn',
+    (3, -2): 'cp',
+    (4, -2): 'sn2',
+    (5, -2): 'bt',
+    (6, -2): 'hh',
+    (7, -2): 'lt',
+    (8, -2): 'ch',
+    (9, -2): 'mt',
+    (10, -2): 'oh',
+    (11, -2): 'ht'
+}
+
+_NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Fs', 'G', 'Ab', 'A', 'Bb', 'B']
+def absolute_note_repr(note):
+    val, oct = note.val, note.octave
+    note_str = _NOTES[val % len(_NOTES)]
+    oct_str = str(note.base_octave + oct + val // oct)
+    return f"{note_str}{oct_str}"

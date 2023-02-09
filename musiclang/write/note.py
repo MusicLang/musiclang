@@ -457,13 +457,27 @@ class Note:
             It will return a new note transposed
 
         """
-        if self.type in ['s', 'h', 'c']:
+        if self.type in ['s', 'h', 'c', 'b']:
             return self.oabs(octave)
         return self.copy()
 
     def duration_to_str(self):
         """ """
         return DURATION_TO_STR[self.duration]
+
+
+    def to_drum(self):
+        note = self.copy()
+        note.type = 'd'
+        return note
+
+    @property
+    def base_octave(self):
+        return 5
+
+    @property
+    def is_drum(self):
+        return self.type == 'd'
 
     def to_code(self):
         """
@@ -481,6 +495,8 @@ class Note:
 
         if self.is_note:
             result = f"{self.type}{self.val}"
+        elif self.is_drum:
+            result = DRUMS_DICT.get((self.val, self.octave), 'r')
         else:
             result = f"{self.type}"
 
@@ -639,6 +655,18 @@ class Note:
         """
         # Apply a function to each note
         return other(self.copy())
+
+    def convert_to_drum_note(self, chord):
+        if self.type.startswith('d') or self.is_silence or self.is_continuation:
+            return self.copy()
+        new_note = self.copy()
+        new_note.type = 'd'
+        pitch = chord.to_pitch(self)
+        new_note.val = pitch % 12
+        new_note.octave = pitch // 12
+        return new_note
+
+
 
     def __hash__(self):
         return hash(self.__repr__())

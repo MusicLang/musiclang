@@ -200,7 +200,10 @@ def _infer_instruments(mf):
     for track in mf.tracks:
         for note in track:
             if note.type == 'program_change':
-                channel_inst[note.channel] = REVERSE_INSTRUMENT_DICT[note.program]
+                if note.channel == 9:
+                    channel_inst[note.channel] = f'drums_{note.program}'
+                else:
+                    channel_inst[note.channel] = REVERSE_INSTRUMENT_DICT[note.program]
     return channel_inst
 
 

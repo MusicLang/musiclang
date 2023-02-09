@@ -43,53 +43,67 @@ class NoteProperties:
     def amp_normalized(self):
         return self.note.amp / 120
 
+
+    @property
+    def n(self):
+        """ """
+        note = self.note.copy()
+        note.amp = 120 * 0.0
+        return note
+
     @property
     def ppp(self):
         """ """
         note = self.note.copy()
-        note.amp = 120 * 0.15
+        note.amp = 120 * 0.16
         return note
 
     @property
     def pp(self):
         """ """
         note = self.note.copy()
-        note.amp = 120 * 0.25
+        note.amp = 120 * 0.26
         return note
 
     @property
     def p(self):
         """ """
         note = self.note.copy()
-        note.amp = 120 * 0.35
+        note.amp = 120 * 0.36
+        return note
+
+    @property
+    def mp(self):
+        note = self.note.copy()
+        note.amp = 120 * 0.5
         return note
 
     @property
     def mf(self):
         """ """
         note = self.note.copy()
-        note.amp = 120 * 0.55
+        note.amp = 120 * 0.65
         return note
 
     @property
     def f(self):
         """ """
         note = self.note.copy()
-        note.amp = 120 * 0.7
+        note.amp = 120 * 0.8
         return note
 
     @property
     def ff(self):
         """ """
         note = self.note.copy()
-        note.amp = 120 * 0.85
+        note.amp = 120 * 0.9
         return note
 
     @property
     def fff(self):
         """ """
         note = self.note.copy()
-        note.amp = 120 * 0.9
+        note.amp = 120 * 0.95
         return note
 
     @property
@@ -98,21 +112,19 @@ class NoteProperties:
         n = self.note.amp_normalized
         if n is None or n <= 0:
             return 'n'
-        elif n < 0.11:
-            return 'pppp'
-        elif n < 0.16:
+        elif n <= 0.16:
             return 'ppp'
-        elif n < 0.26:
+        elif n <= 0.26:
             return 'pp'
-        elif n < 0.36:
+        elif n <= 0.36:
             return 'p'
-        elif n < 0.5:
+        elif n <= 0.5:
             return 'mp'
-        elif n < 0.65:
+        elif n <= 0.65:
             return 'mf'
-        elif n < 0.8:
+        elif n <= 0.8:
             return 'f'
-        elif n < 0.9:
+        elif n <= 0.9:
             return 'ff'
         else:
             return 'fff'
@@ -120,12 +132,12 @@ class NoteProperties:
     @property
     def is_up(self):
         """ """
-        return "u" in self.note.type
+        return "u" in self.note.type[1:]
 
     @property
     def is_down(self):
         """ """
-        return "d" in self.note.type
+        return "d" in self.note.type[1:]
 
     @property
     def had_absolute_note(self):
@@ -135,7 +147,7 @@ class NoteProperties:
     @property
     def is_relative(self):
         """ """
-        return ("u" in self.note.type or "d" in self.note.type)
+        return (self.note.type != "d") and ("u" in self.note.type or "d" in self.note.type)
 
     @property
     def starts_with_relative(self):
@@ -153,24 +165,38 @@ class NoteProperties:
         return self.note.type == "r"
 
     @property
+    def is_drum_note(self):
+        """ """
+        return "d" in self.note.type
+
+    @property
     def is_pattern_note(self):
         """ """
-        return "a" in self.note.type
+        return self.note.type == "a"
 
     @property
     def is_chromatic_note(self):
         """ """
-        return "h" in self.note.type
+        return self.note.type in ["h", "hu", "hd"]
 
     @property
     def is_scale_note(self):
         """ """
-        return "s" in self.note.type
+        return self.note.type in ["s", "su", "sd"]
 
     @property
     def is_chord_note(self):
         """ """
-        return "c" in self.note.type
+        return self.note.type == "c"
+
+    @property
+    def is_absolute_note(self):
+        return self.note.type == "a"
+
+    @property
+    def is_bass_note(self):
+        """ """
+        return self.note.type == "b"
 
     @property
     def is_continuation(self):
@@ -180,12 +206,12 @@ class NoteProperties:
     @property
     def is_note(self):
         """ """
-        return self.note.type not in ["r", "l"]
+        return self.note.type not in ["r", "l", "d", "x"]
 
     @property
     def starts_with_note(self):
         """ """
-        return self.note.type not in ["r", "l"]
+        return self.note.type not in ["r", "l", "d", "x"]
 
     @property
     def starts_with_absolute_note(self):

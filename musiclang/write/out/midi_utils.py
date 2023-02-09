@@ -28,7 +28,7 @@ def voice_to_channel(instrument_list, voice, instruments):
     return instrument_list.index(instrument_of_voice)
 
 
-def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, **kwargs):
+def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, instrument_names=None, **kwargs):
     """
 
     Parameters
@@ -50,6 +50,8 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     -------
 
     """
+    if instrument_names is None:
+        instrument_names = []
     from mido import MidiFile, MidiTrack, Message, MetaMessage
     from ..constants import SILENCE, CONTINUATION, PITCH, TRACK, OFFSET, VELOCITY, DURATION
     from .constants import OCTAVES
@@ -93,16 +95,21 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
 
     for i in range(nb_tracks + 1):
         track = MidiTrack()
-        if i in instruments.keys():
+        if (len(instrument_names) > i) and instrument_names[i].startswith('drum'):
+            channels[i] = 9
+            track.append(Message('program_change', program=0, time=0, channel=9))
+        elif i in instruments.keys():
             track.append(Message('program_change', program=instruments.get(i, 0), time=0, channel=channels[i]))
         elif i != 9:
             track.append(Message('program_change', program=0, time=0, channel=channels[i]))
         mid.tracks.append(track)
 
-    if output_file is not None:
+    if isinstance(output_file, str):
         mid.tracks[0].append(MetaMessage("track_name", name=os.path.split(output_file)[1], time=int(0)))
-        mid.tracks[0].append(MetaMessage("set_tempo", tempo=(480000 * 120) // tempo, time=int(0)))
-        mid.tracks[0].append(MetaMessage("time_signature", numerator=4, denominator=4, time=int(0)))
+    else:
+        mid.tracks[0].append(MetaMessage("track_name", name='track', time=int(0)))
+    mid.tracks[0].append(MetaMessage("set_tempo", tempo=(480000 * 120) // tempo, time=int(0)))
+    mid.tracks[0].append(MetaMessage("time_signature", numerator=4, denominator=4, time=int(0)))
 
     sort_events = []
     last_silence = True
@@ -156,7 +163,10 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     if output_file is not None:
         for track in mid.tracks:
             track.append(MetaMessage('end_of_track', time=(int(0))))
-        mid.save(output_file)
+        if isinstance(output_file, str):
+            mid.save(output_file)
+        else:
+            mid.save(file=output_file)
     return mid
 
 

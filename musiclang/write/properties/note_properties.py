@@ -292,7 +292,7 @@ class NoteProperties:
     def min(self):
         """ """
         new_note = self.note.copy()
-        new_note.accident = "dim"
+        new_note.accident = "min"
         return new_note
 
     @property

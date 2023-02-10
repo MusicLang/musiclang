@@ -50,7 +50,7 @@ Here is a simple example to write a C-major chord in musiclang and save it to mi
 Learn MusicLang
 ---------------
 
-To learn MusicLang we strongly advise to read the :ref:`user-guide`.
+To learn MusicLang we strongly advise to read the :ref:`user-guide-index`.
 
 
 Contributing to MusicLang

@@ -1,9 +1,9 @@
 .. _user-guide:
 
-User's guide
-============
+General User's guide
+======================
 
-This guide is here to help you write music with musiclang.
+This guide covers the basics to write music with musiclang.
 
 
 General considerations
@@ -107,10 +107,15 @@ There are different kinds of notes
 
 - Scale notes : ``s0, s1, s2, s3, s4, s5, s6`` : relative to 7 sounds scale of the chord inside a tonality
 - Chromatic notes : ``h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11`` : relative to the 12 sounds of the chromatic scale associated with the chord/tonality
+- Drum notes : ``bd, sd, sd2, ...`` See See the :ref:`drums` for some detailed examples and whole library.
+- Chord extension notes : ``b0, b1, ..., b11`` Arpeggio notes starting from the bass note of the chord, octaved if necessary. See :ref:`chords` to get an overview on how to use chord extensions.
+- Chord notes : ``c0, c1, ..., c11`` Chord notes starting from the root note of the chord, octaved if necessary. See :ref:`chords` to get an overview on how to use chord extensions.
+- Absolute notes : ``C5, Cs5, Bb4, ...`` Absolute note that are not changed by the context of a chord and not transposable
 - Relative up scale note, ``su0, su1, su2, su3, su4, su5, su6`` : Up relatively to the previous note of a melody
 - Relative down scale note, ``sd0, sd1, sd2, sd3, sd4, sd5, sd6`` : Down relatively to the previous note of a melody
 - Relative up chromatic note, ``hu0, hu1, hu2,  hu3, hu4, hu5, hu6, hu7, hu8, hu9, hu10, hu11`` : Up relatively to the previous note of a melody
 - Relative down chromatic note, ``hd0, hd1, hd2,  hu3, hu4, hu5, hu6, hu7, hu8, hu9, hu10, hu11`` : Down relatively to the previous note of a melody
+
 
 Octaves
 '''''''''''''
@@ -160,6 +165,31 @@ For example ::
 .. image:: ../images/lydian.png
   :width: 600
   :alt: Lydian mode in musiclang
+
+
+Accident
+''''''''''
+
+You can force an accident on a note that bypass the mode of the chord scale (same as tonalities modes)
+
+There are four different accidents :
+
+- dim
+- aug
+- natural
+- min
+- maj
+
+For example ::
+
+    from musiclang.library import s0, s1, s2, s3, s4, I
+    score = (I%I.M)(piano=s0 + s1 + s2 + s3 + s4.dim)
+
+    score.show()
+
+.. image:: ../images/dim_note.png
+  :width: 300
+  :alt: Diminish a note in musiclang
 
 Examples
 '''''''''
@@ -231,14 +261,17 @@ For the modes :
 
 Tonalities can have an octave with the ``o`` method.
 
-Write chords scales
+Write Chords
 `````````````````````
+Chords represents a chord in the context of a scale.
 
 General structure of a chord
 '''''''''''''''''''''''''''''
 
-A chord is structured the following way : ``<degree> % <tonality>``
+A chord is structured the following way : ``(<degree> % <tonality>)[<chord_extension>]``
 The chord can have an octave with the ``o`` method.
+
+The structure is detailed here : :ref:`chords`.
 
 
 Modulation
@@ -250,7 +283,6 @@ When you modulate in a new tonality the final degree will be the addition of the
 and the new mode will be the mode at the right. For example ``(I % II.M) % II.m = (I % III.m)``.
 
 
-
 Instruments
 ''''''''''''
 
@@ -258,9 +290,9 @@ You can use any instrument of the general midi list (https://en.wikipedia.org/wi
 
 - with _ (underscores) instead of spaces.
 - In lowercase
+- You can use any instruments starting by ``drums`` for your drums parts.
 
 .. note:: To specify the part number of an instrument you can use the __<part_idx> notation. For example ``violin__0`` means the part 0 of the violin instrument. All the instruments will be associated with a part number even if you don't specify it.
-
 
 
 Output a musiclang score into another format
@@ -303,8 +335,7 @@ Here is a script that allows you to read a midi file called music.mid ::
 Transform music
 ---------------
 
-.. warning:: As of the time of the beta, the transform library is still not released.
-
+See the :ref:`transforms` for some detailed examples.
 
 Predict music
 -------------

@@ -21,7 +21,7 @@ Welcome to MusicLang's documentation!
 .. toctree::
    :maxdepth: 2
 
-   ./usage/user_guide.rst
+   ./usage/user_guide_index.rst
 
 .. toctree::
    :maxdepth: 2

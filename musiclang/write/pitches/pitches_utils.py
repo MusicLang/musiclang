@@ -13,15 +13,14 @@ def relative_scale_up_value(delta, last_pitch, scale_pitches):
 
     Parameters
     ----------
-    delta :
-        
-    last_pitch :
-        
-    scale_pitches :
-        
+    note : Note
+    last_pitch : int
+    scale_pitches : list[int]
+
 
     Returns
     -------
+    pitch: int
 
     """
     scale_mod = list(sorted([i % 12 for i in scale_pitches]))
@@ -42,15 +41,14 @@ def relative_scale_down_value(delta, last_pitch, scale_pitches):
 
     Parameters
     ----------
-    delta :
-        
-    last_pitch :
-        
-    scale_pitches :
-        
+    note : Note
+    last_pitch : int
+    scale_pitches : list[int]
+
 
     Returns
     -------
+    pitch: int
 
     """
     scale_mod = list(sorted([i % 12 for i in scale_pitches]))
@@ -70,23 +68,21 @@ def get_relative_scale_value(note, last_pitch, scale_pitches):
 
     Parameters
     ----------
-    note :
-        
-    last_pitch :
-        
-    scale_pitches :
-        
+    note : Note
+    last_pitch : int
+    scale_pitches : list[int]
+
 
     Returns
     -------
-
+    pitch: int
     """
     if note.is_up:
         return relative_scale_up_value(note.val + 7 * note.octave, last_pitch, scale_pitches)
     elif note.is_down:
         return relative_scale_down_value(note.val + 7 * note.octave, last_pitch, scale_pitches)
     else:
-        pass
+        raise Exception(f'This relative note {note} is nor up or down')
 
 
 def get_value_to_scale_note_with_accident(note, chord):
@@ -94,11 +90,12 @@ def get_value_to_scale_note_with_accident(note, chord):
     Get the value of the note if there is an accident
     Parameters
     ----------
-    note
-    chord
+    note: Note
+    chord: Chord
 
     Returns
     -------
+    pitch: int
 
     """
     from musiclang.write.constants import ACCIDENTS_TO_NOTE
@@ -107,16 +104,18 @@ def get_value_to_scale_note_with_accident(note, chord):
 
 def get_value_to_scale_note(value, scale_pitches):
     """
+    Transform an absolute value and a scale pitches to an unique pitch
 
     Parameters
     ----------
-    value :
+    value : int
         
-    scale_pitches :
+    scale_pitches : list[int]
         
 
     Returns
     -------
+    pitch: int
 
     """
     return scale_pitches[value % len(scale_pitches)] + 12 * (value // len(scale_pitches))
@@ -144,15 +143,26 @@ def note_to_pitch_result(note, chord, last_pitch=None):
 
     pitch_result = None
     if not note.is_relative:
-        if note.has_accident:
-            pitch_result = get_value_to_scale_note_with_accident(note, real_chord)
-        elif note.is_scale_note:
-            pitch_result = get_value_to_scale_note(note.val + 7 * note.octave, scale_pitches)
+        if note.is_scale_note:
+            if note.has_accident:
+                pitch_result = get_value_to_scale_note_with_accident(note, real_chord)
+            else:
+                pitch_result = get_value_to_scale_note(note.val + 7 * note.octave, scale_pitches)
         elif note.is_chord_note:
-            raise Exception('Chord notes parsing are not implemented yet')
+            scale_chord = chord.chord_pitches
+            pitch_result = get_value_to_scale_note(note.val + len(scale_chord) * note.octave, scale_chord)
             pass
+        elif note.is_bass_note:
+            scale_chord = chord.chord_extension_pitches
+            pitch_result = get_value_to_scale_note(note.val + len(scale_chord) * note.octave, scale_chord)
+        elif note.is_absolute_note:
+            chromatic_pitches = list(range(12))
+            pitch_result = get_value_to_scale_note(note.val + 12 * note.octave, chromatic_pitches)
         elif note.is_chromatic_note:
             chromatic_pitches = [scale_pitches[0] + i for i in range(12)]
+            pitch_result = get_value_to_scale_note(note.val + 12 * note.octave, chromatic_pitches)
+        elif note.is_drum_note:
+            chromatic_pitches = list(range(12))
             pitch_result = get_value_to_scale_note(note.val + 12 * note.octave, chromatic_pitches)
 
     elif note.is_relative:
@@ -165,5 +175,7 @@ def note_to_pitch_result(note, chord, last_pitch=None):
         elif note.is_chromatic_note:
             raise Exception('Relative chromatic notes parsing are not implemented yet')
             pass
+        else:
+            raise Exception('This kind of note is not supported or has no pitch : {}'.format(note.type))
 
     return pitch_result

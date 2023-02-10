@@ -32,5 +32,5 @@ print(tokens)
 detokenizer = ChordDetokenizer()
 score = detokenizer.detokenize(tokens)
 print(score)
-score.to_voicings().show('midi')
+score.to_voicing().show('midi')
 

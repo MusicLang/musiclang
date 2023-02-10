@@ -30,13 +30,13 @@ def test_chord_with_mode_to_scale_pitches2():
 def test_chord_pitches_seventh():
 
     chord = Element(0) % Tonality(0)
-    assert chord[7].chord_pitches == [0, 4, 7, 11]
+    assert chord['7'].chord_pitches == [0, 4, 7, 11]
 
 
 def test_chord_pitches_ninth():
 
     chord = Element(0) % Tonality(0)
-    assert chord[9].chord_pitches == [0, 4, 7, 11, 2]
+    assert chord['9'].chord_pitches == [0, 4, 7, 11, 14]
 
 def test_chord_pitches():
 

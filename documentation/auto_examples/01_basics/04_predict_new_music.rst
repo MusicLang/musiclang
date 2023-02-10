@@ -54,7 +54,7 @@ In this example we are gonna see how we can use the predict module to extends an
     detokenizer = ChordDetokenizer()
     score = detokenizer.detokenize(tokens)
     print(score)
-    score.to_voicings().show('midi')
+    score.to_voicing().show('midi')
 
 
 

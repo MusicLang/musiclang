@@ -58,12 +58,12 @@ def parse_midi_to_musiclang(input_file: str):
     """
     import tempfile
     import os
-    import music21
     import shutil
+    from .augmented_net import m21Parse
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         mxl_file = os.path.join(di, 'data.mxl')
-        obj = music21.converter.parse(input_file, format='midi')
+        obj = m21Parse(input_file, remove_perc=True)
         obj.write('musicxml', fp=os.path.join(di, mxl_file))
         shutil.copy(input_file, midi_file)
         result = parse_directory_to_musiclang(di)
@@ -93,10 +93,11 @@ def parse_mxl_to_musiclang(input_file: str):
     import os
     import music21
     import shutil
+    from .augmented_net import m21Parse
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         mxl_file = os.path.join(di, 'data.mxl')
-        obj = music21.converter.parse(input_file)
+        obj = m21Parse(input_file)
         obj.write('midi', fp=os.path.join(di, midi_file))
         shutil.copy(input_file, mxl_file)
         result = parse_directory_to_musiclang(di)
@@ -120,12 +121,12 @@ def parse_directory_to_musiclang(directory: str):
 
     """
     import os
-    from .augmented_net import batch
+    from .augmented_net import infer_chords
     print('1/2 : Analyze the score (This may takes a while)')
     annotation_file = os.path.join(directory, 'data_annotated.rntxt')
     midi_file = os.path.join(directory, 'data.mid')
     mxl_file = os.path.join(directory, 'data.mxl')
-    batch(midi_file)
+    infer_chords(mxl_file)
     score, tempo = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
     annotation = open(annotation_file, 'r').read()
     return score, {'annotation': annotation, 'tempo': tempo}
@@ -288,12 +289,12 @@ def get_chords_from_mxl(input_file):
     import shutil
     import tempfile
     import os
-    from .augmented_net import batch
+    from .augmented_net import infer_chords
     with tempfile.TemporaryDirectory() as di:
         mxl_file = os.path.join(di, 'data.mxl')
         annotated_file = os.path.join(di, 'data_annotated.rntxt')
         shutil.copy(input_file, mxl_file)
-        batch(mxl_file)
+        infer_chords(mxl_file)
         return get_chords_from_analysis(annotated_file)
 
 

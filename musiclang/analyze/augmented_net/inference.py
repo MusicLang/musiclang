@@ -11,12 +11,28 @@ import re
 from . import __version__
 from .chord_vocabulary import frompcset, cosineSimilarity
 from .cache import forceTonicization, getTonicizationScaleDegree
-from .score_parser import parseScore
+from .score_parser import parseScore, m21Parse
 from .input_representations import available_representations as availableInputs
 from .output_representations import (
     available_representations as availableOutputs,
 )
 from .utils import tensorflowGPUHack, disableGPU, padToSequenceLength
+from tensorflow import keras
+
+modelPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'AugmentedNet.hdf5')
+
+MODEL = None
+
+def get_model():
+    global MODEL
+    if MODEL is not None:
+        return MODEL
+    else:
+        disableGPU()
+        MODEL = keras.models.load_model(modelPath)
+        return MODEL
+
+MODEL = get_model()
 
 
 inversions = {
@@ -250,7 +266,8 @@ def predict(model, inputPath):
     dfout["offset"] = paddedIndex
     dfout["measure"] = paddedMeasure
     chords = solveChordSegmentation(dfout)
-    s = music21.converter.parse(inputPath, forceSource=True)
+    #s = music21.converter.parse(inputPath, forceSource=True)
+    s = m21Parse(inputPath)
     ts = {
         (ts.measureNumber, float(ts.beat)): ts.ratioString
         for ts in s.flat.getElementsByClass("TimeSignature")
@@ -305,8 +322,7 @@ def predict(model, inputPath):
         fd.write(rntxt)
 
 
-def batch(inputPath, useGpu=False):
-    from tensorflow import keras
+def infer_chords(inputPath, useGpu=False):
     """
 
     Parameters
@@ -320,14 +336,9 @@ def batch(inputPath, useGpu=False):
     -------
 
     """
-    modelPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'AugmentedNet.hdf5')
-    if useGpu:
-        tensorflowGPUHack()
-    else:
-        disableGPU()
-    model = keras.models.load_model(modelPath)
+
     if not os.path.isdir(inputPath):
-        predict(model, inputPath)
+        predict(get_model(), inputPath)
     for root, _, files in os.walk(inputPath):
         for f in files:
             name, ext = os.path.splitext(f)
@@ -337,5 +348,5 @@ def batch(inputPath, useGpu=False):
                 # do not recursively annotate an annotated_file
                 continue
             filepath = os.path.join(root, f)
-            predict(model, inputPath=filepath)
+            predict(get_model(), inputPath=filepath)
 

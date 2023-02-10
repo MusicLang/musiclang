@@ -5,6 +5,7 @@ All rights reserved.
 This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
+from musiclang.library import *
 
 
 class Score:
@@ -291,7 +292,31 @@ class Score:
         return list(sorted(result, key=lambda x: (x.split('__')[0], int(x.split('__')[1]))))
 
 
-    def to_voicings(self, instruments=None):
+    def octaver(self, **instruments_octaves):
+        """
+        Transpose down octave per instrument
+
+
+        Parameters
+        ----------
+        instruments_octaves: **keywords
+                key : instrument_name, val:
+
+        Examples
+        --------
+
+
+
+        Returns
+        -------
+        """
+        score = None
+        for chord in self:
+            score += chord(**{instrument: melody.o(instruments_octaves.get(instrument, 0)) for instrument, melody in chord.items()})
+
+        return score
+
+    def to_voicing(self, nb_voices=4, instruments=None):
         """Convert score to a four voice voicing using the extensions provided in the chord.
 
         It will remove the existing scores of each chord and create the associated voicings
@@ -308,24 +333,9 @@ class Score:
                The score with voicings corresponding to chords
 
         """
-        from .library import s0, s1, s2, s3, s4, s5, s6
-        extension_dict = {
-            '': [s0, s2, s4, s0.o(1)],
-            '5': [s0, s2, s4, s0.o(1)],
-            '6': [s2, s4, s0.o(1), s2],
-            '64': [s4, s0.o(1), s2.o(1), s4.o(1)],
-            '7': [s0, s2, s4, s6],
-            '65': [s2, s4, s6, s0.o(1)],
-            '43': [s4, s6, s0.o(1), s2.o(1)],
-            '2': [s6, s0.o(1), s2.o(1), s4.o(1)]
-        }
-        if instruments is None:
-            instruments = ['piano__0', 'piano__1', 'piano__2', 'piano__3']
-
         score = None
         for chord in self:
-            notes = extension_dict[chord.extension]
-            score += chord(**{ins: notes[i].copy() for i, ins in enumerate(instruments)})
+            score += chord.to_voicing(nb_voices=nb_voices, instruments=instruments)
 
         return score
 
@@ -591,6 +601,18 @@ class Score:
     def to_score(self):
         """ """
         return self.copy()
+
+
+    @classmethod
+    def from_str(cls, s):
+        from musiclang.library import I, II, III, IV, V, VI, VII
+        from musiclang.library import s0, s1, s2, s3, s4, s5, s6
+        from musiclang.library import h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11
+        from musiclang.library import su0, su1, su2, su3, su4, su5, su6
+        from musiclang.library import hu0, hu1, hu2, hu3, hu4, hu5, hu6, hu7, hu8, hu9, hu10, hu11
+        from musiclang.library import sd0, sd1, sd2, sd3, sd4, sd5, sd6
+        from musiclang.library import hd0, hd1, hd2, hd3, hd4, hd5, hd6, hd7, hd8, hd9, hd10, hd11
+        return eval(s.replace('\n', ''))
 
     @classmethod
     def from_sequence(cls, sequence, **kwargs):

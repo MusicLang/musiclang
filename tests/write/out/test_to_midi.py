@@ -86,8 +86,9 @@ def test_get_track_list():
 
 
 def test_tracks_to_instruments():
-    res = tracks_to_instruments(['piano__0', 'violin__0'])
+    res, names = tracks_to_instruments(['piano__0', 'violin__0'])
     assert res == {0: 0, 1: 40}
+    assert names == ['piano', 'violin']
 
 
 def test_create_melody_for_track():

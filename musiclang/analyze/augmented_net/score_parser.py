@@ -29,7 +29,7 @@ S_LISTTYPE_COLUMNS = [
 ]
 
 
-def _m21Parse(f, fmt=None):
+def m21Parse(f, fmt=None, remove_perc=True):
     """
 
     Parameters
@@ -44,12 +44,19 @@ def _m21Parse(f, fmt=None):
 
     """
     s = music21.converter.parse(f, format=fmt, forceSource=True)
-    perc = [
-        p
-        for p in s.parts
-        if list(p.recurse().getElementsByClass("PercussionClef"))
-    ]
-    s.remove(perc, recurse=True)
+    if remove_perc:
+
+        for el in s.recurse():
+            if set(el.classes).intersection(['PercussionChord', 'Unpitched']):  # or 'Piano'
+                # el.activeSite.replace(el, instrument.Violin())
+                el.activeSite.remove(el)
+
+        # perc = [
+        #     p
+        #     for p in s.parts
+        #     if list(p.recurse().getElementsByClass(["PercussionClef", "PercussionChord"]))
+        # ]
+        # s.remove(perc, recurse=True)
     return s
 
 
@@ -159,6 +166,7 @@ def _initialDataFrame(s, fmt=None):
     df.loc[len(df) - 1, "s_duration"] += deltaDuration
     df.set_index("s_offset", inplace=True)
     df = df[~df.index.duplicated()]
+
     return df
 
 
@@ -225,8 +233,10 @@ def parseScore(f, fmt=None, fixedOffset=FIXEDOFFSET, eventBased=False):
     -------
 
     """
+
     # Step 0: Use music21 to parse the score
-    s = _m21Parse(f, fmt)
+    s = m21Parse(f, fmt)
+
     # Step 1: Parse and produce a salami-sliced dataset
     df = _initialDataFrame(s, fmt)
     # Step 2: Turn salami-slice into fixed-duration steps

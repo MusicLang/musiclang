@@ -67,3 +67,14 @@ def test_multi_instrument_1_2_quarters_score_between():
     subscore = score.get_score_between(start=1, end=2)
     expected_result =  I(piano__0=s1, violin__0=s1)
     assert subscore == expected_result
+
+def test_octaver():
+
+    score = I(piano__0=s0 + s1 + s2, violin__0=s0 + s1 + s4) + II(piano__0=s1 + s2)
+
+    score2 = score.octaver(piano__0=-1, violin__0=1)
+    expected = I(piano__0=(s0 + s1 + s2).o(-1), violin__0=(s0 + s1 + s4).o(1)) + II(piano__0=(s1 + s2).o(-1))
+    assert score2 == expected
+
+
+

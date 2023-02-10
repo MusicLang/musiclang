@@ -189,7 +189,7 @@ def tracks_to_instruments(tracks):
     from .constants import INSTRUMENTS_DICT
     names = [t.split('__')[0] for t in tracks]
     instruments_idx = {i: INSTRUMENTS_DICT.get(name, 0) for i, name in enumerate(names)}
-    return instruments_idx
+    return instruments_idx, names
 
 
 def score_to_midi(score, filepath, **kwargs):
@@ -220,6 +220,7 @@ def score_to_midi(score, filepath, **kwargs):
         melody = create_melody_for_track(score, track_idx, track)
         notes += melody
 
-    instruments = tracks_to_instruments(tracks)
-    res = to_midi(notes, output_file=filepath, instruments=instruments, **kwargs)
+    instruments, instrument_names = tracks_to_instruments(tracks)
+
+    res = to_midi(notes, output_file=filepath, instruments=instruments, instrument_names=instrument_names, **kwargs)
     return res

@@ -599,8 +599,9 @@ class Chord:
         res.extension = res.normalize_extension()
         try:
             n = res.extension_notes
-        except:
-            raise ValueError(f'Could not parse extension : {item}')
+        except Exception as e:
+            raise e
+            #raise ValueError(f'Could not parse extension : {item} {e}')
 
         return res
 
@@ -1080,14 +1081,10 @@ class Chord:
 
         for replacement in replacements:
             note_replaced, new_note = DICT_REPLACEMENT[replacement]
-            try:
-                idx = notes_without_octave.index(note_replaced)
-                notes[idx] = new_note.copy()
-                notes_without_octave[idx] = new_note.o(-new_note.octave)
-            except ValueError:
-                # make an addition instead
-                notes += [new_note.copy()]
-                notes_without_octave += [new_note.o(-new_note.octave)]
+            idx = notes_without_octave.index(note_replaced)
+            notes[idx] = new_note.o(notes[idx].octave)
+            notes_without_octave[idx] = new_note.o(-new_note.octave)
+
 
         for removal in removals:
             note_removed = DICT_REMOVAL[removal]

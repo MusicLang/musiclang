@@ -22,7 +22,7 @@ Here are some examples ::
     C_major_chord = (I % I.M)  # I in key of C major
     C_minor_chord = (I % I.m)  # I In key of C minor
     F_sharp_diminished7 = (VII % V.m) # VII in key of G minor
-    D_major_sus2_second_inversion = (I % II.M)['64[sus2]'] # I in key of D major
+    D_major_sus2_second_inversion = (I % II.M)['64(sus2)'] # I in key of D major
 
 
 
@@ -43,7 +43,7 @@ Formalism
 
 You can write your chords using the following syntax :
 
-``extension_code[replacement1]...[replacementN](addition1)...(additionN)...{omission1}...{omissionN}``
+``extension_code(replacement1)...(replacementN)[addition1]...[additionN]...{omission1}...{omissionN}``
 
 The extension is implemented on the ``__getitem__`` method of the chord (or []), calling this will return a new chord
 with the proper extension.
@@ -71,7 +71,7 @@ The extension follows the roman numeral notation standard :
 Replacement :
 ****************
 
-This is the replacement dict, the key is the name you can use between [] eg: [sus2]
+This is the replacement dict, the key is the name you can use between ()) eg: (sus2), (+) for augmented chord
 The first value is the note replaced in the chord, the second value in the note added in the chord ::
 
 
@@ -99,7 +99,7 @@ Additions :
 
 
 
-Here is the addition dict, the key is the name you can use between () eg: (+) for augmented chord
+Here is the addition dict, the key is the name you can use between [] eg: [add6] for added sixth chord
 The first value is the note that will give the octave of the addition in the existing chord, the second value in the note added in the chord ::
 
     DICT_ADDITION = {
@@ -156,14 +156,14 @@ Chord extension notes
 Chord extension notes (b0, b1 ...). Chord extension notes are understood as the notes of the
 arpeggio of the current chord starting by the chord bass::
 
-    score = (I % I.M)['6[sus2]'](b0 + b1 + b2 + b3)
+    score = (I % I.M)['6(sus2)'](b0 + b1 + b2 + b3)
 
 Will give the notes : ``D, G, C.o(1), E.o(1)``
 
 Another example slightly more complex ::
 
 
-    score = (I % I.M)['6[m3](+){-1}'](b0 + b1 + b2 + b3)
+    score = (I % I.M)['6(m3)(+){-1}'](b0 + b1 + b2 + b3)
 
 Will give the notes : ``Eb, G#, Eb.o(1), G#.o(1)``
 
@@ -174,7 +174,7 @@ Chord notes
 Chord notes (c0, c1 ...). Chord extension notes are understood as the notes of the
 arpeggio of the current chord starting by the chord root. For example ::
 
-    score = (I % I.M)['6[sus2]'](c0 + c1 + c2 + c3)
+    score = (I % I.M)['6(sus2)'](c0 + c1 + c2 + c3)
 
 Will give the notes : ``C, D, G, C.o(1)``
 

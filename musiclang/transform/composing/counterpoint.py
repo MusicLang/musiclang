@@ -88,6 +88,8 @@ def create_counterpoint_on_score(score, fixed_parts, counterpoint_parts=None):
     from musiclang import Score
     if counterpoint_parts is None:
         counterpoint_parts = set(score.instruments) - set(fixed_parts)
+
+    # Deal with bass and chord notes
     chord, _, chords_offsets, _, chords = project_on_one_chord(score)
     fixed_voices = [chord.score[part] for part in fixed_parts]
     moving_voices = [chord.score[part] for part in counterpoint_parts]

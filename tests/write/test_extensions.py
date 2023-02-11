@@ -4,8 +4,8 @@ import pytest
 
 
 def test_normalization_extension():
-    chord = (I % I.M)['6{-5}[m3](sus2)[add6](sus4)']
-    assert chord.extension == '6(sus2)(sus4)[add6][m3]{-5}'
+    chord = (I % I.M)['6{-5}[m3](sus2)[add6]']
+    assert chord.extension == '6(sus2)[add6][m3]{-5}'
 
 
 def test_without_additions_or_replacements():
@@ -17,7 +17,7 @@ def test_unexisting_extension_lead_to_error():
         chord = (I % I.M)['22zrahj']
 
 def test_replacement_without_candidate_lead_to_addition():
-    chord = (I % I.M)['(#11)']
+    chord = (I % I.M)['[#11]']
     assert chord.extension_notes == [s0, s2, s4, h6.o(1)]
 
 

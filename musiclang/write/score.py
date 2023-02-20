@@ -206,6 +206,97 @@ class Score:
         cp.tags = set()
         return cp
 
+
+    def set_amp(self, amp):
+        """
+        Set the velocity of the notes in the score (between 0 and 120)
+        Parameters
+        ----------
+        amp: int
+
+        Returns
+        -------
+
+        """
+        return Score([c.set_amp(amp) for c in self.chords], tags=set(self.tags))
+
+
+    def normalize_instruments(self):
+        """
+        Get a score with the same instruments on all chords,
+        if an instrument is missing on one chord add it with a silence lasting for the chord duration.
+
+        Returns
+        -------
+        score: Score
+        Normalize score
+        """
+        from musiclang import Silence
+        score = None
+        instruments = set(self.instruments)
+        for chord_raw in self.chords:
+            chord = chord_raw.copy()
+            missing_instruments = set(instruments) - set(chord.instruments)
+            chord_score = chord.score
+            for instrument in missing_instruments:
+                chord_score[instrument] = Silence(chord.duration)
+            score += chord(**chord_score)
+        return score
+
+    def remove_silenced_instruments(self):
+        """
+        Inverse operation of :func:`~Score.normalize_instruments`
+        For each chord remove all instruments that are silenced
+        Returns
+        -------
+        score: Score
+        """
+
+        score = None
+        for chord_raw in self.chords:
+            chord = chord_raw.copy()
+            chord_score = chord.score
+
+            for instrument in list(chord_score.keys()):
+                if all([n.type == 'r' for n in chord_score[instrument]]):
+                    del chord_score[instrument]
+
+            score += chord(**chord_score)
+
+        return score
+
+    def replace_instruments(self, **instruments_dict):
+        """
+        Replace any instrument with another (use full part name (eg: piano__0)
+
+        Parameters
+        ----------
+        instruments_dict: dict[str, str]
+            Dictionary of parts name to replace
+
+        Returns
+        -------
+        score: Score
+
+        """
+        score = None
+        instruments_dict = {key: instruments_dict[key] if key in instruments_dict.keys() else key for key in self.parts}
+        for chord in self.chords:
+            new_chord_dict = {}
+            for ins_name, new_ins_name in instruments_dict.items():
+                if ins_name in chord.score.keys():
+                    new_chord_dict[new_ins_name] = chord.score[ins_name]
+            score += chord(**new_chord_dict)
+
+        return score
+
+
+    def clean(self):
+        return self.to_drum().decompose_duration()
+
+    def to_drum(self):
+        return Score([chord.to_drum() for chord in self.chords], tags=set(self.tags))
+
     def to_chords(self):
         """ """
         res = [chord.to_chord() for chord in self.chords]
@@ -271,6 +362,10 @@ class Score:
 
 
     @property
+    def parts(self):
+        return self.instruments
+
+    @property
     def instruments(self):
         """
 
@@ -315,6 +410,13 @@ class Score:
             score += chord(**{instrument: melody.o(instruments_octaves.get(instrument, 0)) for instrument, melody in chord.items()})
 
         return score
+
+
+    def apply(self, keep_durations=True, **melodies):
+        if keep_durations:
+            return Score([c(**melodies).augment(c.duration) for c in self.chords])
+        else:
+            return Score([c(**melodies) for c in self.chords])
 
     def to_voicing(self, nb_voices=4, instruments=None):
         """Convert score to a four voice voicing using the extensions provided in the chord.
@@ -422,8 +524,12 @@ class Score:
         from .time_utils import put_on_same_chord
         return put_on_same_chord(self)
 
-    def project_on_score(self, score2, keep_score=False):
-        """Project harmonically the current score onto the score2
+    def project_on_score(self, score2, voice_leading=True):
+        """Project harmonically the current score onto the score2.
+        The score2 notes will disappear, only keeping the current score with the harmony of score2
+        Can either project by complete diatonic transposition or trying to move as little as possible the notes
+        (voice_leading=True)
+
         Algorithm : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
 
         Parameters
@@ -432,6 +538,8 @@ class Score:
                 Score to project on the chords of score2
         score2 : Score
             Score that contains the harmony
+        voice_leading: boolean (default=True)
+            If true, we try to move the notes as little as possible
         keep_score : Score (Default value = False)
             Keep the voices of score2 ? (Default value = False)
 
@@ -452,8 +560,11 @@ class Score:
         """
         # Algo : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
         from .time_utils import project_on_score
-        return project_on_score(self.to_score(), score2.to_score(), keep_score=keep_score)
-
+        from musiclang.transform.composing import project_on_score_keep_notes
+        if voice_leading:
+            return project_on_score_keep_notes(self.to_score(), score2.to_score())
+        else:
+            return project_on_score(self.to_score(), score2.to_score(), keep_score=False)
 
     def get_chord_between(self, chord, start, end):
         """
@@ -542,6 +653,20 @@ class Score:
             pickle.dump(self, f)
 
     @classmethod
+    def from_annotation_file(cls, file):
+        from musiclang.analyze import annotation_to_musiclang
+        return annotation_to_musiclang(file)
+
+    @classmethod
+    def from_annotation(cls, text):
+        import tempfile
+        with tempfile.NamedTemporaryFile() as file:
+            with open(file.name, 'w') as f:
+                f.write(text)
+            return Score.from_annotation_file(file.name)
+
+
+    @classmethod
     def from_midi(cls, filename):
         """
         Load a midi score into musiclang
@@ -564,6 +689,16 @@ class Score:
         score, config = parse_to_musiclang(filename)
         score.config = config
         return score
+
+    def to_extension_note(self):
+        return Score([chord.to_extension_note() for chord in self.chords], tags=set(self.tags))
+
+    def to_chord_note(self):
+        return Score([chord.to_chord_note() for chord in self.chords], tags=set(self.tags))
+
+    def to_standard_note(self):
+        return Score([chord.to_standard_note() for chord in self.chords], tags=set(self.tags))
+
 
     @classmethod
     def from_xml(cls, filename):
@@ -598,9 +733,12 @@ class Score:
         """
         return Score([chord.decompose_duration() for chord in self.chords], tags=self.tags)
 
-    def to_score(self):
+    def to_score(self, copy=True):
         """ """
-        return self.copy()
+        if not copy:
+            return self
+        else:
+            return self.copy()
 
 
     @classmethod

@@ -76,5 +76,14 @@ def test_octaver():
     expected = I(piano__0=(s0 + s1 + s2).o(-1), violin__0=(s0 + s1 + s4).o(1)) + II(piano__0=(s1 + s2).o(-1))
     assert score2 == expected
 
+def test_normalize_instruments():
 
+    score = (I % I.M)(piano__0=s0.h) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    expected_score = (I % I.M)(piano__0=s0.h, violin__1=r.h) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    assert score.normalize_instruments() == expected_score
 
+def test_remove_silenced_instruments():
+
+    score = (I % I.M)(piano__0=s0.h, violin__1=r + r) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    expected_score = (I % I.M)(piano__0=s0.h) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    assert score.remove_silenced_instruments() == expected_score

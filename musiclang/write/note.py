@@ -110,8 +110,9 @@ class Note:
 
 
     """
+    DEFAULT_AMP = 66
 
-    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=66, tags=None):
+    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=DEFAULT_AMP, tags=None):
         self.type = type
         self.val = val
         self.octave = octave
@@ -234,7 +235,7 @@ class Note:
         Parameters
         ----------
         chord :
-            
+
 
         Returns
         -------
@@ -308,6 +309,11 @@ class Note:
         """ """
         return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, accident=self.accident, amp=self.amp, tags=set(self.tags))
 
+    def set_amp(self, amp):
+        new_note = self.copy()
+        new_note.amp = amp
+        return new_note
+
     def set_val(self, val):
         note = self.copy()
         note.val = val
@@ -319,7 +325,7 @@ class Note:
         Parameters
         ----------
         value :
-            
+
 
         Returns
         -------
@@ -337,7 +343,7 @@ class Note:
         ----------
         value : fractions.Fraction
                 Fraction on which to multiply the current duration
-            
+
 
         Returns
         -------
@@ -363,7 +369,7 @@ class Note:
         Parameters
         ----------
         new_type :
-            
+
 
         Returns
         -------
@@ -379,7 +385,7 @@ class Note:
         Parameters
         ----------
         note :
-            
+
 
         Returns
         -------
@@ -397,9 +403,9 @@ class Note:
         Parameters
         ----------
         val :
-            
+
         octave :
-            
+
 
         Returns
         -------
@@ -431,7 +437,7 @@ class Note:
         Parameters
         ----------
         octave :
-            
+
 
         Returns
         -------
@@ -468,7 +474,8 @@ class Note:
 
     def to_drum(self):
         note = self.copy()
-        note.type = 'd'
+        if not note.is_silence and not note.is_continuation:
+            note.type = 'd'
         return note
 
     @property
@@ -545,7 +552,7 @@ class Note:
         chord : Chord
             Chord on which the note will be played
 
-            
+
         inst : str
             Instrument on which the note will be played
 
@@ -621,7 +628,7 @@ class Note:
         >>> s0 & 2
         s2
         """
-        if self.type in ['s', 'c', 'h']:
+        if self.type in ['s', 'h']:
             return self.add_value(n, 0)
         elif self.type in ['h']:
             return self.add_value((12 * n) // 7, 0)
@@ -666,6 +673,58 @@ class Note:
         new_note.octave = pitch // 12
         return new_note
 
+    def to_standard_note(self, chord):
+        if self.type in ['b', 'c']:
+            if self.is_bass_note:
+                candidates = chord.extension_notes
+            elif self.is_chord_note:
+                candidates = chord.chord_notes
+            else:
+                raise Exception('Not existing type')
+            val = self.val
+            octave = self.octave
+            new_note = candidates[val % len(candidates)].o((val // len(candidates)) + octave)
+            new_note = new_note.set_duration(self.duration)
+            new_note.amp = self.amp
+            return new_note
+        else:
+            return self
+
+
+    def as_key(self, octave=False, duration=False, amp=False):
+        oct = self.octave if octave else 0
+        duration = self.duration if duration else 1
+        amp = self.amp if amp else 66
+        return Note(self.type, self.val, oct, duration, mode=self.mode, amp=amp, accident=self.accident)
+
+
+    def to_extension_note(self, chord):
+        candidates = chord.extension_notes
+        candidates_without_octave = [c.o(-c.octave) for c in candidates]
+        try:
+            idx = candidates_without_octave.index(self.as_key())
+            note = candidates[idx]
+            to_return = self.copy()
+            to_return.type = 'b'
+            to_return.val = idx
+            to_return.octave -= note.octave
+            return to_return
+        except:
+            return self.copy()
+
+    def to_chord_note(self, chord):
+        candidates = chord.chord_notes
+        candidates_without_octave = [c.o(-c.octave) for c in candidates]
+        try:
+            idx = candidates_without_octave.index(self.as_key())
+            note = candidates[idx]
+            to_return = self.copy()
+            to_return.type = 'c'
+            to_return.val = idx
+            to_return.octave -= note.octave
+            return to_return
+        except:
+            return self.copy()
 
 
     def __hash__(self):

@@ -67,7 +67,7 @@ def project_on_score_keep_notes(score1, score2):
     from musiclang import Score
     chord, _, _, _, chords = project_on_one_chord(score1)
     _, _, chords_offsets, _, _ = project_on_one_chord(score2)
-    projection = chord.to_score().project_on_score(score2, keep_score=False)
+    projection = chord.to_score().project_on_score(score2, voice_leading=False)
     projection = Score([s & (-i) for s, i in zip(projection.chords, chords_offsets)])
     return projection
 
@@ -438,25 +438,6 @@ def get_nearest_note(candidates, note):
     candidate_val = min(candidates, key=lambda x: abs(x.val - note.val))
     return get_nearest_val(note, candidate_val.val)
 
-
-def get_nearest_note(candidates, note):
-    """
-
-    Parameters
-    ----------
-    candidates :
-        
-    note :
-        
-
-    Returns
-    -------
-
-    """
-    candidate_val = min(candidates, key=lambda x: abs(x.val - note.val))
-    return get_nearest_val(note, candidate_val.val)
-
-
 def get_nearest_val(n, new_val):
     """
 
@@ -575,33 +556,7 @@ def get_notes_candidate_in_context(rhythm_note, chord, dict_notes=None):
     return [rhythm_note]
 
 
-def get_nearest_note_in_context(rhythm_note, note, chord, dict_notes=None):
-    """
 
-    Parameters
-    ----------
-    rhythm_note :
-        
-    note :
-        
-    chord :
-        
-    dict_notes :
-         (Default value = None)
-
-    Returns
-    -------
-
-    """
-    if dict_notes is None:
-        dict_notes = {}
-    candidates = get_notes_candidate_in_context(rhythm_note, chord, dict_notes=dict_notes)
-    if len(candidates) == 0:
-        return note
-    elif note.is_note:
-        return get_nearest_note(candidates, note)
-    else:
-        return note
 
 
 def get_absolute_voice(voice):

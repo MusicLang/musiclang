@@ -51,6 +51,7 @@ class Melody:
         """
         return tag in self.tags
 
+
     def add_tag(self, tag):
         """
         Add a tag to this object
@@ -136,6 +137,13 @@ class Melody:
         cp = self.copy()
         cp.tags = set()
         return cp
+
+    def set_amp(self, amp):
+        return Melody([n.set_amp(amp) for n in self.notes], tags=set(self.tags))
+
+
+    def to_drum(self):
+        return Melody([n.to_drum() for n in self.notes], tags=set(self.tags))
 
     def to_melody(self):
         return self.copy()
@@ -248,9 +256,22 @@ class Melody:
         return sequence
 
 
+    def to_standard_note(self, chord):
+        return Melody([n.to_standard_note(chord) for n in self.notes], tags=set(self.tags))
+
+
+    def to_extension_note(self, chord):
+        return Melody([n.to_extension_note(chord) for n in self.notes], tags=set(self.tags))
+
+    def to_chord_note(self, chord):
+        return Melody([n.to_chord_note(chord) for n in self.notes], tags=set(self.tags))
+
     def to_code(self):
         """ """
         return " + ".join([n.to_code() for n in self.notes])
+
+    def convert_to_drum_note(self, chord):
+        return Melody([n.convert_to_drum_note(chord) for n in self.notes], tags=set(self.tags))
 
     @property
     def is_continuation(self):

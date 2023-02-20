@@ -6,6 +6,8 @@ from .transformer import NoteFilter, NoteFilterTransform, FeatureExtractor
 from .transformer import MaskFilter, NoteMaskFilter, ChordMaskFilter, MelodyMaskFilter
 from .merger import ScoreMerger
 from .graph import TransformGraph
+from .composing import VoiceLeading
+from .dynamics import PitchDynamizer
 
 
 __all__ = ['TransformPipeline', 'ConcatPipeline', 'Mask',
@@ -13,5 +15,6 @@ __all__ = ['TransformPipeline', 'ConcatPipeline', 'Mask',
            'NoteTransformer',
            'ChordFilter', 'ChordFilterTransform', 'MelodyFilterTransform', 'MelodyFilter',
            'NoteFilter', 'NoteFilterTransform', 'FeatureExtractor', 'MaskFilter', 'NoteMaskFilter',
-           'ChordMaskFilter', 'MelodyMaskFilter', 'ScoreMerger', 'TransformGraph'
+           'ChordMaskFilter', 'MelodyMaskFilter', 'ScoreMerger', 'TransformGraph',
+           'VoiceLeading', 'PitchDynamizer'
            ]

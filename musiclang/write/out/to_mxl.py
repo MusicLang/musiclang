@@ -156,9 +156,14 @@ def score_instrument_to_notes(score, part_name, voice, voice_idx):
     voice: music21.Voice
 
     """
+    last_spelling = None
+    curr_dynamic = 'mf'
     for chord in score.chords:
-        voice = chord_instrument_to_notes(chord, voice, part_name, voice_idx)
-
+        voice, last_spelling, curr_dynamic = chord_instrument_to_notes(chord, voice, part_name,
+                                                                       voice_idx,
+                                                                       last_spelling=last_spelling,
+                                                                       curr_dynamic=curr_dynamic
+                                                                       )
     return voice
 
 
@@ -178,7 +183,7 @@ def chord_to_musescore_lyric(chord: Chord):
     return "{} /{}".format(chord.element_to_str(), chord.tonality_to_str()).replace('%', '')
 
 
-def chord_instrument_to_notes(chord, voice, part_name, ins_idx):
+def chord_instrument_to_notes(chord, voice, part_name, ins_idx, last_spelling=None, curr_dynamic='mf'):
     """
     Given a chord, get spellings
 
@@ -187,10 +192,8 @@ def chord_instrument_to_notes(chord, voice, part_name, ins_idx):
     """
 
     # Enharmonic
-
+    FIGURES = ['n', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff']
     last_pitch = None
-    last_spelling = None
-    curr_dynamic = 0
     if part_name in chord.score.keys():
         part = chord.score[part_name]
 
@@ -200,24 +203,32 @@ def chord_instrument_to_notes(chord, voice, part_name, ins_idx):
                 last_spelling = new_note.nameWithOctave
                 if idx_note == 0 and ins_idx == 0:
                     new_note.addLyric(chord_to_musescore_lyric(chord))
-                if n.amp != curr_dynamic:
-                    dyn = dynamics.Dynamic(n.amp / 120)
+                if n.amp_figure != curr_dynamic:
+                    dyn = dynamics.Dynamic(n.amp_figure)
+                    # if FIGURES.index(n.amp_figure) > FIGURES.index(curr_dynamic):
+                    #     d = dynamics.Crescendo()
+                    # else:
+                    #     d = dynamics.Diminuendo()
+                    # voice.append(d)
                     voice.append(dyn)
-                    curr_dynamic = n.amp
+                    curr_dynamic = n.amp_figure
                 voice.append(new_note)
             elif n.is_silence:
                 voice.append(note.Rest(n.duration))
             elif n.is_continuation:
-                new_note = note.Note(last_spelling)
-                new_note.duration = music21.duration.Duration(n.duration)
-                voice[-1].tie = tie.Tie('start')
-                new_note.tie = tie.Tie('stop')
-                voice.append(new_note)
+                try:
+                    new_note = note.Note(last_spelling)
+                    new_note.duration = music21.duration.Duration(n.duration)
+                    voice[-1].tie = tie.Tie('start')
+                    new_note.tie = tie.Tie('stop')
+                    voice.append(new_note)
+                except:
+                    voice.append(note.Rest(n.duration))
 
     else:
         voice.append(note.Rest(chord.duration))
 
-    return voice
+    return voice, last_spelling, curr_dynamic
 
 
 def score_to_music_21(score, signature=(4, 4), tempo=50, tonality=None, title='MusicLang score', composer='MusicLang', **kwargs):

@@ -128,6 +128,7 @@ def parse_directory_to_musiclang(directory: str):
     mxl_file = os.path.join(directory, 'data.mxl')
     infer_chords(mxl_file)
     score, tempo = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+    score = score.clean()
     annotation = open(annotation_file, 'r').read()
     return score, {'annotation': annotation, 'tempo': tempo}
 
@@ -164,6 +165,9 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
 # Helpers for parser
 
 
+def parse_roman_numeral(element):
+    print(element.primaryFigure + element.secondaryRomanNumeral.primaryFigure)
+
 def parse_tonality(element):
     """Parse tonality as written in musicLang from Music21 object
 
@@ -186,18 +190,58 @@ def parse_tonality(element):
     else:
         key_tonic = element.key.tonic.pitchClass
         key_mode = DICT_MODE[element.key.mode]
-    if 'N' in element.primaryFigure:
+
+    figure = element.primaryFigure
+
+    if 'N' in figure:
         key_tonic += 1
         key_mode = 'M'
-    elif 'Ger' in element.primaryFigure:
+    elif 'Ger' in figure:
         key_tonic += 1  # For musiclang it will be a V % II.b.M
         key_mode = 'M'
-    elif 'It' in element.primaryFigure:
+    elif 'It' in figure:
         key_tonic += 1  # For musiclang it will be a I % II.b.M
         key_mode = 'M'
-    elif 'Fr' in element.primaryFigure:
+    elif 'Fr' in figure:
         key_tonic += 3
         key_mode = 'mm'
+    # elif 'bIII' in figure:
+    #     key_tonic += 3
+    #     key_mode = 'M'
+    # elif 'biii' in figure:
+    #     key_tonic += 3
+    #     key_mode = 'm'
+    # elif 'bIV' in figure:
+    #     key_tonic += 4
+    #     key_mode = 'M'
+    # elif 'biv' in figure:
+    #     key_tonic += 4
+    #     key_mode = 'm'
+    # elif 'bVII' in figure:
+    #     key_tonic += 10
+    #     key_mode = 'M'
+    # elif 'bvii' in figure:
+    #     key_tonic += 10
+    #     key_mode = 'm'
+    # elif 'bVI' in figure:
+    #     key_tonic += 8
+    #     key_mode = 'M'
+    # elif 'bvi' in figure:
+    #     key_tonic += 8
+    #     key_mode = 'm'
+    # elif 'bII' in figure:
+    #     key_tonic += 1
+    #     key_mode = 'M'
+    # elif 'bii' in figure:
+    #     key_tonic += 1
+    #     key_mode = 'm'
+    # elif 'bV' in figure:
+    #     key_tonic += 6
+    #     key_mode = 'M'
+    # elif 'bv' in figure:
+    #     key_tonic += 6
+    #     key_mode = 'm'
+
     return key_tonic, key_mode
 
 
@@ -217,12 +261,36 @@ def get_degree(element):
     degree = element.scaleDegree - 1
     if 'Ger' in element.primaryFigure:
         degree = 4
-    if 'It' in element.primaryFigure:
+    elif 'It' in element.primaryFigure:
         degree = 4
     elif 'N' in element.primaryFigure:
         degree = 0
     elif 'Fr' in element.primaryFigure:
         degree = 3
+    # elif 'bIII' in element.primaryFigure:
+    #     degree = 0
+    # elif 'biii' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bIV' in element.primaryFigure:
+    #     degree = 0
+    # elif 'biv' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bVII' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bvii' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bVI' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bvi' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bII' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bii' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bV' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bv' in element.primaryFigure:
+    #     degree = 0
 
     return degree
 
@@ -371,9 +439,52 @@ def music21_roman_analysis_to_chords(score):
         notes = [(n.pitch.pitchClass, n.pitch.octave - 5) for n in roman.notes]
         duration = get_duration(roman)
         degree = get_degree(roman)
-        figure = roman.figuresWritten.replace('/', '')
-        if figure == 'ar':
-            figure = ''
+        figure = roman.primaryFigure
+        figure = figure.replace('bI', '').replace('bV', '')
+        figure = figure.replace('#I', '').replace('#V', '')
+        figure = figure.replace('I', '').replace('V', '')
+        figure = figure.replace('bi', '').replace('bv', '')
+        figure = figure.replace('#i', '').replace('#v', '')
+        figure = figure.replace('i', '').replace('v', '')
+
+        #primary_figure = roman.primaryFigure
+
+        replacer = (
+            ('M7', '[M7]'),
+            ('maj7', '[M7]'),
+            ('m7', '[m7]'),
+            ('min7', '[m7]'),
+            ('+', '(+)'),
+            ('b5', '(b5)'),
+            ('b7', '[m7]'),
+            ('b9', '[m9]'),
+            ('ar', ''),
+            ('add2', '[add2]'),
+            ('add4', '[add4]'),
+            ('add6', '[add6]'),
+            ('add9', '[add9]'),
+            ('add11', '[add11]'),
+            ('add13', '[add13]'),
+            ('sus2', '(sus2)'),
+            ('sus4', '(sus4)'),
+            ('[no5]', '{-5}'),
+            ('[no3]', '{-3}'),
+            ('[no1]', '{-1}'),
+            ('[no7]', '{-7}'),
+        )
+
+        figure = figure.replace('[', '').replace('(', '').replace(']', '').replace(')', '')
+        for key, val in replacer:
+            figure = figure.replace(key, val)
+
         chords.append([notes, duration, degree, figure, (key_tonic, key_mode)])
 
     return chords
+
+
+def old_annotation_to_musiclang(file):
+    import music21
+    analysis = music21.converter.parse(file, format="romanText")
+    chords = music21_roman_analysis_to_chords(analysis)
+    score = chords_to_musiclang(chords)
+    return score

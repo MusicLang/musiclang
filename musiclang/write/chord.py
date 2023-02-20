@@ -73,7 +73,8 @@ class Chord:
                 Represents the base octave of the chord
         """
         self.element = element
-        self.extension = extension
+        self.extension = str(extension)
+        self.extension = self.normalize_extension()
         self.tonality = tonality
         self.octave = octave
         self.score = {} if score is None else score
@@ -272,10 +273,11 @@ class Chord:
 
         return sequence_dict
 
-    def to_score(self):
+    def to_score(self, copy=True):
         """ """
         from .score import Score
-        return Score([self])
+        chord = self if not copy else self.copy()
+        return Score([chord])
 
     def show(self, *args, **kwargs):
         """
@@ -430,6 +432,9 @@ class Chord:
         Same as :func:`~Chord.instruments`
         """
         return list(self.score.keys())
+
+    def to_drum(self):
+        return self(**{key: val.to_drum() if key.startswith('drum') else val for key, val in self.items()})
 
     @property
     def instruments(self):
@@ -596,12 +601,12 @@ class Chord:
         item = str(item)
         res = self.copy()
         res.extension = str(item)
-        res.extension = res.normalize_extension()
         try:
             n = res.extension_notes
         except Exception as e:
             raise e
             #raise ValueError(f'Could not parse extension : {item} {e}')
+        res.extension = res.normalize_extension()
 
         return res
 
@@ -624,6 +629,9 @@ class Chord:
         if len(self.score.keys()) == 0:
             return 0
         return max([self.score[key].duration for key in self.score.keys()])
+
+    def set_amp(self, amp):
+        return self(**{key: val.set_amp(amp) for key, val in self.items()}, tags=set(self.tags))
 
     def set_part(self, part, melody, inplace=False):
         """
@@ -827,6 +835,16 @@ class Chord:
         """Chord down one octave (=o(-1))"""
         return self.o(1)
 
+    def to_extension_note(self):
+        return self(**{key: val.to_extension_note(self) for key, val in self.items()}, tags=set(self.tags))
+
+    def to_chord_note(self):
+        return self(**{key: val.to_chord_note(self) for key, val in self.items()}, tags=set(self.tags))
+
+    def to_standard_note(self):
+        return self(**{key: val.to_standard_note(self) for key, val in self.items()}, tags=set(self.tags))
+
+
     def o_melody(self, octave):
         """Change the octave of the melody (not the chord)
 
@@ -939,12 +957,18 @@ class Chord:
                 for idx, melody in enumerate(named_melodies[key]):
                     mel = melody.to_melody()
                     if key_obj.startswith('drums'):
-                        mel = Melody([n.convert_to_drum_note(self) for n in mel.notes])
+                        new_mel = None
+                        for n in mel.notes:
+                            new_mel += n.convert_to_drum_note(self)
+                        mel = new_mel
                     named_melodies_result[key_obj + '__' + str(number + idx)] = mel
             else:
                 mel = named_melodies[key].to_melody()
                 if key_obj.startswith('drums'):
-                    mel = Melody([n.convert_to_drum_note(self) for n in mel.notes])
+                    new_mel = None
+                    for n in mel.notes:
+                        new_mel += n.convert_to_drum_note(self)
+                    mel = new_mel
                 named_melodies_result[key_obj + '__' + str(number)] = mel
 
         return named_melodies_result
@@ -1052,6 +1076,29 @@ class Chord:
         return f"{self.to_code()}({self.melody_to_str()})"
 
 
+    def replace_instruments(self, **instruments_dict):
+        """
+        Replace any instrument with another (use full part name (eg: piano__0)
+
+        Parameters
+        ----------
+        instruments_dict: dict[str, str]
+            Dictionary of parts name to replace
+
+        Returns
+        -------
+        chord: Chord
+
+        """
+        instruments_dict = {key: instruments_dict[key] if key in instruments_dict.keys() else key for key in self.parts}
+        new_chord_dict = {}
+        for ins_name, new_ins_name in instruments_dict.items():
+            if ins_name in self.score.keys():
+                new_chord_dict[new_ins_name] = self.score[ins_name]
+
+        return self(**new_chord_dict)
+
+
     def normalize_extension(self):
         extension, replacements, additions, removals = self.get_extension_properties()
         replacements = ''.join([f'({r})' for r in replacements])
@@ -1063,7 +1110,11 @@ class Chord:
         replacements = sorted(re.findall(r'\((.*?)\)', self.extension))
         additions = sorted(re.findall(r'\[(.*?)\]', self.extension))
         removals = sorted(re.findall(r'\{(.*?)\}', self.extension))
-        extension = self.extension.split('(')[0].split('[')[0].split('{')[0]
+        ext = self.extension
+        for r in replacements + additions + removals:
+            ext = ext.replace(r, '')
+        ext = ext.replace('()', '').replace('[]', '').replace('{}', '')
+        extension = ext
         return extension, replacements, additions, removals
 
 
@@ -1072,19 +1123,28 @@ class Chord:
             DICT_REPLACEMENT, DICT_ADDITION, DICT_REMOVAL
         notes = BASE_EXTENSION_DICT[extension][:]
         notes_without_octave = [n.o(-n.octave) for n in notes]
+
+        dict_replaced = {}
+        for replacement in replacements:
+            note_replaced, new_note = DICT_REPLACEMENT[replacement]
+            if note_replaced not in notes_without_octave:
+                additions.append(replacement)
+            else:
+                idx = notes_without_octave.index(note_replaced)
+                notes[idx] = new_note.o(notes[idx].octave)
+                notes_without_octave[idx] = new_note.o(-new_note.octave)
+                dict_replaced[note_replaced] = notes_without_octave[idx]
+
         for addition in additions:
             note_after, new_note = DICT_ADDITION[addition]
-            idx = notes_without_octave.index(note_after) + 1
+            if note_after in dict_replaced.keys():
+                query_note = dict_replaced[note_after]
+            else:
+                query_note = note_after
+            idx = notes_without_octave.index(query_note) + 1
             new_note = new_note.o(note_after.octave)
             notes.insert(idx, new_note)
             notes_without_octave.insert(idx, new_note.o(-new_note.octave))
-
-        for replacement in replacements:
-            note_replaced, new_note = DICT_REPLACEMENT[replacement]
-            idx = notes_without_octave.index(note_replaced)
-            notes[idx] = new_note.o(notes[idx].octave)
-            notes_without_octave[idx] = new_note.o(-new_note.octave)
-
 
         for removal in removals:
             note_removed = DICT_REMOVAL[removal]

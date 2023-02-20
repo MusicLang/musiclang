@@ -151,7 +151,6 @@ def note_to_pitch_result(note, chord, last_pitch=None):
         elif note.is_chord_note:
             scale_chord = chord.chord_pitches
             pitch_result = get_value_to_scale_note(note.val + len(scale_chord) * note.octave, scale_chord)
-            pass
         elif note.is_bass_note:
             scale_chord = chord.chord_extension_pitches
             pitch_result = get_value_to_scale_note(note.val + len(scale_chord) * note.octave, scale_chord)

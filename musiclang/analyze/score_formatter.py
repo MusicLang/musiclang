@@ -21,7 +21,7 @@ class ScoreFormatter:
         ## PARAMETERS
         self.key = 0
         self.mode = 'M'
-        self.instruments = ['piano', 'piano', 'piano', 'piano']
+        self.instruments = ['piano__0', 'piano__1', 'piano__2', 'piano__3']
         self.init_bar_idx = -1
         self.current_score = (b0, b1, b2, b3)
         self.bar_number = 0
@@ -253,24 +253,28 @@ class MultiBar:
 
 class Event:
 
-    def __new__(self, text):
-        return self.init(text)
+    def __new__(cls, text):
+        return cls.init(text)
 
+    @classmethod
     def is_generate(self, text):
-        return self.text.replace(' ', '').startswith('!generate')
+        return text.replace(' ', '').startswith('!generate')
 
+    @classmethod
     def is_voicing(self, text):
-        return self.text.replace(' ', '').startswith('!voicing')
+        return text.replace(' ', '').startswith('!voicing')
 
+    @classmethod
     def is_instruments(self, text):
-        return self.text.replace(' ', '').startswith('!instruments')
+        return text.replace(' ', '').startswith('!instruments')
 
-    def init(self, text):
-        if self.is_generate(text):
+    @classmethod
+    def init(cls, text):
+        if cls.is_generate(text):
             return Generate(text)
-        elif self.is_voicing(text):
+        elif cls.is_voicing(text):
             return Voicing(text)
-        elif self.is_instruments(text):
+        elif cls.is_instruments(text):
             return Instruments(text)
         else:
             raise Exception(f'Not existing event {text}')
@@ -283,7 +287,7 @@ class Instruments:
         self.init()
 
     def init(self):
-        insts = ','.join([f"{ins}" for ins in self.text.replace('!instruments', '').split(' ')])
+        insts = ','.join([f"'{ins}'" for ins in self.text.replace('!instruments', '').lstrip(' ').split(' ')])
         insts = eval(insts)
         tracks = {}
         # Assign tracks
@@ -305,7 +309,7 @@ class Voicing:
         self.init()
 
     def init(self):
-        self.score = ','.join([f"{ins}" for ins in self.text.replace('!generate', '').split(' ')])
+        self.score = ','.join([f"{ins}" for ins in self.text.replace('!voicing', '').lstrip(' ').split(' ')])
         self.score = eval(self.score)
 
     def parse(self, score, parent):
@@ -380,7 +384,8 @@ class BarChord:
         chord = Chord(final_degree,
                       tonality=Tonality(final_key, final_mode))[extension]
         new_dur = parent.duration - parent.current_beat
-        chord = chord(**parent.current_score).set_duration(new_dur)
+        applied_score = {key: item for key, item in zip(parent.instruments, parent.current_score)}
+        chord = chord(**applied_score).set_duration(new_dur)
         score = parent.add_chord(chord, score)
         return score
 

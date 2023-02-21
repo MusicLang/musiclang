@@ -367,7 +367,7 @@ def test_score_change_voicing():
     m0 C: I
     m1 V
     !instruments piano piano piano piano
-    !voicing b0.o(-2), b2.o(-1), b3, b1.o(1)
+    !voicing b0.o(-2) b2.o(-1) b3 b1.o(1)
     m2 I
     m3 vi
     """

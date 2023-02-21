@@ -142,6 +142,9 @@ class Melody:
         return Melody([n.set_amp(amp) for n in self.notes], tags=set(self.tags))
 
 
+    def set_duration(self, duration):
+        return self.augment(duration / self.duration)
+
     def to_drum(self):
         return Melody([n.to_drum() for n in self.notes], tags=set(self.tags))
 

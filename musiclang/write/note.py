@@ -331,6 +331,8 @@ class Note:
         -------
 
         """
+        if isinstance(value, float):
+            value = frac(value).limit_denominator(8)
         result = self.copy()
         result.duration = value
         return result
@@ -355,10 +357,13 @@ class Note:
 
         >>> from musiclang.library import s0
         >>> from fractions import Fraction
-        >>> s0.augment(Fraction(8, 9))
-        s0.augment(frac(8, 9))
+        >>> s0.augment(Fraction(8, 7))
+        s0.augment(frac(8, 7))
 
         """
+        if isinstance(value, float):
+            value = frac(value).limit_denominator(8)
+
         result = self.copy()
         result.duration *= value
         return result

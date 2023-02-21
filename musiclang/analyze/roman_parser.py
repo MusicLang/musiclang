@@ -20,7 +20,6 @@ def annotation_to_musiclang(text):
         MusicLang score
 
     """
-    import music21
     from .parser import chords_to_musiclang
 
     chords = analyze_roman_notation(text)
@@ -48,20 +47,36 @@ def analyze_roman_notation(text):
 
     for roman in romans:
         prim, sec, key, mode, duration = _get_roman_full(roman)
-        mode = {'major': 'M', 'minor': 'm'}[mode]
         notes = [(n.pitch.pitchClass, n.pitch.octave - 5) for n in roman.notes]
-        prim = _clean(prim)
-        prim = _replace_special_cases(prim)
-        degree, extension = _get_degree_and_extension(prim)
-        sec_degree, _ = _get_degree_and_extension(sec)
-        extension = _clean_extension(extension)
-        # Get the key, mode of the sec_degree
-        final_degree, final_key, final_mode = _get_degree_and_tonality(sec_degree, degree, key, mode)
+        final_degree, extension, final_key, final_mode = _analyze_one_chord(prim, sec, key, mode)
         # Use it
         chords.append([notes, duration, final_degree, extension, (final_key, final_mode)])
 
     return chords
 
+
+def analyze_one_chord(figure, key, mode):
+    figure = figure.replace('/4', '4').replace('/3', '').replace('/2', '').replace('/5', '5')
+    res = figure.split('/')
+    if len(res) == 1:
+        prim, sec = res[0], None
+    elif len(res) == 2:
+        prim, sec = res[0], res[1]
+    else:
+        raise Exception(f'Issue with figure {figure}')
+
+    return _analyze_one_chord(prim, sec, key, mode)
+
+def _analyze_one_chord(prim, sec, key, mode):
+    mode = {'major': 'M', 'minor': 'm'}[mode]
+    prim = _clean(prim)
+    prim = _replace_special_cases(prim)
+    degree, extension = _get_degree_and_extension(prim)
+    sec_degree, _ = _get_degree_and_extension(sec)
+    extension = _clean_extension(extension)
+    # Get the key, mode of the sec_degree
+    final_degree, final_key, final_mode = _get_degree_and_tonality(sec_degree, degree, key, mode)
+    return final_degree, extension, final_key, final_mode
 
 def _replace_special_cases(prim):
 
@@ -135,7 +150,7 @@ def _get_degree_and_tonality(sec_degree, degree, key, mode):
 
 
 def _clean(data):
-    data = data.replace('42', '2').replace('/3', '').replace('/', '')
+    data = data.replace('42', '2').replace('/3', '').replace('/', '').replace('/4', '4')
     return data
 
 

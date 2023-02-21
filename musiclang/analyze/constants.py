@@ -124,7 +124,7 @@ DICT_RELATIVE_CHANGE = {
         '#ivø': (6, 'M', 7),
     },
     'm': {
-        'I': (0, 'm', 0),  # Degree, mode, offset tonality
+        'I': (0, 'M', 0),  # Degree, mode, offset tonality
         'II': (4, 'M', 7),
         'III': (0, 'M', 3),
         'IV': (3, 'M', 0),

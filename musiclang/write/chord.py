@@ -993,6 +993,8 @@ class Chord:
     def set_duration(self, duration):
         from musiclang import Silence
         if self.empty_score:
+            if isinstance(duration, float):
+                duration = frac(duration).limit_denominator(8)
             silence = Silence(duration)
             return self(silence)
         else:

@@ -21,8 +21,9 @@ class ScoreFormatter:
         ## PARAMETERS
         self.key = 0
         self.mode = 'M'
+        self.instruments = ['piano', 'piano', 'piano', 'piano']
         self.init_bar_idx = -1
-        self.current_score = {'piano': [b0, b1, b2, b3]}
+        self.current_score = (b0, b1, b2, b3)
         self.bar_number = 0
         self.current_beat = 0
         self.chord_started_time = (0, 0)  # Bar idx, beat idx
@@ -258,12 +259,61 @@ class Event:
     def is_generate(self, text):
         return self.text.replace(' ', '').startswith('!generate')
 
+    def is_voicing(self, text):
+        return self.text.replace(' ', '').startswith('!voicing')
+
+    def is_instruments(self, text):
+        return self.text.replace(' ', '').startswith('!instruments')
+
     def init(self, text):
         if self.is_generate(text):
             return Generate(text)
+        elif self.is_voicing(text):
+            return Voicing(text)
+        elif self.is_instruments(text):
+            return Instruments(text)
+        else:
+            raise Exception(f'Not existing event {text}')
 
-        raise Exception(f'Not existing event {text}')
 
+
+class Instruments:
+    def __init__(self, text):
+        self.text = text
+        self.init()
+
+    def init(self):
+        insts = ','.join([f"{ins}" for ins in self.text.replace('!instruments', '').split(' ')])
+        insts = eval(insts)
+        tracks = {}
+        # Assign tracks
+        self.instruments = []
+        for ins in insts:
+            self.instruments.append(f'{ins}__{tracks.get(ins, 0)}')
+            tracks[ins] = tracks.get(ins, 0) + 1
+
+    def parse(self, score, parent):
+        parent.instruments = self.instruments
+        return score
+
+    def __repr__(self):
+        return f"Voicing({self.text})"
+
+class Voicing:
+    def __init__(self, text):
+        self.text = text
+        self.init()
+
+    def init(self):
+        self.score = ','.join([f"{ins}" for ins in self.text.replace('!generate', '').split(' ')])
+        self.score = eval(self.score)
+
+    def parse(self, score, parent):
+        parent.current_score = self.score
+        return score
+
+    def __repr__(self):
+        return f"Voicing({self.text})"
 
 class Generate:
     def __init__(self, text):

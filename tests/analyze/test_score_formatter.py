@@ -339,39 +339,39 @@ def test_score_pickup_bar():
     assert score == expected_score
 
 
-# expected_text11 = """
-# (I % I.M)(
-# 	piano__0=b0.w,
-# 	piano__1=b1.w,
-# 	piano__2=b2.w,
-# 	piano__3=b3.w)+
-# (V % I.M)(
-# 	piano__0=b0.w,
-# 	piano__1=b1.w,
-# 	piano__2=b2.w,
-# 	piano__3=b3.w) +
-# (I % I.M)(
-# 	piano__0=b0.w,
-# 	piano__1=b1.w,
-# 	piano__2=b2.w,
-# 	piano__3=b3.w) +
-# (VI % I.M)(
-# 	piano__0=b0.w,
-# 	piano__1=b1.w,
-# 	piano__2=b2.w,
-# 	piano__3=b3.w) 
-# 
-# """
-# def test_score_change_voicing():
-#     text = """
-#     Time Signature: 4/4
-#     m0 C: I
-#     m1 V
-#     !voicing b0.o(-2), b2.o(-1), b3, b1.o(1)
-#     m2 I
-#     m3 vi
-#     """
-#     sf = ScoreFormatter(text)
-#     score = sf.parse()
-#     expected_score = Score.from_str(expected_text11)
-#     assert score == expected_score
+expected_text11 = """
+(I % I.M)(
+	piano__0=b0.w,
+	piano__1=b1.w,
+	piano__2=b2.w,
+	piano__3=b3.w) +
+(V % I.M)(
+	piano__0=b0.w,
+	piano__1=b1.w,
+	piano__2=b2.w,
+	piano__3=b3.w) +
+(I % I.M)(
+    piano__0=b0.o(-2).w,
+    piano__1=b2.o(-1).w,
+    piano__2=b3.w,
+    piano__3=b1.o(1).w)+
+(VI % I.M)(
+    piano__0=b0.o(-2).w,
+    piano__1=b2.o(-1).w,
+    piano__2=b3.w,
+    piano__3=b1.o(1).w)
+"""
+def test_score_change_voicing():
+    text = """
+    Time Signature: 4/4
+    m0 C: I
+    m1 V
+    !instruments piano piano piano piano
+    !voicing b0.o(-2), b2.o(-1), b3, b1.o(1)
+    m2 I
+    m3 vi
+    """
+    sf = ScoreFormatter(text)
+    score = sf.parse()
+    expected_score = Score.from_str(expected_text11)
+    assert score == expected_score

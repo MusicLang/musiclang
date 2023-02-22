@@ -1,6 +1,7 @@
 from musiclang.analyze.roman_parser import analyze_one_chord
 from musiclang.library import *
 
+import re
 """
 The roman numeral parsed language is an extension of this paper : 
 https://archives.ismir.net/ismir2019/paper/000012.pdf
@@ -19,12 +20,16 @@ class ScoreFormatter:
         self.bar_elements = {}
 
         ## PARAMETERS
+        self.rhythm = {}
+        self.counterpoint = None
+        self.voice_leading = None
         self.key = 0
         self.mode = 'M'
         self.instruments = ['piano__0', 'piano__1', 'piano__2', 'piano__3']
         self.init_bar_idx = -1
         self.current_score = (b0, b1, b2, b3)
         self.bar_number = 0
+        self.chord_number = 0
         self.current_beat = 0
         self.chord_started_time = (0, 0)  # Bar idx, beat idx
         ## Init elements
@@ -40,6 +45,13 @@ class ScoreFormatter:
         self.chord_started_time = (self.bar_number, self.current_beat)
         score += chord
         return score
+
+    def set_rhythm(self, instrument, nb_bars, rhythm):
+        from musiclang import Metric
+        metric = Metric.FromArray(rhythm, signature=self.time_signature, nb_bars=nb_bars)
+        if instrument in self.rhythm.keys():
+            self.rhythm[instrument][-1][1] = self.chord_number
+        self.rhythm[instrument] = self.rhythm.get(instrument, []) + [[self.chord_number, None, metric]]
 
     def set_time_signature(self, time_signature):
         self.prev_time_signature = tuple(self.time_signature)
@@ -83,21 +95,56 @@ class ScoreFormatter:
         first_word = line.split(' ')[0]
         return line.startswith('m') and (('-' in first_word) or ('=' in line))
 
+    def apply_counterpoint(self, score):
+        from musiclang import Melody
+        # Normalize score
+        score = score.normalize_instruments()
+        # Find first notes of each ...
+        # Apply counterpoint
+        from musiclang.transform.library import create_counterpoint_on_score
+        counterpoint_score = create_counterpoint_on_score(score.to_standard_note())
+
+        # Reapply first notes of each chord to keep harmonic content ok
+        for idx, chord in enumerate(counterpoint_score):
+            for ins, melody in chord.score.items():
+                score[idx].score[ins] = score[idx].score[ins].notes[0] + Melody([n for n in melody.notes[1:]])
+
+        return score
+
+    def apply_rhythm(self, score):
+        from musiclang import ScoreRhythm
+        for key, rhythm_array in self.rhythm.items():
+            for start_idx, end_idx, metric in rhythm_array:
+                print(start_idx, end_idx, score[start_idx: end_idx])
+                score[start_idx:end_idx] = ScoreRhythm(rhythm_dict={key: metric})(score[start_idx: end_idx])
+        return score
+
     def parse(self):
         """
         Parse the chord progression into music lang using voice leading
         """
         interpreter = ScoreInterpreter(self)
-        return interpreter.parse()
+        score = interpreter.parse()
+        if self.voice_leading is not None:
+            score = self.voice_leading(score)
+        if self.rhythm:
+            # Apply proper rhythm to each section
+            score = self.apply_rhythm(score)
+        if self.counterpoint:
+            # Apply counterpoint to notes starting from second if voice leading
+            score = self.apply_counterpoint(score)
+
+        return score
 
     def init(self):
         lines = self.text.split('\n')
         for line in lines:
+            print(line, self.chord_number, self.rhythm)
             line = line.lstrip('\t').lstrip(' ')
             if self.is_time_signature(line):
                 self.elements.append(TimeSignature(line))
             elif self.is_event(line):
-                self.elements.append(Event(line))
+                self.elements.append(Event(line, self))
             elif self.is_multibar(line):
                 multibar = MultiBar(line)
                 new_range = multibar.receiver_range
@@ -107,6 +154,7 @@ class ScoreFormatter:
                     self.elements.append(Bar(f"m{idx}"))
                     self.elements += self.bar_elements[old_idx]
                     self.bar_elements[idx] = self.bar_elements[old_idx]
+                    self.chord_number += len([e for e in self.bar_elements[idx] if isinstance(e, BarChord)])
 
             elif self.is_bar(line):
                 bar = Bar(line)
@@ -116,6 +164,7 @@ class ScoreFormatter:
                     self.elements += elements
                     self.init_bar_idx = bar.idx
                     self.bar_elements[bar.idx] = elements
+                    self.chord_number += len([e for e in elements if isinstance(e, BarChord)])
                 elif self.init_bar_idx > bar.idx:
                     raise Exception('Invalid bar number, should be higher than current')
 
@@ -223,7 +272,6 @@ class MultiBar:
     def init(self):
         new, old = self.text.replace(' ', '').split('=')
         res = new[1:].split('-')
-        print(res)
         if len(res) == 1:
             a = res[0]
             b = a
@@ -253,32 +301,137 @@ class MultiBar:
 
 class Event:
 
-    def __new__(cls, text):
-        return cls.init(text)
+    def __new__(cls, text, parent):
+        return cls.init(text, parent)
 
     @classmethod
-    def is_generate(self, text):
+    def is_generate(cls, text):
         return text.replace(' ', '').startswith('!generate')
 
     @classmethod
-    def is_voicing(self, text):
+    def is_voicing(cls, text):
         return text.replace(' ', '').startswith('!voicing')
 
     @classmethod
-    def is_instruments(self, text):
+    def is_voice_leading(cls, text):
+        return text.replace(' ', '').startswith('!voice_leading')
+
+    @classmethod
+    def is_rhythm(cls, text):
+        return text.replace(' ', '').startswith('!rhythm')
+
+    @classmethod
+    def is_instruments(cls, text):
         return text.replace(' ', '').startswith('!instruments')
 
     @classmethod
-    def init(cls, text):
+    def is_counterpoint(cls, text):
+        return text.replace(' ', '').startswith('!counterpoint')
+
+    @classmethod
+    def init(cls, text, parent):
         if cls.is_generate(text):
             return Generate(text)
         elif cls.is_voicing(text):
             return Voicing(text)
         elif cls.is_instruments(text):
             return Instruments(text)
+        elif cls.is_rhythm(text):
+            return Rhythm(text, parent)
+        elif cls.is_voice_leading(text):
+            return VoiceLeading(text)
+        elif cls.is_counterpoint(text):
+            return Counterpoint(text)
         else:
             raise Exception(f'Not existing event {text}')
 
+
+
+
+class Counterpoint:
+    def __init__(self, text):
+        self.text = text
+        self.init()
+
+    def init(self):
+        from musiclang.transform import VoiceLeading
+        self.text = re.sub(' +', ' ', self.text)
+        insts = ','.join([f"'{ins}'" for ins in self.text.replace('!voice_leading', '').lstrip(' ').split(' ')])
+        insts = eval(insts)
+        tracks = {}
+        # Assign tracks
+        fixed_voices = []
+        for ins in insts:
+            if '__' in ins:
+                fixed_voices.append(ins)
+                tracks[ins] = int(ins.split('__')[1]) + 1
+            fixed_voices.append(f'{ins}__{tracks.get(ins, 0)}')
+            tracks[ins] = tracks.get(ins, 0) + 1
+
+        self.fixed_voices = fixed_voices
+
+    def parse(self, score, parent):
+        parent.counterpoint = True
+        return score
+
+    def __repr__(self):
+        return f"Counterpoint({self.text})"
+
+class VoiceLeading:
+    def __init__(self, text):
+        self.text = text
+        self.init()
+
+    def init(self):
+        from musiclang.transform import VoiceLeading
+        self.text = re.sub(' +', ' ', self.text)
+        insts = ','.join([f"'{ins}'" for ins in self.text.replace('!voice_leading', '').lstrip(' ').split(' ')])
+        insts = eval(insts)
+        tracks = {}
+        # Assign tracks
+        fixed_voices = []
+        for ins in insts:
+            if '__' in ins:
+                fixed_voices.append(ins)
+                tracks[ins] = int(ins.split('__')[1]) + 1
+            fixed_voices.append(f'{ins}__{tracks.get(ins, 0)}')
+            tracks[ins] = tracks.get(ins, 0) + 1
+
+        self.voice_leading = VoiceLeading(fixed_voices=fixed_voices)
+
+    def parse(self, score, parent):
+        parent.voice_leading = self.voice_leading
+        return score
+
+    def __repr__(self):
+        return f"VoiceLeading({self.text})"
+
+class Rhythm:
+    """
+    Apply a rhythm to a specific part
+    """
+    def __init__(self, text, parent):
+        self.text = text
+        self.init(parent)
+
+    def init(self, parent):
+        self.text = re.sub(' +', ' ', self.text)
+        self.text = self.text.lstrip(' ')
+        args = self.text.split(' ')
+        self.instrument = f"{args[1]}"
+        self.rhythm = f"{args[2]}"
+        self.nb_bars = len(self.rhythm.split('|'))
+        self.rhythm = [r if r in ['x', '.'] else '' for r in self.rhythm.replace('|', '')]
+        self.rhythm = [1 if r == 'x' else 0 for r in self.rhythm]
+        if '__' not in self.instrument:
+            self.instrument = f"{self.instrument}__0"
+        parent.set_rhythm(self.instrument, self.nb_bars, self.rhythm)
+
+    def parse(self, score, parent):
+        return score
+
+    def __repr__(self):
+        return f"Rhythm({self.text})"
 
 
 class Instruments:
@@ -287,6 +440,7 @@ class Instruments:
         self.init()
 
     def init(self):
+        self.text = re.sub(' +', ' ', self.text)
         insts = ','.join([f"'{ins}'" for ins in self.text.replace('!instruments', '').lstrip(' ').split(' ')])
         insts = eval(insts)
         tracks = {}
@@ -301,7 +455,7 @@ class Instruments:
         return score
 
     def __repr__(self):
-        return f"Voicing({self.text})"
+        return f"Instruments({self.text})"
 
 class Voicing:
     def __init__(self, text):
@@ -309,6 +463,8 @@ class Voicing:
         self.init()
 
     def init(self):
+        import re
+        self.text = re.sub(' +', ' ', self.text)
         self.score = ','.join([f"{ins}" for ins in self.text.replace('!voicing', '').lstrip(' ').split(' ')])
         self.score = eval(self.score)
 

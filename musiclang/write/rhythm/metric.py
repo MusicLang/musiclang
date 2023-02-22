@@ -311,6 +311,31 @@ class Metric:
                       signature=self.signature, tatum=self.tatum, nb_bars=self.nb_bars).masked(array_mask)
 
     @classmethod
+    def FromArray(cls, array, signature=(4, 4), tatum=None, nb_bars=1):
+        """
+        Get a metric from a binary array, if several bar we only support constant tatum
+        between bar at the time being
+        Parameters
+        ----------
+        array: list[int]
+            List of binary
+        signature
+        tatum
+        nb_bars
+
+        Returns
+        -------
+
+        """
+        if tatum is None:
+            nb_notes = len(array)
+            nom, den = signature
+            duration = nb_bars * nom * frac(4, den)
+            tatum = duration / nb_notes
+        return Metric(array, signature=signature, tatum=tatum, nb_bars=nb_bars)
+
+
+    @classmethod
     def FromMelody(cls, melody, signature=(4, 4), tatum=None, nb_bars=1):
         # Get tatum
         if tatum is None:

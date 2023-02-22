@@ -464,6 +464,9 @@ class Score:
             return m21_score.show(*args)
 
 
+    def __setitem__(self, key, value):
+        return self.chords.__setitem__(key, value)
+
     def __getitem__(self, item):
         """
         If str return a score with only this voice

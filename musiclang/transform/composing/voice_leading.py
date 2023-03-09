@@ -42,7 +42,7 @@ class VoiceLeading:
 
     TYPES = ['b', 'c', 's', 'h']
 
-    def __init__(self, types=None, rules=None, fixed_voices=None, seed=None, method='voices_and_rules', **kwargs):
+    def __init__(self, types=None, rules=None, fixed_voices=None, change_octave_fixed=True, seed=None, method='voices_and_rules', **kwargs):
         """
 
         Parameters
@@ -57,11 +57,17 @@ class VoiceLeading:
             - parallel_dissonnances
         fixed_voices: list[str]
             List of name of voice (with voice idx like piano__0) to not modify
+        change_octave_fixed: list[str] or boolean or None
+            Do we apply the octave change for the fixed voices (useful to set to true for bass)
         seed: int
             Seed used for random generation to get reproducible results
         """
         self.types = types if types is not None else self.TYPES
         self.fixed_voices = [] if (fixed_voices is None) else fixed_voices
+        self.change_octave_fixed = change_octave_fixed
+        if isinstance(self.change_octave_fixed, bool):
+            self.change_octave_fixed = [self.change_octave_fixed for i in self.fixed_voices]
+
         self.rules = rules if rules is not None else ALL_RULES
         self.seed = seed
         self.rg = np.random.RandomState(seed)
@@ -115,8 +121,44 @@ class VoiceLeading:
 
         return self.get_score(score, solution)
 
-    def __call__(self, *args, **kwargs):
-        return self.optimize(*args, **kwargs)
+    def find_optimal_octaves(self, score):
+        """
+        Find optimal chord octaves, to get the most constant bass pitch
+        Parameters
+        ----------
+        score
+
+        Returns
+        -------
+
+        """
+        def recursive_correct_octave(chord):
+            bass_pitch = chord.bass_pitch
+            if bass_pitch > 6:
+                new_chord = chord.o(-1)
+                for voice, change in zip(self.fixed_voices, self.change_octave_fixed):
+                    if not change:
+                        new_chord.score[voice] = new_chord.score[voice].o(1)
+                return recursive_correct_octave(new_chord)
+            elif bass_pitch <= -6:
+                new_chord = chord.o(1)
+                for voice, change in zip(self.fixed_voices, self.change_octave_fixed):
+                    if not change:
+                        new_chord.score[voice] = new_chord.score[voice].o(-1)
+                return recursive_correct_octave(new_chord)
+            else:
+                return chord
+
+        new_score = None
+        for chord in score.chords:
+            new_score += recursive_correct_octave(chord)
+        return new_score
+
+    def __call__(self, score, **kwargs):
+        # First Find best chords octaves
+        score = self.find_optimal_octaves(score)
+        new_score = self.optimize(score, **kwargs)
+        return new_score
 
     def init(self, score):
         """

@@ -41,6 +41,8 @@ def analyze_roman_notation(text):
 
 
     """
+
+    text = _first_clean(text)
     analysis = music21.converter.parse(text, format="romanText")
     romans = analysis.recurse().getElementsByClass('RomanNumeral')
     chords = []
@@ -55,6 +57,10 @@ def analyze_roman_notation(text):
     return chords
 
 
+def _first_clean(text):
+    text = text.replace('%', 'ø')
+    return text
+
 def analyze_one_chord(figure, key, mode):
     figure = figure.replace('/4', '4').replace('/3', '').replace('/2', '').replace('/5', '5')
     res = figure.split('/')
@@ -68,7 +74,7 @@ def analyze_one_chord(figure, key, mode):
     return _analyze_one_chord(prim, sec, key, mode)
 
 def _analyze_one_chord(prim, sec, key, mode):
-    mode = {'major': 'M', 'minor': 'm'}[mode]
+    mode = {'major': 'M', 'minor': 'm', 'M': 'M', 'm': 'm'}[mode]
     prim = _clean(prim)
     prim = _replace_special_cases(prim)
     degree, extension = _get_degree_and_extension(prim)
@@ -86,19 +92,16 @@ def _replace_special_cases(prim):
     #Fr = II*[bV]
     #N6 = bII6
 
-    if 'N6' in prim:
-        prim = prim.replace('N6', 'bII6')
-    elif 'N' in prim:
-        prim = prim.replace('N', 'bII6')
-    elif 'Ger' in prim:
-        temp_prim = '#ivo*[b3]'
-        prim = temp_prim.replace('*', prim.replace('Ger', ''))
+    # if 'N6' in prim:
+    #     prim = prim.replace('N6', 'bII6')
+    # elif 'N' in prim:
+    #     prim = prim.replace('N', 'bII6')
+    if 'Ger' in prim:
+        pass
     elif 'It' in prim:
-        temp_prim = '#ivo*[b3]'
-        prim = temp_prim.replace('*', prim.replace('It', ''))
+        prim = 'It' + prim.replace('It', '')
     elif 'Fr' in prim:
-        temp_prim = 'II*[b5]'
-        prim = temp_prim.replace('*', prim.replace('Fr', ''))
+        prim = 'Fr' + prim.replace('Fr', '')
 
     return prim
 
@@ -133,6 +136,28 @@ def _get_degree_and_extension(data):
     else:
         degree = DEGREE_REGEX.match(data)[0]
         extension = data.replace(degree, '')
+        if degree == 'N' and extension == '':
+            extension = '6'
+        elif degree == "Ger" and extension == '':
+            extension = '7'
+        elif degree == "Ger" and extension == '6':
+            extension = '65'
+        elif degree == "It" and extension == '':
+            extension = "7[no5]"
+        elif degree == "It" and extension == '53':
+            extension = "7[no5]"
+        elif degree == "It" and extension == '6':
+            extension = "65[no5]"
+        elif degree == "It" and extension == '64':
+            extension = "2[no5]"
+        elif degree == "Fr" and extension == '':
+            extension = "7[b5]"
+        elif degree == "Fr" and extension == '6':
+            extension = "65[b5]"
+        elif degree == "Fr":
+            extension = extension + "[b5]"
+        elif degree == "It":
+            extension = extension + "[no5]"
         return degree, extension
 
 
@@ -145,12 +170,12 @@ def _get_degree_and_tonality(sec_degree, degree, key, mode):
         new_key, new_mode = (key + key_add) % 12, new_mode
     degree, new_mode, key_add = DICT_RELATIVE_CHANGE[new_mode][degree]
     new_key = (new_key + key_add) % 12
-
     return degree, new_key, new_mode
 
 
 def _clean(data):
-    data = data.replace('42', '2').replace('/3', '').replace('/', '').replace('/4', '4')
+    data = data.replace('42', '2').replace('4/3', '43').replace('/3', '').replace('/', '').replace('/4', '4')
+    data = data.replace('%', 'ø')
     return data
 
 

@@ -18,7 +18,7 @@ expected_text = """
 	piano__1=b1.hd, 
 	piano__2=b2.hd, 
 	piano__3=b3.hd)+ 
-(V['7'] % IV.s.M)(
+(V['7'] % IV.s.mm)(
 	piano__0=b0.w, 
 	piano__1=b1.w, 
 	piano__2=b2.w, 
@@ -344,22 +344,30 @@ expected_text11 = """
 	piano__0=b0.w,
 	piano__1=b1.w,
 	piano__2=b2.w,
-	piano__3=b3.w) +
+	piano__3=b3.w,
+	violin__0=r.w
+	) +
 (V % I.M)(
 	piano__0=b0.w,
 	piano__1=b1.w,
 	piano__2=b2.w,
-	piano__3=b3.w) +
+	piano__3=b3.w,
+	violin__0=r.w
+	) +
 (I % I.M)(
     piano__0=b0.o(-2).w,
     piano__1=b2.o(-1).w,
     piano__2=b3.w,
-    violin__0=b1.o(1).w)+
+    violin__0=b1.o(1).w,
+    piano__3=r.w
+    )+
 (VI % I.M)(
     piano__0=b0.o(-2).w,
     piano__1=b2.o(-1).w,
     piano__2=b3.w,
-    violin__0=b1.o(1).w)
+    violin__0=b1.o(1).w,
+    piano__3=r.w
+    )
 """
 def test_score_change_voicing():
     text = """

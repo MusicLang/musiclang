@@ -180,6 +180,23 @@ class Chord:
         cp.tags = set()
         return cp
 
+    def has_pitch(self, pitch):
+        """
+        Check whether the pitch belong to the chord or not
+
+        Parameters
+        ----------
+        pitch: int
+        Pitch to check
+
+        Returns
+        -------
+        result: boolean
+            True if the chord has this pitch
+
+        """
+        return (pitch % 12) in [p % 12 for p in self.chord_pitches]
+
     def parse(self, pitch):
         """
         Parse an integer pitch (0=C5)
@@ -259,9 +276,16 @@ class Chord:
 
         """
         from .out.to_midi import note_to_pitch_result
+        if note.is_continuation:
+            return last_pitch
+
         if not note.is_note:
             return None
         return note_to_pitch_result(note, self, last_pitch=last_pitch)
+
+    @property
+    def bass_pitch(self):
+        return self.chord_extension_pitches[0]
 
     def to_sequence(self):
         """
@@ -390,6 +414,7 @@ class Chord:
         scale_pitches = tonality_scale_pitches[start_idx:] + [t + 12 for t in tonality_scale_pitches[:start_idx]]
         scale_pitches = [n + 12 * self.octave for n in scale_pitches]
         return scale_pitches
+
 
     @property
     def chromatic_scale_pitches(self):
@@ -1077,6 +1102,9 @@ class Chord:
     def __repr__(self):
         return f"{self.to_code()}({self.melody_to_str()})"
 
+    @property
+    def full_octave(self):
+        return self.octave + self.tonality.octave
 
     def replace_instruments(self, **instruments_dict):
         """

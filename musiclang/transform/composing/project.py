@@ -20,10 +20,10 @@ def offset_between_chords(c1, c2):
 
     c1_degree = c1.tonality.degree if c1.tonality is not None else 0
     c2_degree = c2.tonality.degree if c2.tonality is not None else 0
-    c1_octave = c1.tonality.octave if c1.tonality is not None else 0
-    c2_octave = c2.tonality.octave if c2.tonality is not None else 0
+    c1_octave = c1.full_octave if c1.tonality is not None else 0
+    c2_octave = c2.full_octave if c2.tonality is not None else 0
     offset_tonalities = int(np.sign(c2_degree - c1_degree) * DEGREE_TO_SCALE_DEGREE[abs(c2_degree - c1_degree)])
-    offset_octave = c2_octave - c1_octave
+    offset_octave = c1_octave - c2_octave
     offset_octave_chords = c2.octave - c1.octave
 
     return offset_degrees + offset_tonalities + 7 * (offset_octave + offset_octave_chords)
@@ -313,6 +313,7 @@ def parse_relative_to_absolute(melody):
             new_note = note.copy()
             new_note.type = "s"
             new_note.val = DICT_NOTES[new_note.val]
+            result += new_note
         else:
             raise Exception('Could not handle type in project rhythm : {}'.format(note.type))
 

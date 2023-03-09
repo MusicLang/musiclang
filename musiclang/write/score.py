@@ -657,16 +657,14 @@ class Score:
 
     @classmethod
     def from_annotation_file(cls, file):
-        from musiclang.analyze import annotation_to_musiclang
-        return annotation_to_musiclang(file)
+        with open(file, 'r') as f:
+            text = f.read()
+        return Score.from_annotation(text)
 
     @classmethod
     def from_annotation(cls, text):
-        import tempfile
-        with tempfile.NamedTemporaryFile() as file:
-            with open(file.name, 'w') as f:
-                f.write(text)
-            return Score.from_annotation_file(file.name)
+        from musiclang.analyze import ScoreFormatter
+        return ScoreFormatter(text).parse()
 
 
     @classmethod
@@ -898,7 +896,7 @@ class Score:
         with open(filepath, 'w') as f:
             f.write(code)
 
-    def to_musicxml(self, filepath, signature=(4, 4), tonality=None, tempo=120, **kwargs):
+    def to_musicxml(self, filepath, signature=(4, 4), tonality=None, tempo=120, no_repeat=False, **kwargs):
         """
         Transform a musiclang score into a musicxml file, readable by all the main notation software (musescore, finale ...)
 
@@ -921,7 +919,7 @@ class Score:
         # Convert score to midi
         from .out.to_mxl import score_to_mxl
 
-        return score_to_mxl(self, filepath, signature=signature, tonality=tonality, tempo=tempo, **kwargs)
+        return score_to_mxl(self, filepath, signature=signature, tonality=tonality, tempo=tempo, no_repeat=no_repeat, **kwargs)
 
     def to_music21(self, signature=(4, 4), tonality=None, tempo=120, **kwargs):
         """

@@ -1,4 +1,5 @@
 from musiclang import Chord, Element, Tonality
+from musiclang.library import *
 
 def test_chord_to_scale_pitches():
     chord = Element(2) % Tonality(1, mode="m", octave=1)
@@ -46,3 +47,10 @@ def test_chord_pitches():
 def test_chord_from_element():
     chord = Element(0) % Element(3).s.m
     assert chord.scale_pitches == [6, 8, 9, 11, 13, 14, 17]
+
+
+def test_chord_notes_to_scale_pitches_with_octave():
+    chord = (I % I.M.o(1)).o(1)
+    pitch = chord.to_pitch(c0)
+
+    assert pitch == 24

@@ -100,7 +100,7 @@ def get_value_to_scale_note_with_accident(note, chord):
     """
     from musiclang.write.constants import ACCIDENTS_TO_NOTE
     tonic = chord.scale_pitches[0]
-    return tonic + ACCIDENTS_TO_NOTE[(note.val, note.accident)] + 12 * note.octave
+    return tonic + ACCIDENTS_TO_NOTE[(note.val, note.accident)] + 12 * (note.octave)
 
 def get_value_to_scale_note(value, scale_pitches):
     """

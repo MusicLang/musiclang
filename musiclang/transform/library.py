@@ -8,6 +8,7 @@ from .chord import RepeatChord, Modulate, ModulateKeepOriginMode
 from .score_merger import ConcatScores, ConcatWithPattern, TakeSlice, TakeFirst, TakeLast, TakeIdx
 from .composing import VoiceLeading
 from .dynamics import PitchDynamizer
+from .melody import ContinuationWhenSameNote
 
 __all__ = ['create_counterpoint', 'create_counterpoint_on_score',
            'CircularPermutationMelody', 'SelectRangeMelody', 'ReverseMelody', 'InvertMelody',
@@ -16,5 +17,5 @@ __all__ = ['create_counterpoint', 'create_counterpoint_on_score',
             'ExtractMainTonality', 'MostCommonTonalities',
             'RepeatChord', 'Modulate', 'ModulateKeepOriginMode',
            'ConcatScores', 'ConcatWithPattern', 'TakeSlice', 'TakeFirst', 'TakeLast', 'TakeIdx',
-           'VoiceLeading', 'PitchDynamizer'
+           'VoiceLeading', 'PitchDynamizer', 'ContinuationWhenSameNote'
            ]

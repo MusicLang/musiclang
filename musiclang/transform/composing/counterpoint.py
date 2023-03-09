@@ -96,9 +96,7 @@ def create_counterpoint_on_score(score, fixed_parts, counterpoint_parts=None):
     moving_voices = create_counterpoint(fixed_voices, moving_voices)
     for voice, part in zip(moving_voices, counterpoint_parts):
         chord.score[part] = voice
-
-    projection = chord.to_score().project_on_score(score, keep_score=False)
-    projection = Score([s & (-i) for s, i in zip(projection.chords, chords_offsets)])
+    projection = chord.to_score().project_on_score(score)
     return projection
 
 
@@ -206,7 +204,10 @@ def get_future_delta(delta):
 
 def get_delta_list():
     """ """
-    return [0, 1, -1, 2, -2, 3, -3, 4, -4]
+    deltas = [0, 1, -1, 2, -2, 3, -3, 4, -4]
+    #deltas = [0, 1, -2, 2, -2]
+    np.random.shuffle(deltas)
+    return deltas
 
 def is_dissonnance(n1, n2):
     """
@@ -314,6 +315,8 @@ def nb_parallel_dissonnances(last_intervals, subject_notes, candidate):
             count += 1
     return count
 
+
+
 def is_triton(candidate, subject_note):
     """
 
@@ -330,7 +333,7 @@ def is_triton(candidate, subject_note):
     """
     return {candidate % 7, subject_note % 7} == {3, 6}
 
-def scorer(subject_notes, note, delta, last_intervals):
+def scorer(subject_notes, note, delta, last_intervals, last_notes):
     """
 
     Parameters
@@ -356,9 +359,14 @@ def scorer(subject_notes, note, delta, last_intervals):
     NB_PARALLEL_DISSONNANCES = nb_parallel_dissonnances(last_intervals[-1], subject_notes, candidate)
     NB_TRITON = sum([1 * is_triton(candidate, s) for s in not_silenced_subject_notes])
     DISTANCE = abs(delta)
-    return 10 - 4 * NB_DISSONNANCES - 4 * NB_FORBIDDEN_PARALLELS - 4 * NB_PARALLEL_DISSONNANCES - 0.2 * DISTANCE - 0.2 * NB_TRITON
+    LAST_NOTE_SAME = 1.0 * (candidate == last_notes[-1]) if len(last_notes) > 0 else 0.0
+    score = 10 - 3.0 * NB_DISSONNANCES
+    score += - 2.0 * NB_TRITON
+    score += - 4 * NB_FORBIDDEN_PARALLELS - 4 * NB_PARALLEL_DISSONNANCES - 0.5 * DISTANCE
+    score += - 2.0 * LAST_NOTE_SAME
+    return score
 
-def get_counterpoint_for_one_note(subjects_notes, note, last_intervals, delta=0):
+def get_counterpoint_for_one_note(subjects_notes, note, last_intervals, last_notes, delta=0):
     """
 
     Parameters
@@ -378,10 +386,10 @@ def get_counterpoint_for_one_note(subjects_notes, note, last_intervals, delta=0)
     """
 
     deltas = get_delta_list()
-    scores = [scorer(subjects_notes, note, delta, last_intervals) for delta in deltas]
+    scores = [scorer(subjects_notes, note, delta, last_intervals, last_notes) for delta in deltas]
     max_score, max_score_idx = np.max(scores), np.argmax(scores)
-
     best_delta = deltas[max_score_idx]
+
     chosen_candidate = note + best_delta
     assert len(subjects_notes) == len(last_intervals[-1]), "{} {}".format(len(subjects_notes), len(last_intervals[-1]))
     last_intervals.append([interval(s, chosen_candidate, replace=old_inter) for s, old_inter in zip(subjects_notes, last_intervals[-1])])
@@ -449,13 +457,15 @@ def get_counterpoint(subjects, to_fix):
     last_intervals = [[None for s in subjects]]
     result = []
     total_score = 0
+    last_notes = []
     for i, n in enumerate(to_fix):
         if n is None:
             result.append(None)
         else:
-            new_note, last_intervals, max_score = get_counterpoint_for_one_note(subjects[:, i].tolist(), n, last_intervals)
+            new_note, last_intervals, max_score = get_counterpoint_for_one_note(subjects[:, i].tolist(), n, last_intervals, last_notes)
             result.append(new_note)
             total_score += max_score
+            last_notes.append(new_note)
 
         last_intervals = clear_list_intervals(last_intervals)
 

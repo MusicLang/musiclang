@@ -11,9 +11,13 @@ class Rules:
     PARALLEL_OCTAVES = 'parallel_octaves'
     PARALLEL_FIFTHS = 'parallel_fifths'
     PARALLEL_DISSONNANCES = 'parallel_dissonnances'
+    CROSSING = 'no_crossing'
+    UNISSON = 'no_unisson'
 
 
-ALL_RULES = [Rules.PARALLEL_OCTAVES, Rules.PARALLEL_FIFTHS, Rules.PARALLEL_DISSONNANCES]
+ALL_RULES = [Rules.PARALLEL_OCTAVES, Rules.PARALLEL_FIFTHS,
+             Rules.PARALLEL_DISSONNANCES, Rules.CROSSING,
+             Rules.UNISSON]
 
 
 class VoiceLeading:
@@ -184,11 +188,13 @@ class VoiceLeading:
         pitches_extensions = [chord.chord_extension_pitches for chord in score.chords]
         pitches_scale = [chord.scale_pitches for chord in score.chords]
         pitches_chromatic = [chord.chromatic_scale_pitches for chord in score.chords]
+        pitches_absolute = list(range(12))
         self.candidates_raw = [{
             'b': pitches_extensions[i],
             'c': pitches_chords[i],
             's': pitches_scale[i],
             'h': pitches_chromatic[i],
+            'a': pitches_absolute,
             'r': [0],
             'l': [0],
             'bass': pitches_extensions[i][0]
@@ -252,7 +258,7 @@ class VoiceLeading:
 
 
 
-    def random_optim(self, dvals, max_iter=200, max_norm=2, **kwargs):
+    def random_optim(self, dvals, max_iter=250, max_norm=3, **kwargs):
         solutions = [dvals + self.rg.randint(-max_norm, max_norm + 1, dvals.shape) for i in range(max_iter - 1)]
         solutions.append(dvals)
         scores = [self.eval_solution(sol) for sol in solutions]
@@ -288,7 +294,7 @@ class VoiceLeading:
         # Move in direction of sgn
 
 
-    def optimize_rules(self, dvals, max_iter_rules=100, max_norm=2, temperature=1, **kwargs):
+    def optimize_rules(self, dvals, max_iter_rules=200, max_norm=3, temperature=1, **kwargs):
 
         def eval_solution(dvals):
             pitches = self.get_pitch_solution(dvals)
@@ -334,17 +340,23 @@ class VoiceLeading:
         dissonnances = {1, 2, 6, 11, 10}
         # Find intervals between all instruments
         intervals = np.zeros((pitches.shape[0], *pitches.shape))
+        abs_intervals = np.zeros((pitches.shape[0], *pitches.shape))
         parallel_fifths = np.zeros(pitches.shape)
         parallel_octaves = np.zeros(pitches.shape)
         parallel_dissonnances = np.zeros(pitches.shape)
+        unissons = np.zeros(pitches.shape)
+        crossings = np.zeros(pitches.shape)
         for v1 in range(pitches.shape[0]):
             for v2 in range(pitches.shape[0]):
                 if v2 >= v1:
                     break
                 for idxc in range(pitches.shape[1]):
-                    val = abs(pitches[v1, idxc] - pitches[v2, idxc]) % 12
+                    rel_val = pitches[v2, idxc] - pitches[v1, idxc]
+                    abs_val = abs(rel_val)
+                    val = abs_val % 12
                     intervals[v1, v2, idxc] = val
                     intervals[v2, v1, idxc] = val
+                    abs_intervals[v1, v2, idxc] = abs_val
                     if Rules.PARALLEL_FIFTHS in self.rules:
                         if val == 7 and val == self.get_val(pitches, v1, v2, idxc + 1):
                             parallel_fifths[v1, idxc] += 1
@@ -365,8 +377,16 @@ class VoiceLeading:
                             parallel_dissonnances[v2, idxc] += 1
                             parallel_dissonnances[v1, idxc + 1] += 1
                             parallel_dissonnances[v2, idxc + 1] += 1
+                    if Rules.CROSSING in self.rules:
+                        if rel_val < 0:
+                            crossings[v1, idxc] += 3
+                            crossings[v2, idxc] += 3
+                    if Rules.UNISSON in self.rules:
+                        if abs_val == 0:
+                            unissons[v1, idxc] += 5
+                            unissons[v2, idxc] += 5
 
-        problems = parallel_fifths + parallel_octaves + parallel_dissonnances
+        problems = parallel_fifths + parallel_octaves + parallel_dissonnances + unissons + crossings
         problems *= self.dvalsmask
         return problems
 

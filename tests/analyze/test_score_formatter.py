@@ -147,7 +147,7 @@ def test_score_formatter_time_signature_change():
     m1 V7
     """
     sf = ScoreFormatter(text)
-    score = sf.parse()
+    score = sf.parse(allow_multi_signature=True)
     expected_score = Score.from_str(expected_text4)
     assert score == expected_score
 
@@ -174,7 +174,7 @@ def test_score_formatter_time_signature_change_complex():
     m1 b3 V7
     """
     sf = ScoreFormatter(text)
-    score = sf.parse()
+    score = sf.parse(allow_multi_signature=True)
     expected_score = Score.from_str(expected_text5)
     assert score == expected_score
 

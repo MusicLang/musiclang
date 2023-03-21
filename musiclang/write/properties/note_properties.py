@@ -187,16 +187,16 @@ class NoteProperties:
     @property
     def is_chord_note(self):
         """ """
-        return self.note.type == "c"
+        return self.note.type in ['c', 'cu', 'cd']
 
     @property
     def is_absolute_note(self):
-        return self.note.type == "a"
+        return self.note.type in ['a', 'au', 'ad']
 
     @property
     def is_bass_note(self):
         """ """
-        return self.note.type == "b"
+        return self.note.type in ['b', 'bu', 'bd']
 
     @property
     def is_continuation(self):

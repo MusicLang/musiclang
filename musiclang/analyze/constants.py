@@ -37,7 +37,16 @@ DICT_TONALITY = {
         '#i': (1, 'm'),
         '#I': (1, 'M'),
         '#ii': (3, 'm'),
-        '#II': (3, 'M')
+        '#II': (3, 'M'),
+        'bbii': (0, 'm'),
+        'bbII': (0, 'M'),
+        'bbvi': (7, 'm'),
+        'bbVI': (7, 'M'),
+        '#V': (8, 'M'),
+        '#v': (8, 'm'),
+        'biv': (4, 'm'),
+        'bbI': (10, 'M'),
+        'bI': (11, 'M')
     },
     'm': {
         'I': (0, 'M'),
@@ -75,7 +84,16 @@ DICT_TONALITY = {
         '#i': (1, 'm'),
         '#I': (1, 'M'),
         '#ii': (3, 'm'),
-        '#II': (3, 'M')
+        '#II': (3, 'M'),
+        'bbii': (0, 'm'),
+        'bbII': (0, 'M'),
+        'bbvi': (7, 'm'),
+        'bbVI': (6, 'M'),
+        '#V': (8, 'M'),
+        '#v': (8, 'm'),
+        'biv': (4, 'm'),
+        'bbI': (10, 'M'),
+        'bI': (11, 'M')
     }
 }
 
@@ -133,6 +151,7 @@ DICT_RELATIVE_CHANGE = {
         '#ivo': (6, 'm', 7),
         '#ivø': (6, 'M', 7),
         "#iiio": (6, 'm', 5),
+        '#viio': (6, 'm', 0)
     },
     'm': {
         'I': (0, 'M', 0),  # Degree, mode, offset tonality
@@ -188,6 +207,7 @@ DICT_RELATIVE_CHANGE = {
         '#ivø': (6, 'M', 7),
         "#iiio": (6, 'm', 5),
         'III+': (2, 'm', 0),
+        '#viio': (6, 'm', 0),
     }
 }
 
@@ -233,4 +253,4 @@ EXTENSION_REPLACER = (
     ('no8', '{-1}'),
 )
 
-DEGREE_REGEX = re.compile(r'(Cad|III\+|N|Ger|Fr|It|[b|#]?[I|V|i|v|o|ø]+)')
+DEGREE_REGEX = re.compile(r'(Cad|III\+|N|Ger|Fr|It|[b|#]*?[I|V|i|v|o|ø]+)')

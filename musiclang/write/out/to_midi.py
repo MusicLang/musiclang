@@ -85,7 +85,12 @@ def note_to_pitch(note, chord, track_idx, time, last_pitch):
         pitch_result = 0
 
     pitch = NotePitch(pitch_result, offset=time, duration=note.duration, track=track_idx,
-                      velocity=note.amp, silence=1 * note.is_silence, continuation=1 * note.is_continuation)
+                      velocity=note.amp,
+                      silence=1 * note.is_silence,
+                      continuation=1 * note.is_continuation,
+                      tempo= note.tempo,
+                      pedal= note.pedal
+                      )
 
     if pitch.is_note():
         last_pitch = pitch.to_midi_note()
@@ -141,11 +146,15 @@ def create_melody_for_track(score, track_idx, track):
     result = []
     last_pitch = None
     time = 0
-    for chord in score.chords:
+    from musiclang import Melody, Silence
+    for idx_chord, chord in enumerate(score.chords):
         last_pitch = get_or_default_last_pitch(chord, track_idx, time, last_pitch)
         if track in chord.score.keys():
             part = chord.score[track]
-            chord_result, last_pitch = melody_to_pitches(part, chord, track_idx, time, last_pitch)
+            last_note = score.chords[idx_chord - 1].score.get(track, Melody([Silence(1)])).notes[-1] if idx_chord -1 >= 0 else None
+            next_note = score.chords[idx_chord + 1].score.get(track, Melody([Silence(1)])).notes[0] if idx_chord + 1 < len(score.chords) else None
+            part_enriched = part.realize_tags(last_note=last_note, final_note=next_note)
+            chord_result, last_pitch = melody_to_pitches(part_enriched, chord, track_idx, time, last_pitch)
             result += chord_result
 
         time += chord.duration

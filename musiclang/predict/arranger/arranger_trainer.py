@@ -22,7 +22,18 @@ class ArrangerTrainer:
         self.output_directory = output_directory
 
 
-    def train(self):
+    def train(self, nb_candidates=None):
+        """
+        Train the arranger model
+        Parameters
+        ----------
+        nb_candidates: int
+            Number of chords to keep per mode, will reduce the size of the transition matrix
+
+        Returns
+        -------
+
+        """
         files = glob.glob(self.directory)
         self.texts = []
         for file in files:
@@ -36,6 +47,21 @@ class ArrangerTrainer:
         filepath_priors = os.path.join(self.output_directory, 'priors.pickle')
         filepath_transitions = os.path.join(self.output_directory, 'transitions.pickle')
         filepath_emissions = os.path.join(self.output_directory, 'emissions.pickle')
+
+        if nb_candidates is not None:
+            # Find the most probable candidates
+            keep_index = {mode: priors[mode].sort_values(ascending=False).index[:nb_candidates]
+                          for mode in priors.keys()}
+            priors = {mode: priors[mode].loc[keep_index[mode]]
+                              for mode in priors.keys()}
+
+            transitions = {mode: transitions[mode].loc[keep_index[mode], keep_index[mode]]
+                                for mode in transitions.keys()}
+            emissions = {mode: emissions[mode].loc[keep_index[mode]]
+                              for mode in emissions.keys()}
+
+            states = {mode: [s for s in states[mode] if s in keep_index[mode]] for mode in states.keys()}
+
         joblib.dump(states, filepath_states)
         joblib.dump(self._convert_to_dict(priors), filepath_priors)
         joblib.dump(self._convert_to_dict(transitions), filepath_transitions)

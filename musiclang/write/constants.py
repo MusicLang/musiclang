@@ -653,6 +653,8 @@ VELOCITY = 3
 TRACK = 4
 SILENCE = 5
 CONTINUATION = 6
+TEMPO = 7
+PEDAL = 8
 
 DRUMS_DICT = {
     (0, -2):  'bd',

@@ -19,11 +19,12 @@ V = v = Element(4)
 VI = vi = Element(5)
 VII = vii = Element(6)
 Atonal = (I % I.M)
+NC = (I % I.M)
 r = Silence(1)
 l = Continuation(1)
 
 # Chord scale
-c0 = Note('c', 0, 0, 1)  # b0 represents the first note in the chord.extension_notes
+c0 = Note('c', 0, 0, 1)  # c0 represents the first note in the chord.chord_notes
 c1 = Note('c', 1, 0, 1)
 c2 = Note('c', 2, 0, 1)
 c3 = Note('c', 3, 0, 1)
@@ -35,6 +36,33 @@ c8 = Note('c', 8, 0, 1)
 c9 = Note('c', 9, 0, 1)
 c10 = Note('c', 10, 0, 1)
 c11 = Note('c', 11, 0, 1)
+
+cu0 = Note('cu', 0, 0, 1)
+cu1 = Note('cu', 1, 0, 1)
+cu2 = Note('cu', 2, 0, 1)
+cu3 = Note('cu', 3, 0, 1)
+cu4 = Note('cu', 4, 0, 1)
+cu5 = Note('cu', 5, 0, 1)
+cu6 = Note('cu', 6, 0, 1)
+cu7 = Note('cu', 7, 0, 1)
+cu8 = Note('cu', 8, 0, 1)
+cu9 = Note('cu', 9, 0, 1)
+cu10 = Note('cu', 10, 0, 1)
+cu11 = Note('cu', 11, 0, 1)
+
+cd0 = Note('cd', 0, 0, 1)
+cd1 = Note('cd', 1, 0, 1)
+cd2 = Note('cd', 2, 0, 1)
+cd3 = Note('cd', 3, 0, 1)
+cd4 = Note('cd', 4, 0, 1)
+cd5 = Note('cd', 5, 0, 1)
+cd6 = Note('cd', 6, 0, 1)
+cd7 = Note('cd', 7, 0, 1)
+cd8 = Note('cd', 8, 0, 1)
+cd9 = Note('cd', 9, 0, 1)
+cd10 = Note('cd', 10, 0, 1)
+cd11 = Note('cd', 11, 0, 1)
+
 
 # Scale
 s0 = Note('s', 0, 0, 1)
@@ -58,6 +86,33 @@ b8 = Note('b', 8, 0, 1)
 b9 = Note('b', 9, 0, 1)
 b10 = Note('b', 10, 0, 1)
 b11 = Note('b', 11, 0, 1)
+
+bu0 = Note('bu', 0, 0, 1)  # b0 represents the first note in the chord.extension_notes
+bu1 = Note('bu', 1, 0, 1)  # b1 represents the second note in the chord.extension_notes
+bu2 = Note('bu', 2, 0, 1)
+bu3 = Note('bu', 3, 0, 1)
+bu4 = Note('bu', 4, 0, 1)
+bu5 = Note('bu', 5, 0, 1)
+bu6 = Note('bu', 6, 0, 1)
+bu7 = Note('bu', 7, 0, 1)
+bu8 = Note('bu', 8, 0, 1)
+bu9 = Note('bu', 9, 0, 1)
+bu10 = Note('bu', 10, 0, 1)
+bu11 = Note('bu', 11, 0, 1)
+
+bd0 = Note('bd', 0, 0, 1)  # b0 represents the first note in the chord.extension_notes
+bd1 = Note('bd', 1, 0, 1)  # b1 represents the second note in the chord.extension_notes
+bd2 = Note('bd', 2, 0, 1)
+bd3 = Note('bd', 3, 0, 1)
+bd4 = Note('bd', 4, 0, 1)
+bd5 = Note('bd', 5, 0, 1)
+bd6 = Note('bd', 6, 0, 1)
+bd7 = Note('bd', 7, 0, 1)
+bd8 = Note('bd', 8, 0, 1)
+bd9 = Note('bd', 9, 0, 1)
+bd10 = Note('bd', 10, 0, 1)
+bd11 = Note('bd', 11, 0, 1)
+
 
 
 # Absolute notes

@@ -6,7 +6,7 @@ from .score import RepeatScore
 from .features import ExtractMainTonality, MostCommonTonalities
 from .chord import RepeatChord, Modulate, ModulateKeepOriginMode
 from .score_merger import ConcatScores, ConcatWithPattern, TakeSlice, TakeFirst, TakeLast, TakeIdx
-from .composing import VoiceLeading
+from .composing import VoiceLeading, Patternator
 from .dynamics import PitchDynamizer
 from .melody import ContinuationWhenSameNote
 
@@ -17,5 +17,5 @@ __all__ = ['create_counterpoint', 'create_counterpoint_on_score',
             'ExtractMainTonality', 'MostCommonTonalities',
             'RepeatChord', 'Modulate', 'ModulateKeepOriginMode',
            'ConcatScores', 'ConcatWithPattern', 'TakeSlice', 'TakeFirst', 'TakeLast', 'TakeIdx',
-           'VoiceLeading', 'PitchDynamizer', 'ContinuationWhenSameNote'
+           'VoiceLeading', 'PitchDynamizer', 'ContinuationWhenSameNote', 'Patternator'
            ]

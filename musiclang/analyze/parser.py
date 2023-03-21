@@ -19,7 +19,7 @@ def parse_to_musiclang(input_file: str):
     ----------
     input_file : str
         Input filepath
-        
+
     Returns
     -------
     score: musiclang.Score
@@ -30,9 +30,9 @@ def parse_to_musiclang(input_file: str):
 
     """
     extension = input_file.split('.')[-1]
-    if extension in ['mid', 'midi']:
+    if extension.lower() in ['mid', 'midi']:
         return parse_midi_to_musiclang(input_file)
-    elif extension in ['mxl', 'xml', 'musicxml', 'krn']:
+    elif extension.lower() in ['mxl', 'xml', 'musicxml', 'krn']:
         return parse_mxl_to_musiclang(input_file)
     else:
         raise Exception('Unknown extension {}'.format(extension))
@@ -122,15 +122,14 @@ def parse_directory_to_musiclang(directory: str):
     """
     import os
     from .augmented_net import infer_chords
-    print('1/2 : Analyze the score (This may takes a while)')
+    print('1/4 : Analyze the score (This may takes a while)')
     annotation_file = os.path.join(directory, 'data_annotated.rntxt')
     midi_file = os.path.join(directory, 'data.mid')
     mxl_file = os.path.join(directory, 'data.mxl')
     infer_chords(mxl_file)
-    score, tempo = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+    score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
     score = score.clean()
-    annotation = open(annotation_file, 'r').read()
-    return score, {'annotation': annotation, 'tempo': tempo}
+    return score, config
 
 
 
@@ -142,10 +141,10 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
     ----------
     midi_file: str :
         Filepath to the midi file to parse
-        
+
     annotation_file: str :
         Filepath to the anotation file to parse
-        
+
 
     Returns
     -------
@@ -158,8 +157,10 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
     """
 
     chords = get_chords_from_analysis(annotation_file)
+    config = chords.config
     score, tempo = parse_musiclang_sequence(midi_file, chords)
-    return score, tempo
+    config.update({'tempo': tempo})
+    return score, config
 
 
 # Helpers for parser
@@ -322,22 +323,25 @@ def parse_musiclang_sequence(midi_file, chords):
     midi_file :
 
     chords :
-        
+
 
     Returns
     -------
 
     """
+    from musiclang import Score
     from .midi_parser import parse_midi
     from .item import convert_to_items
     from .to_musiclang import infer_voices_per_tracks, infer_score_with_chords_durations
     notes, instruments, tempo = parse_midi(midi_file)
     sequence = convert_to_items(notes)
-    print('2/3 : Performing voice separation (This may takes a while)')
+    print('2/4 : Performing voice separation (This may takes a while)')
     sequence = infer_voices_per_tracks(sequence)
-    print('3/3 : Create the score')
+    print('3/4 : Create the score')
     score = infer_score_with_chords_durations(sequence, chords, instruments)
     print('Finished creating score')
+    print('4/4 Create a copy of the score...')
+
     return score, tempo
 
 
@@ -373,18 +377,17 @@ def get_chords_from_analysis(analysis):
     ----------
     analysis : str,
         Filepath of analysis file (.rntxt) format
-        
+
 
     Returns
     -------
     score: musiclang.Score
 
     """
-    import music21
-    analysis = music21.converter.parse(analysis, format="romanText")
-    chords = music21_roman_analysis_to_chords(analysis)
-    ml = chords_to_musiclang(chords)
-    return ml
+    from .score_formatter import ScoreFormatter
+    with open(analysis, 'r') as f:
+        chords = ScoreFormatter(f.read()).parse()
+    return chords
 
 
 
@@ -394,7 +397,7 @@ def chords_to_musiclang(chords):
     Parameters
     ----------
     chords :
-        
+
 
     Returns
     -------
@@ -423,7 +426,7 @@ def music21_roman_analysis_to_chords(score):
     Parameters
     ----------
     score :
-        
+
 
     Returns
     -------

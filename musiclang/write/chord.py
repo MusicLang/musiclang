@@ -222,6 +222,19 @@ class Chord:
         oct = (pitch - scale[0]) // 12
         return Note(type, idx, oct, 1)
 
+    def project_on_score(self, score2, **kwargs):
+        """
+        Transform chord into a score and apply Score.project_on_score
+        Parameters
+        ----------
+        score2: other score on which to project
+        voice_leading:
+        kwargs
+        Returns
+        -------
+        """
+        return self.to_score().project_on_score(score2, **kwargs)
+
     def decompose_duration(self):
         """ """
         return self(**{key: melody.decompose_duration() for key, melody in self.score.items()}, tags=self.tags)
@@ -282,6 +295,9 @@ class Chord:
         if not note.is_note:
             return None
         return note_to_pitch_result(note, self, last_pitch=last_pitch)
+
+    def to_absolute_note(self):
+        return self(**{part: melody.to_absolute_note(self) for part, melody in self.score.items()})
 
     @property
     def bass_pitch(self):
@@ -1137,10 +1153,11 @@ class Chord:
         return extension + replacements + additions + removals
 
     def get_extension_properties(self):
-        replacements = sorted(re.findall(r'\((.*?)\)', self.extension))
-        additions = sorted(re.findall(r'\[(.*?)\]', self.extension))
-        removals = sorted(re.findall(r'\{(.*?)\}', self.extension))
-        ext = self.extension
+        extension = self.extension.split('|')[0]
+        replacements = sorted(re.findall(r'\((.*?)\)', extension))
+        additions = sorted(re.findall(r'\[(.*?)\]', extension))
+        removals = sorted(re.findall(r'\{(.*?)\}', extension))
+        ext = extension
         for r in replacements + additions + removals:
             ext = ext.replace(r, '')
         ext = ext.replace('()', '').replace('[]', '').replace('{}', '')

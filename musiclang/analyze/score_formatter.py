@@ -9,16 +9,18 @@ https://archives.ismir.net/ismir2019/paper/000012.pdf
 By Dmitri Tymoczko Mark Gotham Michael Scott Cuthbert and Christopher Ariza
 
 """
+DEFAULT_INSTRUMENTS = ['piano__0', 'piano__1', 'piano__2', 'piano__3']
+DEFAULT_VOICING = (b0, b1, b2, b3)
 class ScoreFormatter:
 
-    def __init__(self, text):
+    def __init__(self, text, instruments=None, voicing=None):
         self.text = text
         self.time_signature = None
         self.prev_time_signature = None
         self.elements = []
 
         self.bar_elements = {}
-
+        self.allow_multi_signature = False
         ## PARAMETERS
         self.rhythm = {}
         self.counterpoint = []
@@ -26,13 +28,15 @@ class ScoreFormatter:
         self.chord_idx_voice_leading = 0
         self.chord_idx_counterpoint = 0
         self.key = 0
+        self.init_offset_bar = 0
         self.mode = 'M'
-        self.instruments = ['piano__0', 'piano__1', 'piano__2', 'piano__3']
+        self.instruments = DEFAULT_INSTRUMENTS if instruments is None else instruments
         self.init_bar_number = -1
-        self.current_score = (b0, b1, b2, b3)
+        self.current_score = DEFAULT_VOICING if voicing is None else voicing
         self.bar_number = 0
         self.chord_number = 0
         self.current_beat = 0
+        self.pickup = 0
         self.chord_started_time = (0, 0)  # Bar idx, beat idx
         ## Init elements
         self.init()
@@ -49,6 +53,8 @@ class ScoreFormatter:
                 assert score.chords[-1].duration == duration
         # Create new chord started time
         self.chord_started_time = (self.bar_number, self.current_beat)
+        if score is None and self.current_beat > 0:
+            self.pickup = self.current_beat
         score += chord
         return score
 
@@ -71,6 +77,8 @@ class ScoreFormatter:
 
     def set_time_signature(self, time_signature):
         if self.time_signature is not None:
+            if not self.allow_multi_signature:
+                raise Exception('Cannot handle multi signature scores with "allow_multi_signature" flag to false')
             self.prev_time_signature = tuple(self.time_signature)
         else:
             self.prev_time_signature = time_signature
@@ -161,10 +169,11 @@ class ScoreFormatter:
                 score[start_idx:end_idx] = ScoreRhythm(rhythm_dict={key: metric})(score[start_idx: end_idx])
         return score
 
-    def parse(self):
+    def parse(self, allow_multi_signature=False):
         """
         Parse the chord progression into music lang using voice leading
         """
+        self.allow_multi_signature = allow_multi_signature
         interpreter = ScoreInterpreter(self)
         score = interpreter.parse()
         if self.voice_leading is not None:
@@ -175,7 +184,9 @@ class ScoreFormatter:
         if self.counterpoint is not None:
             # Apply counterpoint to notes starting from second if voice leading
             score = self.apply_counterpoint(score)
-
+        score.config['pickup'] = self.pickup
+        score.config['time_signature'] = self.time_signature
+        score.config['annotation'] = self.text
         return score
 
     @classmethod
@@ -207,14 +218,16 @@ class ScoreFormatter:
             elif self.is_bar(line):
                 bar = BarLine(line, self)
                 elements = bar.get_elements()
-                if self.init_bar_number != bar.idx:  # Get only first variation of a bar
+                if self.init_bar_number > bar.idx:
+                    continue
+                    #raise Exception('Invalid bar number, should be higher than current')
+                elif self.init_bar_number != bar.idx:  # Get only first variation of a bar
                     self.elements.append(bar)
                     self.elements += elements
                     self.init_bar_number = bar.idx
                     self.bar_elements[bar.idx] = elements
                     self.chord_number += len([e for e in elements if isinstance(e, BarChord)])
-                elif self.init_bar_number > bar.idx:
-                    raise Exception('Invalid bar number, should be higher than current')
+
 
     def __repr__(self):
         return f"ScoreFormatter({self.elements})"

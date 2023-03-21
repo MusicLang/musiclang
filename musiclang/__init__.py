@@ -7,6 +7,7 @@ from .write.element import Element
 from .write.rhythm import Metric, CompositeMetric, ScoreRhythm
 
 from .write import library
+from .analyze import ScoreFormatter
 
 __all__ = ['Score', 'Note', 'Silence', 'Continuation', 'Melody',
            'Chord', 'Tonality', 'Element', 'library', 'Metric', 'CompositeMetric', 'ScoreRhythm']

@@ -1,20 +1,35 @@
 import joblib
 import os
 import pandas as pd
+import numpy as np
 from musiclang.write.elements import ChordElement
 
 class Arranger:
 
-    def __init__(self, directory):
+    def __init__(self, directory, nb_candidates=None):
         self.directory = directory
         filepath_states = os.path.join(self.directory, 'states.pickle')
         filepath_priors = os.path.join(self.directory, 'priors.pickle')
         filepath_transitions = os.path.join(self.directory, 'transitions.pickle')
         filepath_emissions = os.path.join(self.directory, 'emissions.pickle')
+        print('Loading infos ...')
         self.states = joblib.load(filepath_states)
         self.priors = self._to_series(joblib.load(filepath_priors))
         self.transitions = self._to_dataframe(joblib.load(filepath_transitions))
         self.emissions = self._to_dataframe(joblib.load(filepath_emissions))
+        print('Finished loading')
+        if nb_candidates is not None:
+            # Find the most probable candidates
+            keep_index = {mode: self.priors[mode].sort_values(ascending=False).index[:nb_candidates]
+                          for mode in self.priors.keys()}
+            self.transitions = {mode: self.transitions[mode].loc[keep_index[mode], keep_index[mode]]
+                                for mode in self.transitions.keys()}
+            self.emissions = {mode: self.emissions[mode].loc[keep_index[mode]]
+                                for mode in self.transitions.keys()}
+            self.priors = {mode: self.priors[mode].loc[keep_index[mode]]
+                                for mode in self.priors.keys()}
+
+            self.states = {mode: [s for s in self.states[mode] if s in keep_index[mode]] for mode in self.states.keys()}
 
     @staticmethod
     def _to_dataframe(x):
@@ -24,22 +39,40 @@ class Arranger:
     def _to_series(x):
         return {key: pd.Series(val) for key, val in x.items()}
 
-    def arrange(self, melody, tonality, candidates=None, instrument='piano', eps=1e-5):
+    def arrange(self, melody, tonality, candidates=None, instrument='piano',
+                temperature=0.0, eps=1e-5, zero_diag=True, weak_beat_importance=0.5):
 
         # melody= [[(s0, 1), (s1, 0)], [], []]
-
+        tone, mode = ChordElement.get_key_mode(tonality)
         # Get pitches from melody
         base_chord = ChordElement.get_tonic_chord(tonality)
         pitches = []
         curr_pitch = None
+        arrange_with_next = False
         for chord_change in melody:
             temp_pitches = []
             for note, is_in_chord in chord_change:
                 if is_in_chord and not note.is_silence:
-                    curr_pitch = base_chord.to_pitch(note, last_pitch=curr_pitch)
-                    temp_pitches.append(curr_pitch)
+                    curr_pitch = (base_chord.to_pitch(note, last_pitch=curr_pitch) - tone) % 12
+                    temp_pitches.append((curr_pitch, 1.0))
+                elif not is_in_chord and not note.is_silence:
+                    curr_pitch = (base_chord.to_pitch(note, last_pitch=curr_pitch) - tone) % 12
+                    temp_pitches.append((curr_pitch, weak_beat_importance))
 
-            pitches.append(temp_pitches)
+            if arrange_with_next and len(temp_pitches) > 0:
+                pitches = [list(temp_pitches)] * len(pitches)
+                arrange_with_next = False
+
+            if len(temp_pitches) == 0 and len(pitches) > 0:
+                pitches.append(pitches[-1])
+
+            elif len(temp_pitches) == 0 or arrange_with_next:
+                pitches.append([])
+                arrange_with_next = True
+
+            if len(temp_pitches) > 0:
+                pitches.append(temp_pitches)
+
         if candidates is None:
             candidates = [None] * len(pitches)
 
@@ -48,7 +81,9 @@ class Arranger:
                                               self.priors,
                                               self.transitions,
                                               self.emissions,
-                                              eps=eps)
+                                              temperature=temperature,
+                                              eps=eps,
+                                              zero_diag=zero_diag)
         # Re-arrange the melody inside the chords
         score = None
         for literal_chord, chord_change in zip(chords, melody):
@@ -73,11 +108,13 @@ class Arranger:
 
         def get_emit(st, t):
             if isinstance(obs[t], int):
+                # If observable is a single pitch
                 emit = emit_p[st][obs[t]]
             else:
+                # If multi pitches
                 emit = 1.0
-                for ob in obs[t]:
-                    emit *= emit_p[st][ob]
+                for ob, strength in obs[t]:
+                    emit *= emit_p[st][ob] * strength
             if candidates[t] is not None:
                 if isinstance(candidates[t], str):
                     emit = 1.0 * (st == candidates[t]) + eps
@@ -105,7 +142,7 @@ class Arranger:
                 V[t][st] = {"prob": max_prob, "prev": prev_st_selected}
 
         opt = []
-        max_prob = 0.0
+        max_prob = - np.inf
         best_st = None
         # Get most probable state and its backtrack
         for st, data in V[-1].items():
@@ -119,7 +156,8 @@ class Arranger:
         for t in range(len(V) - 2, -1, -1):
             opt.insert(0, V[t + 1][previous]["prev"])
             previous = V[t + 1][previous]["prev"]
-
+        print(max_prob)
+        print(opt)
         return opt, max_prob
 
     def dptable(self, V):
@@ -128,17 +166,28 @@ class Arranger:
         for state in V[0]:
             yield "%.7s: " % state + " ".join("%.7s" % ("%lf" % v[state]["prob"]) for v in V)
 
-    def get_chord_progression(self, pitches, candidates, tonality, states, priors, transitions, emissions, eps=1e-5):
+    def get_chord_progression(self, pitches, candidates, tonality, states, priors, transitions,
+                              emissions, temperature=0.0, eps=1e-5, zero_diag=True):
         # Get pitch relative to tonality
         tone, mode = ChordElement.get_key_mode(tonality)
-        obs = [(p - tone) % 12 if isinstance(p, int) else [(pi - tone) % 12 for pi in p] for p in pitches]
+        #obs = [((p[0] - tone) % 12, p[1]) if isinstance(p[0], tuple) else [((pi[0] - tone), pi[1]) % 12 for pi in p] for p in pitches]
+        obs = pitches
+        # If temperature add random noise to each matrix
+        if temperature > 0:
+            priors = {mode: prior + (temperature * np.random.randn(*prior.shape)) for mode, prior in priors.items()}
+            transitions = {mode: transition + (temperature * np.random.randn(*transition.shape)) for mode, transition in transitions.items()}
+            emissions = {mode: emission + (temperature * np.random.randn(*emission.shape)) for mode, emission in emissions.items()}
+
+        if zero_diag:
+            for mode in transitions.keys():
+                transitions[mode] = transitions[mode] * (1 - np.eye(*transitions[mode].shape))
+
         chords, prob = self.viterbi(obs,
                                candidates,
                                states[mode],
-                               (priors[mode] + eps).to_dict(),
+                               (priors[mode]).to_dict(),
                                (transitions[mode].T + eps).to_dict(),
                                (emissions[mode].T + eps).to_dict(),
                                eps=eps)
-
         return chords, prob
 

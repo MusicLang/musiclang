@@ -19,7 +19,11 @@ class Score:
         if self.chords is None:
             self.chords = []
         if self.config is None:
-            self.config = {'annotation': "", "tempo": 120}
+            self.config = {'annotation': "",
+                           "tempo": 120,
+                           "pickup": 0,
+                           "time_signature": (4, 4)
+                           }
 
         self.tags = set(tags) if tags is not None else set()
 
@@ -527,7 +531,8 @@ class Score:
         from .time_utils import put_on_same_chord
         return put_on_same_chord(self)
 
-    def project_on_score(self, score2, voice_leading=True):
+    def project_on_score(self, score2, keep_pitch=False, voice_leading=True, keep_score=False,
+                         repeat_to_duration=False, allow_override=False):
         """Project harmonically the current score onto the score2.
         The score2 notes will disappear, only keeping the current score with the harmony of score2
         Can either project by complete diatonic transposition or trying to move as little as possible the notes
@@ -543,9 +548,13 @@ class Score:
             Score that contains the harmony
         voice_leading: boolean (default=True)
             If true, we try to move the notes as little as possible
-        keep_score : Score (Default value = False)
-            Keep the voices of score2 ? (Default value = False)
-
+        voice_leading : boolean (default=True)
+            If True try to move the notes as little as possible (Default value = True)
+        repeat_to_duration: boolean (default=False)
+            If True then Repeat the score to fit the duration of score2
+        allow_override: boolean (default=False)
+            In case keep_score is True should we allow existence of intersection of voices between self and score2 ?
+            If True score2 parts that exists in self will be replaced by projected parts of self. Otherwise raise an Exception
         Returns
         -------
         new_score: Score
@@ -557,17 +566,39 @@ class Score:
         >>> from musiclang.library import *
         >>> score1 = (I % I.m)(piano__0=s0.e) + (V % I.m)(piano__0=s2.e)
         >>> score2 = (II % III.m)(piano__0=s0.e + s0.e)
-        >>> score1.project_on_score(score2, keep_score=False)
+        >>> score1.project_on_score(score2, voice_leading=False)
         (II % III.m)(piano__0=s0.e + s2.e)
 
         """
         # Algo : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
         from .time_utils import project_on_score
         from musiclang.transform.composing import project_on_score_keep_notes
-        if voice_leading:
-            return project_on_score_keep_notes(self.to_score(), score2.to_score())
+
+        if repeat_to_duration and self.duration < score2.duration:
+            diff_duration = (score2.duration // self.duration) + 1
+            to_project = self * diff_duration
         else:
-            return project_on_score(self.to_score(), score2.to_score(), keep_score=False)
+            to_project = self
+
+        if keep_pitch:
+            to_project = self.to_absolute_note()
+
+        if voice_leading:
+            result_score = project_on_score_keep_notes(to_project.to_score(), score2.to_score())
+        else:
+            result_score = project_on_score(to_project.to_score(), score2.to_score(), keep_score=False)
+
+        if keep_score:
+            if not allow_override and len(set(result_score.parts).intersection(score2.parts)) != 0:
+                raise Exception('If keep_score flag is True, parts should be differents between the scores')
+
+            result_score = sum([c1(**{**c2.score, **c1.score}) for c1, c2 in zip(result_score.chords, score2.chords)], None)
+
+        return result_score
+
+    def to_absolute_note(self):
+        return Score([chord.to_absolute_note() for chord in self.chords], tags=self.tags)
+
 
     def get_chord_between(self, chord, start, end):
         """
@@ -678,7 +709,6 @@ class Score:
         ----------
         filename : str
                    Filepath of the file
-            
 
         Returns
         -------
@@ -724,7 +754,7 @@ class Score:
         """
         from musiclang.analyze import parse_to_musiclang
         score, config = parse_to_musiclang(filename)
-        score.config = config
+        score.config.update(config)
         return score
 
     def decompose_duration(self):

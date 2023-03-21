@@ -169,10 +169,16 @@ def note_to_pitch_result(note, chord, last_pitch=None):
             pitch_result = get_relative_scale_value(note, last_pitch, scale_pitches)
             pass
         elif note.is_chord_note:
-            raise Exception('Relative chord notes parsing are not implemented yet')
+            scale_chord = chord.chord_pitches
+            pitch_result = get_relative_scale_value(note, last_pitch, scale_chord)
+            pass
+        elif note.is_bass_note:
+            scale_chord = chord.chord_extension_pitches
+            pitch_result = get_relative_scale_value(note, last_pitch, scale_chord)
             pass
         elif note.is_chromatic_note:
-            raise Exception('Relative chromatic notes parsing are not implemented yet')
+            chromatic_pitches = [scale_pitches[0] + i for i in range(12)]
+            pitch_result = get_relative_scale_value(note, last_pitch, chromatic_pitches)
             pass
         else:
             raise Exception('This kind of note is not supported or has no pitch : {}'.format(note.type))

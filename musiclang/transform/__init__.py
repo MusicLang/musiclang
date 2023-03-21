@@ -9,12 +9,12 @@ from .graph import TransformGraph
 from .composing import VoiceLeading
 from .dynamics import PitchDynamizer
 from .melody import ContinuationWhenSameNote
-
+from .composing import Patternator
 __all__ = ['TransformPipeline', 'ConcatPipeline', 'Mask',
            'Transformer', 'ChordTransformer', 'ScoreTransformer', 'MelodyTransformer',
            'NoteTransformer',
            'ChordFilter', 'ChordFilterTransform', 'MelodyFilterTransform', 'MelodyFilter',
            'NoteFilter', 'NoteFilterTransform', 'FeatureExtractor', 'MaskFilter', 'NoteMaskFilter',
            'ChordMaskFilter', 'MelodyMaskFilter', 'ScoreMerger', 'TransformGraph',
-           'VoiceLeading', 'PitchDynamizer', 'ContinuationWhenSameNote'
+           'VoiceLeading', 'PitchDynamizer', 'ContinuationWhenSameNote', 'Patternator'
            ]

@@ -49,11 +49,11 @@ def test_voice_leading_correct_parallel_dissonnances():
         max_iter_rules=10,
         temperature=4,
         min_temp=1,
-        max_norm=1
+        max_norm=3
     )
     new_score = vl.optimize(score)
 
-    assert new_score == (I % I.M)(cello=s1, violin=s1) + (I % I.M)(cello=s0, violin=s1)
+    assert new_score == (I % I.M)(cello=s0, violin=s1) + (I % I.M)(cello=s0, violin=s1)
 
 def test_voice_leading_silences_works():
     score = (I % I.M)(cello=s0, violin=r) + (I % I.M)(cello=s0, violin=r)
@@ -69,4 +69,4 @@ def test_voice_leading_silences_works():
     )
     new_score = vl.optimize(score)
 
-    assert new_score == (I % I.M)(cello=s0, violin=r) + (I % I.M)(cello=s0, violin=r)
+    assert new_score == (I % I.M)(cello=s1, violin=r) + (I % I.M)(cello=s1, violin=r)

@@ -1,6 +1,29 @@
 from musiclang import Score
 from .composer import Composer
 
+from musiclang import Tonality, ScoreFormatter, Element
+from musiclang.transform.library import VoiceLeading
+
+def auto_compose(melody, harmony, orchestra, voicing, patternator,
+                 tonality, solo_instrument, instruments, acc_amp='mf',
+                 fixed_bass=True
+                 ):
+
+    real_tonality = Element(0) % Tonality.from_str(tonality)
+    bass = 'v__0'
+    temp_instruments = [f'v__{i}' for i in range(len(instruments))]
+    score_theme = real_tonality(**{'m__0': melody}).to_absolute_note()
+    chords = ScoreFormatter(harmony, instruments=temp_instruments, voicing=voicing).parse()
+    score = score_theme.project_on_score(chords, keep_pitch=True, voice_leading=True, keep_score=True)
+    fixed_voices = ['m__0']
+    if fixed_bass:
+        fixed_voices.append(bass)
+    score = VoiceLeading(fixed_voices=fixed_voices)(score)
+    score = patternator(orchestra().set_amp(acc_amp), score)
+    score = score.replace_instruments(**{temp_instr: instr for temp_instr, instr in zip(temp_instruments, instruments)})
+    score = score.replace_instruments(**{f'm__0': solo_instrument})
+    return score
+
 
 class AutoComposer:
     """

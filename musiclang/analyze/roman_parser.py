@@ -21,7 +21,7 @@ def annotation_to_musiclang(text):
 
     """
     from .parser import chords_to_musiclang
-
+    print(text)
     chords = analyze_roman_notation(text)
     score = chords_to_musiclang(chords)
     return score
@@ -125,7 +125,7 @@ def _get_duration(roman):
 
 def _get_roman_full(roman):
     secondary = None
-    if  roman.secondaryRomanNumeral is not None:
+    if roman.secondaryRomanNumeral is not None:
         secondary = roman.secondaryRomanNumeral.primaryFigure
     duration = _get_duration(roman)
     return roman.primaryFigure, secondary, roman.key.tonic.pitchClass, roman.key.mode, duration

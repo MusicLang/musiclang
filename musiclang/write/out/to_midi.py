@@ -49,7 +49,7 @@ def get_or_default_last_pitch(chord, track_idx, time, last_pitch):
     if last_pitch is not None:
         return last_pitch
 
-    return NotePitch(chord.scale_pitches[0], offset=time - 1, duration=1, track=track_idx).to_midi_note()
+    return None
 
 
 def note_to_pitch(note, chord, track_idx, time, last_pitch):
@@ -86,8 +86,8 @@ def note_to_pitch(note, chord, track_idx, time, last_pitch):
 
     pitch = NotePitch(pitch_result, offset=time, duration=note.duration, track=track_idx,
                       velocity=note.amp,
-                      silence=1 * note.is_silence,
-                      continuation=1 * note.is_continuation,
+                      silence=1 * (note.is_silence or (note.is_continuation and last_pitch is None)),
+                      continuation=1 * (note.is_continuation and last_pitch is not None),
                       tempo= note.tempo,
                       pedal= note.pedal
                       )
@@ -148,17 +148,17 @@ def create_melody_for_track(score, track_idx, track):
     time = 0
     from musiclang import Melody, Silence
     for idx_chord, chord in enumerate(score.chords):
-        last_pitch = get_or_default_last_pitch(chord, track_idx, time, last_pitch)
         if track in chord.score.keys():
+            last_pitch = get_or_default_last_pitch(chord, track_idx, time, last_pitch)
             part = chord.score[track]
             last_note = score.chords[idx_chord - 1].score.get(track, Melody([Silence(1)])).notes[-1] if idx_chord -1 >= 0 else None
             next_note = score.chords[idx_chord + 1].score.get(track, Melody([Silence(1)])).notes[0] if idx_chord + 1 < len(score.chords) else None
             part_enriched = part.realize_tags(last_note=last_note, final_note=next_note)
             chord_result, last_pitch = melody_to_pitches(part_enriched, chord, track_idx, time, last_pitch)
             result += chord_result
-
+        else:
+            last_pitch = None
         time += chord.duration
-
     return result
 
 

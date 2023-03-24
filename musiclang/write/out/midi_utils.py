@@ -28,7 +28,8 @@ def voice_to_channel(instrument_list, voice, instruments):
     return instrument_list.index(instrument_of_voice)
 
 
-def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, instrument_names=None, **kwargs):
+def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
+                  instrument_names=None, **kwargs):
     """
 
     Parameters
@@ -109,7 +110,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     else:
         mid.tracks[0].append(MetaMessage("track_name", name='track', time=int(0)))
     mid.tracks[0].append(MetaMessage("set_tempo", tempo=(480000 * 120) // tempo, time=int(0)))
-    mid.tracks[0].append(MetaMessage("time_signature", numerator=4, denominator=4, time=int(0)))
+    mid.tracks[0].append(MetaMessage("time_signature", numerator=time_signature[0], denominator=time_signature[1], time=int(0)))
 
 
 

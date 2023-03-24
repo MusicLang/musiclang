@@ -274,6 +274,13 @@ class Chord:
         new_chord.tonality = new_chord.tonality.change_mode(mode)
         return new_chord
 
+    @property
+    def pedal(self):
+        """
+        Apply pedal on first note and release on last
+        """
+        return self(**{key: item.to_melody().pedal for key, item in self.score.items()}, tags=set(self.tags))
+
     def to_pitch(self, note, last_pitch=None):
         """
 

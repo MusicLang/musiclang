@@ -318,7 +318,7 @@ class Melody:
         """
         new_melody = self.copy()
         new_melody.notes[0] = new_melody.notes[0].pedal_on
-        new_melody.notes[-1] = new_melody.notes[0].pedal_off
+        new_melody.notes[-1] = new_melody.notes[-1].pedal_off
         return new_melody
 
     @property

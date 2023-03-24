@@ -8,8 +8,11 @@ from .write.rhythm import Metric, CompositeMetric, ScoreRhythm
 
 from .write import library
 from .analyze import ScoreFormatter
+from .transform.library import VoiceLeading
 
 __all__ = ['Score', 'Note', 'Silence', 'Continuation', 'Melody',
-           'Chord', 'Tonality', 'Element', 'library', 'Metric', 'CompositeMetric', 'ScoreRhythm']
+           'Chord', 'Tonality', 'Element', 'library', 'Metric', 'CompositeMetric', 'ScoreRhythm', 'ScoreFormatter',
+           'VoiceLeading'
+           ]
 
 __author__ = 'Florian GARDIN'

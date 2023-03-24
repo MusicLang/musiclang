@@ -619,6 +619,23 @@ class Score:
         from .time_utils import get_chord_between
         return get_chord_between(chord, start, end)
 
+    @property
+    def pedal_each_chord(self):
+        return Score([c.pedal for c in self.chords], tags=set(self.tags))
+
+    def doubling(self, **args):
+        new_score = None
+        for chord in self.chords:
+            score = chord.copy().score
+            for part, new_parts in args.items():
+                if isinstance(new_parts, str):
+                    new_parts = [new_parts]
+                for new_part in new_parts:
+                    if part in score.keys():
+                        score[new_part] = score[part].copy()
+            new_score += chord(**score)
+
+        return new_score
 
     def get_score_between(self, start=None, end=None):
         """

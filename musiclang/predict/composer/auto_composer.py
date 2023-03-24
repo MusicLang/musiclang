@@ -6,22 +6,70 @@ from musiclang.transform.library import VoiceLeading
 
 def auto_compose(melody, harmony, orchestra, voicing, patternator,
                  tonality, solo_instrument, instruments, acc_amp='mf',
-                 fixed_bass=True
+                 fixed_bass=True, voice_leading=True
                  ):
 
+    if isinstance(melody, list):
+        melodies = melody
+    else:
+        melodies = [melody]
+
+    if isinstance(voice_leading, list):
+        voice_leadings = voice_leading
+    else:
+        voice_leadings = [voice_leading]
+
+    if isinstance(orchestra, list):
+        orchestras = orchestra
+    else:
+        orchestras = [orchestra]
+
+    if isinstance(voicing, list) and not isinstance(voicing[0], list):
+        voicings = [voicing]
+    else:
+        voicings = voicing
+
+    if isinstance(solo_instrument, list):
+        solo_instruments = solo_instrument
+    else:
+        solo_instruments = [solo_instrument]
+
+    if isinstance(instruments, list) and not isinstance(instruments[0], list):
+        instrumentss = [instruments]
+    else:
+        instrumentss = instruments
+
+    if isinstance(fixed_bass, list):
+        fixed_basses = fixed_bass
+    else:
+        fixed_basses = [fixed_bass for i in range(len(instrumentss))]
+
     real_tonality = Element(0) % Tonality.from_str(tonality)
-    bass = 'v__0'
-    temp_instruments = [f'v__{i}' for i in range(len(instruments))]
-    score_theme = real_tonality(**{'m__0': melody}).to_absolute_note()
-    chords = ScoreFormatter(harmony, instruments=temp_instruments, voicing=voicing).parse()
+    basses = [f'v_{j}__0' for j in range(len(instrumentss))]
+    temp_instrumentss = [[f'v_{j}__{i}' for i in range(len(instr))] for j, instr in enumerate(instrumentss)]
+
+    score_theme = real_tonality(**{f'm__{idx}': melody for idx, melody in enumerate(melodies)}).to_absolute_note()
+
+    flat_temp_instruments = sum(temp_instrumentss, [])
+    flat_voicings = sum(voicings, [])
+    chords = ScoreFormatter(harmony, instruments=flat_temp_instruments, voicing=flat_voicings).parse()
     score = score_theme.project_on_score(chords, keep_pitch=True, voice_leading=True, keep_score=True)
-    fixed_voices = ['m__0']
+    assert score.duration == score_theme.duration, f"Durations don't match between theme ({score_theme.duration}) and chords"
+    fixed_voices = [f'm__{i}' for i in range(len(melodies))]
     if fixed_bass:
-        fixed_voices.append(bass)
+        fixed_voices = fixed_voices + [bass for bass, fixed_bass in zip(basses, fixed_basses) if fixed_bass]
+    for instruments, voice_leading in zip(temp_instrumentss, voice_leadings):
+        if not voice_leading:
+            fixed_voices = fixed_voices + instruments[1:]
+
     score = VoiceLeading(fixed_voices=fixed_voices)(score)
-    score = patternator(orchestra().set_amp(acc_amp), score)
-    score = score.replace_instruments(**{temp_instr: instr for temp_instr, instr in zip(temp_instruments, instruments)})
-    score = score.replace_instruments(**{f'm__0': solo_instrument})
+
+    for orchestra, temp_instruments in zip(orchestras, temp_instrumentss):
+        score = patternator(orchestra(instruments=temp_instruments).set_amp(acc_amp), score)
+
+    score = score.replace_instruments(**{temp_instr: instr for temp_instruments, instruments in zip(temp_instrumentss, instrumentss)
+                                         for temp_instr, instr in zip(temp_instruments, instruments)})
+    score = score.replace_instruments(**{f'm__{i}': solo_instrument for i, solo_instrument in enumerate(solo_instruments)})
     return score
 
 

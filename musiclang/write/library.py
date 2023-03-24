@@ -161,11 +161,11 @@ mt = Note('d', 9, -2, 1)  # Medium tom
 oh = Note('d', 10, -2, 1)  # Open hat
 ht = Note('d', 11, -2, 1)  # High tom
 
-dr000 = Note('d', 0, -1, 1)
-dr010 = Note('d', 1, -1, 1)
-dr020 = Note('d', 2, -1, 1)
-dr030 = Note('d', 3, -1, 1)
-dr040 = Note('d', 4, -1, 1)
+hht = Note('d', 0, -1, 1)
+crash = Note('d', 1, -1, 1)
+other_hht = Note('d', 2, -1, 1)
+ride = Note('d', 3, -1, 1)
+ride_hard = Note('d', 4, -1, 1)
 dr050 = Note('d', 5, -1, 1)
 dr060 = Note('d', 6, -1, 1)
 dr070 = Note('d', 7, -1, 1)

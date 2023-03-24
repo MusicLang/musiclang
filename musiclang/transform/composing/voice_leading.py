@@ -45,8 +45,9 @@ class VoiceLeading:
     """
 
     TYPES = ['b', 'c', 's', 'h']
+    RULES = Rules
 
-    def __init__(self, types=None, rules=None, fixed_voices=None, change_octave_fixed=True, seed=None, method='voices_and_rules', **kwargs):
+    def __init__(self, types=None, rules=None, exclude_rules=None, fixed_voices=None, change_octave_fixed=True, seed=None, method='voices_and_rules', **kwargs):
         """
 
         Parameters
@@ -77,6 +78,8 @@ class VoiceLeading:
         self.rg = np.random.RandomState(seed)
         self.method = method
         self.kwargs = kwargs
+        if exclude_rules is not None:
+            self.rules = [r for r in self.rules if r not in exclude_rules]
 
 
     def optimize(self, score, **kwargs):

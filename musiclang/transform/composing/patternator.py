@@ -1,5 +1,5 @@
 from musiclang import Note
-
+from musiclang import Silence
 
 class Patternator:
 
@@ -20,12 +20,13 @@ class Patternator:
                                                            allow_override=True,
                                                            repeat_to_duration=True)
                 projected += projected_chord
-
         for c1, c2 in zip(projected.chords, score.chords):
             parts = pattern.parts
+            parts = [p for p in parts if p in c2.score.keys()]
             voicing = []
             for idx, part in enumerate(parts):
                 voicing.append(c2.score[part].notes[0])
+
             voicing = list(sorted(voicing, key=lambda note: c1.to_pitch(note)))
             for idx, part in enumerate(parts):
                 for id_note, note in enumerate(c1.score[part].notes):

@@ -227,15 +227,27 @@ class Note:
         return self.add_tag('roll')
 
     @property
+    def roll_fast(self):
+        return self.add_tag('roll_fast')
+
+    @property
     def suspension_prev(self):
         return self.add_tag('suspension_prev')
+
+    @property
+    def suspension_prev_repeat(self):
+        return self.add_tag('suspension_prev_repeat')
+
+    @property
+    def retarded(self):
+        return self.add_tag('retarded')
 
     def realize_tags(self, last_note=None, next_note=None):
         import musiclang.library as L
         new_note = self.copy()
         duration = self.duration
         if 'accent' in self.tags:
-            new_note.amp = min(120, new_note.amp + 20)
+            new_note.amp = min(120, new_note.amp + 10)
 
         if 'mordant' in self.tags:
             duration = self.duration
@@ -308,11 +320,34 @@ class Note:
             if nb_rolls != (duration / mordant_duration):
                 melody += L.l(duration - nb_rolls * mordant_duration)
             new_note = melody
-        assert new_note.duration == self.duration
+
+        if 'roll_fast' in self.tags:
+            duration = self.duration
+            mordant_duration = frac(1, 6)
+            nb_rolls = int(duration / mordant_duration)
+            melody = None
+            for i in range(nb_rolls):
+                if (i % 2) == 0:
+                    melody += new_note.set_duration(mordant_duration)
+                else:
+                    melody += L.su1.set_duration(mordant_duration)
+
+            if nb_rolls != (duration / mordant_duration):
+                melody += L.l(duration - nb_rolls * mordant_duration)
+            new_note = melody
 
         if 'suspension_prev' in self.tags:
             if last_note:
                 new_note = L.l.set_duration(duration / 2) + new_note.set_duration(duration / 2)
+
+        if 'suspension_prev_repeat' in self.tags:
+            if last_note:
+                new_note = last_note.set_duration(duration / 2) + new_note.set_duration(duration / 2)
+
+        if 'retarded' in self.tags:
+            retarded_duration = frac(1, 12)
+            new_note = L.l.set_duration(retarded_duration) + new_note.set_duration(duration - retarded_duration)
+        assert new_note.duration == self.duration
 
         return new_note
 

@@ -7,7 +7,6 @@ LICENSE file in the root directory of this source tree.
 """
 
 import numpy as np
-from numba import jit, int64
 def relative_scale_up_value(delta, last_pitch, scale_pitches):
     """
 

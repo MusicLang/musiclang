@@ -9,5 +9,5 @@ tensorflow==2.11.0
 toml==0.10.2
 tomli==2.0.1
 xmlschema==2.1.1
-transformers
-tokenizers
+transformers==4.26.1
+tokenizers==0.13.2

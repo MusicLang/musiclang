@@ -597,7 +597,11 @@ class Score:
 
     def predict_score(self):
         """
-        Predict the score from the chords
+        Predict the continuation of the score given the current score
+        Currently it takes no argument.
+        Please note that this method is still very experimental as we are
+        currently improving our musiclang language model.
+
         Returns
         -------
         predicted_score: Score
@@ -607,7 +611,6 @@ class Score:
         from musiclang.predict.predictors import predict_score_from_hugginface
         score_str = predict_score_from_hugginface(str(self))
         return Score.from_str(score_str)
-
 
     def to_text_file(self, filepath, create_dir=False):
         """

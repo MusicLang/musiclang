@@ -117,3 +117,5 @@ piano music for now and the model is not yet trained on a large corpus of music.
 If you want to help us train a better model, please contact [us](mailto:fgardin.pro@gmail.com)
 
 
+4. Mix everything together to create a new pieces of music !
+

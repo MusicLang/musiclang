@@ -28,7 +28,24 @@ def voice_to_channel(instrument_list, voice, instruments):
     return instrument_list.index(instrument_of_voice)
 
 
-def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, instrument_names=None, **kwargs):
+
+def matrix_to_events(matrix, 
+                     output_file=None, 
+                     ticks_per_beat=480, 
+                     tempo=120, 
+                     instruments={}, 
+                     time_signature=(4, 4),
+                     instrument_names=None):
+    matrix = np.asarray(matrix)
+    events = [] # [(time, instrument, duration, message)]
+    for el in matrix:
+        pitch, offset, duration, velocity, track, silence, continuation, tempo, pedal = el
+        # Add note on, note off for each track
+
+    return events
+
+def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
+                  instrument_names=None, **kwargs):
     """
 
     Parameters
@@ -53,12 +70,11 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     if instrument_names is None:
         instrument_names = []
     from mido import MidiFile, MidiTrack, Message, MetaMessage
-    from ..constants import SILENCE, CONTINUATION, PITCH, TRACK, OFFSET, VELOCITY, DURATION
+    from ..constants import SILENCE, CONTINUATION, PITCH, TRACK, OFFSET, VELOCITY, DURATION, TEMPO, PEDAL
     from .constants import OCTAVES
     import os
 
     matrix = np.asarray(matrix)
-
     def number_to_channel(n):
         """
 
@@ -109,7 +125,9 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     else:
         mid.tracks[0].append(MetaMessage("track_name", name='track', time=int(0)))
     mid.tracks[0].append(MetaMessage("set_tempo", tempo=(480000 * 120) // tempo, time=int(0)))
-    mid.tracks[0].append(MetaMessage("time_signature", numerator=4, denominator=4, time=int(0)))
+    mid.tracks[0].append(MetaMessage("time_signature", numerator=time_signature[0], denominator=time_signature[1], time=int(0)))
+
+
 
     sort_events = []
     last_silence = True
@@ -118,18 +136,26 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
         row = row.tolist()
         if row[SILENCE]:
             last_silence = True
+            sort_events.append([0, 2, row[OFFSET], row[TEMPO], row[PEDAL], row[TRACK]])
             continue
+
+        if row[CONTINUATION]:
+            sort_events.append([0, 2, row[OFFSET], row[TEMPO], row[PEDAL], row[TRACK]])
+
         if row[CONTINUATION] == 0:
             sort_events.append([pitch,
-                                1, row[OFFSET], row[VELOCITY], row[TRACK]])
+                                1, row[OFFSET], row[VELOCITY], row[TRACK], row[TEMPO], row[PEDAL]])
 
         if not (row[CONTINUATION] and last_silence):
-            sort_events.append([pitch, 0, (row[OFFSET] + row[DURATION]), row[TRACK], row[CONTINUATION]])
+            sort_events.append([pitch, 0, (row[OFFSET] + row[DURATION]), row[TRACK], row[CONTINUATION],
+                                row[TEMPO], row[PEDAL]
+                                ])
             last_silence = False
 
     sort_events.sort(key=lambda tup: tup[2])
     from fractions import Fraction as frac
-
+    current_tempo = tempo
+    current_pedal = None
     lapso = {idx: 0 for idx in range(nb_tracks + 1)}
     prev_pitch = {idx: 0 for idx in range(nb_tracks + 1)}
     for evt in sort_events:
@@ -140,8 +166,22 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
             if evt[0] > 100 or evt[0] < 10:
                 evt[0] = 0
                 vel = 0
+
+            real_time = int((evt[2] - lapso[track_nb]) * ticks_per_beat)
+
             track.append(Message('note_on', note=int(evt[0]), channel=channels[track_nb],
-                                 velocity=vel, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat)))
+                                 velocity=vel, time=real_time))
+
+            if evt[5] is not None and evt[5] != current_tempo:
+                real_tempo =(480000 * 120) // evt[5]
+                track.append(MetaMessage("set_tempo", tempo=real_tempo, time=int(0)))
+                current_tempo = evt[5]
+
+            if evt[6] is not None and evt[6]:
+                track.append(Message('control_change', value=127, channel=channels[track_nb], control=4, time=int(0)))
+
+            if evt[6] is not None and not evt[6]:
+                track.append(Message('control_change', value=0, channel=channels[track_nb], control=4, time=int(0)))
 
             lapso[track_nb] = evt[2]
             prev_pitch[track_nb] = int(evt[0])
@@ -159,6 +199,24 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
                 track.append(Message('note_off', note=int(evt[0]), channel=channels[track_nb],
                                      velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat)))
             lapso[track_nb] = evt[2]
+
+        elif evt[1] == 2:
+            track_nb = int(evt[5])
+            track = mid.tracks[track_nb]
+            tempo_change = evt[3]
+            pedal_change = evt[4]
+
+            if tempo_change is not None and tempo_change != current_tempo:
+                real_tempo = (480000 * 120) // tempo_change
+                track.append(MetaMessage("set_tempo", tempo=real_tempo, time=int(0)))
+                current_tempo = tempo_change
+
+            if pedal_change is not None and pedal_change:
+                track.append(Message('control_change', value=127, channel=channels[track_nb], control=4, time=int(0)))
+
+            if pedal_change is not None and not pedal_change:
+                track.append(Message('control_change', value=0, channel=channels[track_nb], control=4, time=int(0)))
+
 
     if output_file is not None:
         for track in mid.tracks:

@@ -83,6 +83,17 @@ class Note:
     It is used to force a specific interval that is robust to transposition, but keeping a diatonic value.
     It is advised to be used in replacement of h-type notes because it is in general more compatible with transformations.
 
+    Tempo
+    -----
+
+    You can set a new tempo when this note is played, it will be played
+
+
+    Pedal
+    -----
+
+    You can set the pedal on or off when this note is played, it will be applied to the whole instrument, not a single part
+
     Examples
     --------
     >>> from musiclang.library import s0, s1, s2, I
@@ -110,8 +121,9 @@ class Note:
 
 
     """
+    DEFAULT_AMP = 66
 
-    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=66, tags=None):
+    def __init__(self, type, val, octave, duration, mode=None, accident=None, amp=DEFAULT_AMP, tags=None, pedal=None, tempo=None):
         self.type = type
         self.val = val
         self.octave = octave
@@ -121,6 +133,8 @@ class Note:
         self.mode = mode
         self.properties = self.init_properties()
         self.tags = tags if tags is not None else set()
+        self.pedal = pedal
+        self.tempo = tempo
 
     def has_tag(self, tag):
         """
@@ -171,6 +185,123 @@ class Note:
         cp.tags = cp.tags.union(set(tags))
         return cp
 
+    @property
+    def interpolate(self):
+        return self.add_tag('interpolate')
+
+    @property
+    def accent(self):
+        return self.add_tag('accent')
+
+    @property
+    def mordant(self):
+        return self.add_tag('mordant')
+
+    @property
+    def chroma_mordant(self):
+        return self.add_tag('chroma_mordant')
+
+    @property
+    def inv_chroma_mordant(self):
+        return self.add_tag('inv_chroma_mordant')
+
+
+    @property
+    def inv_mordant(self):
+        return self.add_tag('inv_mordant')
+
+    @property
+    def grupetto(self):
+        return self.add_tag('grupetto')
+
+    @property
+    def inv_grupetto(self):
+        return self.add_tag('inv_grupetto')
+
+    @property
+    def chroma_grupetto(self):
+        return self.add_tag('chroma_grupetto')
+
+    @property
+    def inv_chroma_grupetto(self):
+        return self.add_tag('inv_chroma_grupetto')
+
+    @property
+    def roll(self):
+        return self.add_tag('roll')
+
+    @property
+    def roll_fast(self):
+        return self.add_tag('roll_fast')
+
+    @property
+    def suspension_prev(self):
+        return self.add_tag('suspension_prev')
+
+    @property
+    def suspension_prev_repeat(self):
+        return self.add_tag('suspension_prev_repeat')
+
+    @property
+    def retarded(self):
+        return self.add_tag('retarded')
+
+    def realize_tags(self, last_note=None, next_note=None):
+        from .ornementation import realize_tags
+
+        return realize_tags(self, last_note, next_note)
+
+
+
+
+    def set_tempo(self, tempo):
+        new_note = self.copy()
+        new_note.tempo = tempo
+        return new_note
+
+    @property
+    def pedal_on(self):
+        new_note = self.copy()
+        new_note.pedal = True
+        return new_note
+
+    @property
+    def pedal_off(self):
+        new_note = self.copy()
+        new_note.pedal = False
+        return new_note
+
+    def remove_effects(self):
+        """
+        Remove pedals and tempo change
+        Returns
+        -------
+        """
+        new_note = self.copy()
+        new_note.tempo = None
+        new_note.pedal = None
+        return new_note
+
+    def remove_tempo(self):
+        """
+        Remove tempo change
+        Returns
+        -------
+        """
+        new_note = self.copy()
+        new_note.tempo = None
+        return new_note
+
+    def remove_pedal(self):
+        """
+        Remove pedal
+        Returns
+        -------
+        """
+        new_note = self.copy()
+        new_note.pedal = None
+        return new_note
+
     def remove_tags(self, tags):
         """
         Remove several tags from the object.
@@ -190,6 +321,8 @@ class Note:
         cp.tags = cp.tags - set(tags)
         return cp
 
+    def clear_note_tags(self):
+        return self.clear_tags()
 
     def remove_tag(self, tag):
         """
@@ -234,7 +367,7 @@ class Note:
         Parameters
         ----------
         chord :
-            
+
 
         Returns
         -------
@@ -306,7 +439,22 @@ class Note:
 
     def copy(self):
         """ """
-        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, accident=self.accident, amp=self.amp, tags=set(self.tags))
+        return Note(self.type, self.val, self.octave, self.duration, mode=self.mode, accident=self.accident,
+                    amp=self.amp, tags=set(self.tags),
+                    tempo=self.tempo,
+                    pedal=self.pedal
+                    )
+
+    def set_amp(self, amp):
+        new_note = self.copy()
+        if isinstance(amp, float):
+            amp = int(amp)
+        if isinstance(amp, int):
+            new_note.amp = amp
+        elif isinstance(amp, str):
+            return self.__getattr__(amp)
+
+        return new_note
 
     def set_val(self, val):
         note = self.copy()
@@ -319,12 +467,14 @@ class Note:
         Parameters
         ----------
         value :
-            
+
 
         Returns
         -------
 
         """
+        if isinstance(value, float):
+            value = frac(value).limit_denominator(8)
         result = self.copy()
         result.duration = value
         return result
@@ -337,7 +487,7 @@ class Note:
         ----------
         value : fractions.Fraction
                 Fraction on which to multiply the current duration
-            
+
 
         Returns
         -------
@@ -349,10 +499,13 @@ class Note:
 
         >>> from musiclang.library import s0
         >>> from fractions import Fraction
-        >>> s0.augment(Fraction(8, 9))
-        s0.augment(frac(8, 9))
+        >>> s0.augment(Fraction(8, 7))
+        s0.augment(frac(8, 7))
 
         """
+        if isinstance(value, float):
+            value = frac(value).limit_denominator(8)
+
         result = self.copy()
         result.duration *= value
         return result
@@ -363,7 +516,7 @@ class Note:
         Parameters
         ----------
         new_type :
-            
+
 
         Returns
         -------
@@ -379,7 +532,7 @@ class Note:
         Parameters
         ----------
         note :
-            
+
 
         Returns
         -------
@@ -397,9 +550,9 @@ class Note:
         Parameters
         ----------
         val :
-            
+
         octave :
-            
+
 
         Returns
         -------
@@ -431,7 +584,7 @@ class Note:
         Parameters
         ----------
         octave :
-            
+
 
         Returns
         -------
@@ -457,9 +610,13 @@ class Note:
             It will return a new note transposed
 
         """
-        if self.type in ['s', 'h', 'c', 'b']:
+        if self.type in ['s', 'h', 'c', 'b', 'a', 'x']:
             return self.oabs(octave)
         return self.copy()
+
+    def __or__(self, other):
+        return self.to_melody() | other
+
 
     def duration_to_str(self):
         """ """
@@ -468,7 +625,8 @@ class Note:
 
     def to_drum(self):
         note = self.copy()
-        note.type = 'd'
+        if not note.is_silence and not note.is_continuation:
+            note.type = 'd'
         return note
 
     @property
@@ -478,6 +636,39 @@ class Note:
     @property
     def is_drum(self):
         return self.type == 'd'
+
+    def replace(self, to_replace, new_note, octave=False, amp=False, add_octave=True):
+        """
+        Replace a note by another note
+
+        Parameters
+        ----------
+        to_replace :
+
+        new_note :
+
+
+        Returns
+        -------
+
+        """
+
+        note = self
+        to_add = note.copy()
+        test = note.val == to_replace.val and note.type == to_replace.type
+        test &= (note.octave == to_replace.octave) or not octave
+        if test:
+            to_add.type = new_note.type
+            to_add.val = new_note.val
+            to_add.octave = new_note.octave
+            if not octave:
+                to_add.octave += note.octave
+            to_add.mode = new_note.mode
+            to_add.accident = new_note.accident
+            if amp:
+                to_add.amp = note.amp
+
+        return to_add
 
     def to_code(self):
         """
@@ -497,6 +688,8 @@ class Note:
             result = f"{self.type}{self.val}"
         elif self.is_drum:
             result = DRUMS_DICT.get((self.val, self.octave), 'r')
+        elif self.type == 'x':
+            result = f"{self.type}{self.val}"
         else:
             result = f"{self.type}"
 
@@ -511,15 +704,21 @@ class Note:
                     result += f".augment(frac({self.duration.numerator}, {self.duration.denominator}))"
 
         if self.octave != 0 and self.is_note:
-            result += f".o({self.octave})"
+            if not self.is_relative:
+                result += f".o({self.octave})"
+            else:
+                result += f".oabs({self.octave})"
+
         if self.mode is not None and self.is_note:
             result += f".{self.mode}"
         if self.accident is not None and self.is_note:
             result += f".{self.accident}"
-        if self.is_note:
+        if self.is_note or self.type == "x":
             amp_figure = self.amp_figure
             if amp_figure != 'mf':
                 result += f".{self.amp_figure}"
+        if len(self.tags) > 0:
+            result += f".add_tags({self.tags})"
 
         return result
 
@@ -545,7 +744,7 @@ class Note:
         chord : Chord
             Chord on which the note will be played
 
-            
+
         inst : str
             Instrument on which the note will be played
 
@@ -574,6 +773,8 @@ class Note:
             return f".{self.mode}"
 
         return ""
+
+
 
     def __repr__(self):
         return self.to_code()
@@ -621,7 +822,7 @@ class Note:
         >>> s0 & 2
         s2
         """
-        if self.type in ['s', 'c', 'h']:
+        if self.type in ['s', 'h']:
             return self.add_value(n, 0)
         elif self.type in ['h']:
             return self.add_value((12 * n) // 7, 0)
@@ -666,6 +867,76 @@ class Note:
         new_note.octave = pitch // 12
         return new_note
 
+    def to_standard_note(self, chord):
+        if self.type in ['b', 'c']:
+            if self.is_bass_note:
+                candidates = chord.extension_notes
+            elif self.is_chord_note:
+                candidates = chord.chord_notes
+            else:
+                raise Exception('Not existing type')
+            val = self.val
+            octave = self.octave
+            new_note = candidates[val % len(candidates)].o((val // len(candidates)) + octave)
+            new_note = new_note.set_duration(self.duration)
+            new_note.amp = self.amp
+            return new_note
+
+        elif self.type in ['a']:
+            new_note = self.copy()
+            base_note = chord.parse(chord.to_pitch(self))
+            new_note.type = base_note.type
+            new_note.val = base_note.val
+            new_note.octave = base_note.octave
+            return new_note
+        else:
+            return self
+
+    def to_absolute_note(self, chord):
+        if not self.is_note:
+            return self.copy()
+        pitch = chord.to_pitch(self)
+        new_note = self.copy()
+        new_note.type = 'a'
+        new_note.val = pitch % 12
+        new_note.octave = pitch // 12
+
+        return new_note
+
+    def as_key(self, octave=False, duration=False, amp=False):
+        oct = self.octave if octave else 0
+        duration = self.duration if duration else 1
+        amp = self.amp if amp else 66
+        return Note(self.type, self.val, oct, duration, mode=self.mode, amp=amp, accident=self.accident)
+
+
+    def to_extension_note(self, chord):
+        candidates = chord.extension_notes
+        candidates_without_octave = [c.o(-c.octave) for c in candidates]
+        try:
+            idx = candidates_without_octave.index(self.as_key())
+            note = candidates[idx]
+            to_return = self.copy()
+            to_return.type = 'b'
+            to_return.val = idx
+            to_return.octave -= note.octave
+            return to_return
+        except:
+            return self.copy()
+
+    def to_chord_note(self, chord):
+        candidates = chord.chord_notes
+        candidates_without_octave = [c.o(-c.octave) for c in candidates]
+        try:
+            idx = candidates_without_octave.index(self.as_key())
+            note = candidates[idx]
+            to_return = self.copy()
+            to_return.type = 'c'
+            to_return.val = idx
+            to_return.octave -= note.octave
+            return to_return
+        except:
+            return self.copy()
 
 
     def __hash__(self):
@@ -745,12 +1016,12 @@ class Silence(Note):
     Only takes a duration as a parameter
     """
 
-    def __init__(self, duration, tags=None):
-        super().__init__("r", 0, 0, duration, tags=tags)
+    def __init__(self, duration, tags=None, tempo=None, pedal=None):
+        super().__init__("r", 0, 0, duration, tags=tags, tempo=tempo, pedal=pedal)
 
     def copy(self):
         """ """
-        return Silence(self.duration, tags=set(self.tags))
+        return Silence(self.duration, tempo=self.tempo, pedal=self.pedal, tags=set(self.tags))
 
 
 class Continuation(Note):
@@ -760,9 +1031,9 @@ class Continuation(Note):
     Only takes a duration as a parameter
     """
 
-    def __init__(self, duration, tags=None):
-        super().__init__("l", 0, 0, duration, tags=tags)
+    def __init__(self, duration, tags=None, tempo=None, pedal=None):
+        super().__init__("l", 0, 0, duration, tempo=tempo, pedal=pedal, tags=tags)
 
     def copy(self):
         """ """
-        return Continuation(self.duration, tags=set(self.tags))
+        return Continuation(self.duration, pedal=self.pedal, tags=set(self.tags))

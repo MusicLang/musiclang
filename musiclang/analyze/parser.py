@@ -19,7 +19,7 @@ def parse_to_musiclang(input_file: str):
     ----------
     input_file : str
         Input filepath
-        
+
     Returns
     -------
     score: musiclang.Score
@@ -30,9 +30,9 @@ def parse_to_musiclang(input_file: str):
 
     """
     extension = input_file.split('.')[-1]
-    if extension in ['mid', 'midi']:
+    if extension.lower() in ['mid', 'midi']:
         return parse_midi_to_musiclang(input_file)
-    elif extension in ['mxl', 'xml', 'musicxml', 'krn']:
+    elif extension.lower() in ['mxl', 'xml', 'musicxml', 'krn']:
         return parse_mxl_to_musiclang(input_file)
     else:
         raise Exception('Unknown extension {}'.format(extension))
@@ -122,14 +122,14 @@ def parse_directory_to_musiclang(directory: str):
     """
     import os
     from .augmented_net import infer_chords
-    print('1/2 : Analyze the score (This may takes a while)')
+    print('1/4 : Analyze the score (This may takes a while)')
     annotation_file = os.path.join(directory, 'data_annotated.rntxt')
     midi_file = os.path.join(directory, 'data.mid')
     mxl_file = os.path.join(directory, 'data.mxl')
     infer_chords(mxl_file)
-    score, tempo = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
-    annotation = open(annotation_file, 'r').read()
-    return score, {'annotation': annotation, 'tempo': tempo}
+    score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+    score = score.clean()
+    return score, config
 
 
 
@@ -141,10 +141,10 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
     ----------
     midi_file: str :
         Filepath to the midi file to parse
-        
+
     annotation_file: str :
         Filepath to the anotation file to parse
-        
+
 
     Returns
     -------
@@ -157,12 +157,17 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
     """
 
     chords = get_chords_from_analysis(annotation_file)
+    config = chords.config
     score, tempo = parse_musiclang_sequence(midi_file, chords)
-    return score, tempo
+    config.update({'tempo': tempo})
+    return score, config
 
 
 # Helpers for parser
 
+
+def parse_roman_numeral(element):
+    print(element.primaryFigure + element.secondaryRomanNumeral.primaryFigure)
 
 def parse_tonality(element):
     """Parse tonality as written in musicLang from Music21 object
@@ -186,18 +191,58 @@ def parse_tonality(element):
     else:
         key_tonic = element.key.tonic.pitchClass
         key_mode = DICT_MODE[element.key.mode]
-    if 'N' in element.primaryFigure:
+
+    figure = element.primaryFigure
+
+    if 'N' in figure:
         key_tonic += 1
         key_mode = 'M'
-    elif 'Ger' in element.primaryFigure:
+    elif 'Ger' in figure:
         key_tonic += 1  # For musiclang it will be a V % II.b.M
         key_mode = 'M'
-    elif 'It' in element.primaryFigure:
+    elif 'It' in figure:
         key_tonic += 1  # For musiclang it will be a I % II.b.M
         key_mode = 'M'
-    elif 'Fr' in element.primaryFigure:
+    elif 'Fr' in figure:
         key_tonic += 3
         key_mode = 'mm'
+    # elif 'bIII' in figure:
+    #     key_tonic += 3
+    #     key_mode = 'M'
+    # elif 'biii' in figure:
+    #     key_tonic += 3
+    #     key_mode = 'm'
+    # elif 'bIV' in figure:
+    #     key_tonic += 4
+    #     key_mode = 'M'
+    # elif 'biv' in figure:
+    #     key_tonic += 4
+    #     key_mode = 'm'
+    # elif 'bVII' in figure:
+    #     key_tonic += 10
+    #     key_mode = 'M'
+    # elif 'bvii' in figure:
+    #     key_tonic += 10
+    #     key_mode = 'm'
+    # elif 'bVI' in figure:
+    #     key_tonic += 8
+    #     key_mode = 'M'
+    # elif 'bvi' in figure:
+    #     key_tonic += 8
+    #     key_mode = 'm'
+    # elif 'bII' in figure:
+    #     key_tonic += 1
+    #     key_mode = 'M'
+    # elif 'bii' in figure:
+    #     key_tonic += 1
+    #     key_mode = 'm'
+    # elif 'bV' in figure:
+    #     key_tonic += 6
+    #     key_mode = 'M'
+    # elif 'bv' in figure:
+    #     key_tonic += 6
+    #     key_mode = 'm'
+
     return key_tonic, key_mode
 
 
@@ -217,12 +262,36 @@ def get_degree(element):
     degree = element.scaleDegree - 1
     if 'Ger' in element.primaryFigure:
         degree = 4
-    if 'It' in element.primaryFigure:
+    elif 'It' in element.primaryFigure:
         degree = 4
     elif 'N' in element.primaryFigure:
         degree = 0
     elif 'Fr' in element.primaryFigure:
         degree = 3
+    # elif 'bIII' in element.primaryFigure:
+    #     degree = 0
+    # elif 'biii' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bIV' in element.primaryFigure:
+    #     degree = 0
+    # elif 'biv' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bVII' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bvii' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bVI' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bvi' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bII' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bii' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bV' in element.primaryFigure:
+    #     degree = 0
+    # elif 'bv' in element.primaryFigure:
+    #     degree = 0
 
     return degree
 
@@ -254,22 +323,25 @@ def parse_musiclang_sequence(midi_file, chords):
     midi_file :
 
     chords :
-        
+
 
     Returns
     -------
 
     """
+    from musiclang import Score
     from .midi_parser import parse_midi
     from .item import convert_to_items
     from .to_musiclang import infer_voices_per_tracks, infer_score_with_chords_durations
     notes, instruments, tempo = parse_midi(midi_file)
     sequence = convert_to_items(notes)
-    print('2/3 : Performing voice separation (This may takes a while)')
+    print('2/4 : Performing voice separation (This may takes a while)')
     sequence = infer_voices_per_tracks(sequence)
-    print('3/3 : Create the score')
+    print('3/4 : Create the score')
     score = infer_score_with_chords_durations(sequence, chords, instruments)
     print('Finished creating score')
+    print('4/4 Create a copy of the score...')
+
     return score, tempo
 
 
@@ -305,18 +377,17 @@ def get_chords_from_analysis(analysis):
     ----------
     analysis : str,
         Filepath of analysis file (.rntxt) format
-        
+
 
     Returns
     -------
     score: musiclang.Score
 
     """
-    import music21
-    analysis = music21.converter.parse(analysis, format="romanText")
-    chords = music21_roman_analysis_to_chords(analysis)
-    ml = chords_to_musiclang(chords)
-    return ml
+    from .score_formatter import ScoreFormatter
+    with open(analysis, 'r') as f:
+        chords = ScoreFormatter(f.read()).parse()
+    return chords
 
 
 
@@ -326,7 +397,7 @@ def chords_to_musiclang(chords):
     Parameters
     ----------
     chords :
-        
+
 
     Returns
     -------
@@ -355,7 +426,7 @@ def music21_roman_analysis_to_chords(score):
     Parameters
     ----------
     score :
-        
+
 
     Returns
     -------
@@ -371,9 +442,52 @@ def music21_roman_analysis_to_chords(score):
         notes = [(n.pitch.pitchClass, n.pitch.octave - 5) for n in roman.notes]
         duration = get_duration(roman)
         degree = get_degree(roman)
-        figure = roman.figuresWritten.replace('/', '')
-        if figure == 'ar':
-            figure = ''
+        figure = roman.primaryFigure
+        figure = figure.replace('bI', '').replace('bV', '')
+        figure = figure.replace('#I', '').replace('#V', '')
+        figure = figure.replace('I', '').replace('V', '')
+        figure = figure.replace('bi', '').replace('bv', '')
+        figure = figure.replace('#i', '').replace('#v', '')
+        figure = figure.replace('i', '').replace('v', '')
+
+        #primary_figure = roman.primaryFigure
+
+        replacer = (
+            ('M7', '[M7]'),
+            ('maj7', '[M7]'),
+            ('m7', '[m7]'),
+            ('min7', '[m7]'),
+            ('+', '(+)'),
+            ('b5', '(b5)'),
+            ('b7', '[m7]'),
+            ('b9', '[m9]'),
+            ('ar', ''),
+            ('add2', '[add2]'),
+            ('add4', '[add4]'),
+            ('add6', '[add6]'),
+            ('add9', '[add9]'),
+            ('add11', '[add11]'),
+            ('add13', '[add13]'),
+            ('sus2', '(sus2)'),
+            ('sus4', '(sus4)'),
+            ('[no5]', '{-5}'),
+            ('[no3]', '{-3}'),
+            ('[no1]', '{-1}'),
+            ('[no7]', '{-7}'),
+        )
+
+        figure = figure.replace('[', '').replace('(', '').replace(']', '').replace(')', '')
+        for key, val in replacer:
+            figure = figure.replace(key, val)
+
         chords.append([notes, duration, degree, figure, (key_tonic, key_mode)])
 
     return chords
+
+
+def old_annotation_to_musiclang(file):
+    import music21
+    analysis = music21.converter.parse(file, format="romanText")
+    chords = music21_roman_analysis_to_chords(analysis)
+    score = chords_to_musiclang(chords)
+    return score

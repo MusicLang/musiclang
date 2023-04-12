@@ -48,21 +48,28 @@ class Metric:
         nom, den = self.signature
         return nom * frac(4, den)
 
-    def get_beat_durations(self):
-        first_has_note = self.array[0] == 1
+    def get_beat_durations(self, array=None):
+        if array is None:
+            array = self.array
+        first_has_note = array[0] == 1
         result = []
         curr_dur = self.tatum
         is_note = first_has_note
-        for b in self.array[1:]:
+        for b in array[1:]:
             if b == 0:
                 curr_dur += self.tatum
-            else:
+            elif b == 1:
                 result.append((is_note, curr_dur))
                 curr_dur = self.tatum
                 is_note = True
+            else:
+                result.append((is_note, curr_dur))
+                curr_dur = self.tatum
+                is_note = False
+
         result.append((is_note, curr_dur))
 
-        return result
+        return result, first_has_note
 
     def beat_type(self, time):
         """
@@ -96,6 +103,7 @@ class Metric:
         elif self.signature in [(6, 8), (9, 8), (12, 8)]:
             return Metric.STRONG if (time % frac(3, 2)) == 0 else Metric.WEAK
 
+
     @classmethod
     def Euclidian(cls, pulses, signature, tatum, nb_bars=1):
         """
@@ -116,6 +124,9 @@ class Metric:
 
         steps = cls._nb_steps(signature, tatum, nb_bars)
         return Metric(bjorklund_algorithm(steps, pulses), signature, tatum, nb_bars=nb_bars)
+
+
+
 
     @classmethod
     def _nb_steps(self, signature, tatum, nb_bars):
@@ -186,7 +197,30 @@ class Metric:
     def alternating(self, n):
         return Metric.Alternating(n, signature=self.signature, tatum=self.tatum, nb_bars=self.nb_bars)
 
-    def apply_to_melody(self, melody, expand=True):
+    def apply_to_score(self, score):
+        """
+        Apply the rythm to a given score
+        Parameters
+        ----------
+        score
+
+        Returns
+        -------
+
+        """
+        pass
+
+
+    def get_array_between(self, start, end):
+        if start is None:
+            start = 0
+        if end is None:
+            end = self.duration
+        idx_start = start // self.tatum
+        idx_end = end // self.tatum
+        return [self.array[idx % len(self.array)] for idx in range(idx_start, idx_end)], start, end
+
+    def apply_to_melody(self, melody, expand=True, start=None, end=None):
         """
         Apply the metric to a given melody.
         If expand is True, the notes of the melody will be used circularly until metric duration is satisfied
@@ -210,22 +244,38 @@ class Metric:
         else:
             notes = melody.notes
 
-        if not expand and len(notes) < sum(self.array):
-            notes += [Silence(1)] * (sum(self.array) - len(notes))
+        array, start, end = self.get_array_between(start, end)
+        if not expand and len(notes) < sum(array):
+            notes += [Silence(1)] * (sum(array) - len(notes))
 
-        beat_durations = self.get_beat_durations()
-        return self._apply_durations_to_melody(notes, beat_durations, expand=expand)
+        beat_durations, first_has_note = self.get_beat_durations(array)
+        result = self._apply_durations_to_melody(notes, beat_durations, first_has_note=first_has_note, expand=expand)
+        if result.duration > (end - start):
+            # It means the duration of the chord is not divisible by tatum, must shorter the last note
+            delta_tatum = (end - start) % self.tatum
+            before = result.copy()
+            result.notes[-1] = result.notes[-1].set_duration(result.notes[-1].duration - delta_tatum)
+            assert result.duration == (end - start), f'{result.duration} {end - start} {delta_tatum} {result} {before}'
+
+        elif result.duration < (end - start):
+            delta_tatum = (end - start) % self.tatum
+            result.notes[-1] = result.notes[-1].set_duration(result.notes[-1].duration + delta_tatum)
+
+        return result
 
     @classmethod
-    def _apply_durations_to_melody(cls, notes, beat_durations, expand=True):
-        from musiclang import Silence
+    def _apply_durations_to_melody(cls, notes, beat_durations, first_has_note=True, expand=True):
+        from musiclang import Silence, Continuation
         melody = None
-        if not beat_durations[0]:
-            notes = [Silence(1)] + notes
         for idx, (has_note, beat) in enumerate(beat_durations):
-            if not expand and idx > len(notes):
+            if idx == 0 and not first_has_note:
+                melody += Continuation(1).set_duration(beat)
+            elif not expand and idx > len(notes):
                 break
-            melody += notes[idx % len(notes)].set_duration(beat)
+            elif has_note:
+                melody += notes[idx % len(notes)].set_duration(beat)
+            else:
+                melody += Silence(1).set_duration(beat)
 
         return melody
 
@@ -263,7 +313,7 @@ class Metric:
         -------
         metric: Metric
         """
-        return Metric(self.array[(n % len(self.array)):] + self.array[:(n % len(self.array))],
+        return Metric(self.array[(-n % len(self.array)):] + self.array[:(-n % len(self.array))],
                       signature=self.signature, tatum=self.tatum, nb_bars=self.nb_bars)
 
     def canon(self, n):
@@ -279,6 +329,31 @@ class Metric:
         array_mask = ([0] * n) + ([1] * (len(self.array) - n))
         return Metric(self.array[(n % len(self.array)):] + self.array[:(n % len(self.array))],
                       signature=self.signature, tatum=self.tatum, nb_bars=self.nb_bars).masked(array_mask)
+
+    @classmethod
+    def FromArray(cls, array, signature=(4, 4), tatum=None, nb_bars=1):
+        """
+        Get a metric from a binary array, if several bar we only support constant tatum
+        between bar at the time being
+        Parameters
+        ----------
+        array: list[int]
+            List of binary
+        signature
+        tatum
+        nb_bars
+
+        Returns
+        -------
+
+        """
+        if tatum is None:
+            nb_notes = len(array)
+            nom, den = signature
+            duration = nb_bars * nom * frac(4, den)
+            tatum = duration / nb_notes
+        return Metric(array, signature=signature, tatum=tatum, nb_bars=nb_bars)
+
 
     @classmethod
     def FromMelody(cls, melody, signature=(4, 4), tatum=None, nb_bars=1):
@@ -385,7 +460,7 @@ class CompositeMetric:
             melody = Melody(melody).copy()
 
         notes = melody.notes
-        durations = sum([m.get_beat_durations() for m in self.metrics], [])
+        durations = sum([m.get_beat_durations()[0] for m in self.metrics], [])
         return Metric.apply_durations_to_melody(notes, durations, expand=expand)
 
     def masked(self, masks):

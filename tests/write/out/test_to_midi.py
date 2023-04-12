@@ -9,7 +9,7 @@ def test_note_to_pitch_down():
     last_pitch = [12]
     chord = Element(3) % Tonality(2, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [10, 12, 1, 66, 0, 0, 0]
+    res = [10, 12, 1, 66, 0, 0, 0, None, None]
     assert result == (res, res)
 
 
@@ -18,7 +18,7 @@ def test_note_to_pitch_up():
     last_pitch = [12]
     chord = Element(3) % Tonality(1, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [13, 12, 1, 66, 0, 0, 0]
+    res = [13, 12, 1, 66, 0, 0, 0, None, None]
     assert result == (res, res)
 
 
@@ -29,7 +29,7 @@ def test_note_to_pitch_abs():
     last_pitch = [12]
     chord = Element(3) % Tonality(2, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [-15, 12, 1, 66, 0, 0, 0]
+    res = [-15, 12, 1, 66, 0, 0, 0, None, None]
     assert result == (res, res)
 
 
@@ -40,7 +40,7 @@ def test_note_to_pitch_abs_octave_tonality():
     last_pitch = [12]
     chord = Element(3).o(1) % Tonality(2, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [-3, 12, 1, 66, 0, 0, 0]
+    res = [-3, 12, 1, 66, 0, 0, 0, None, None]
     assert result == (res, res)
 
 
@@ -49,7 +49,7 @@ def test_note_to_pitch_silence():
     last_pitch = [12]
     chord = Element(3) % Tonality(1, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [0, 12, 1, 66, 0, 1, 0]
+    res = [0, 12, 1, 66, 0, 1, 0, None, None]
     assert result == (res, last_pitch)
 
 
@@ -58,12 +58,12 @@ def test_note_to_pitch_continuation():
     last_pitch = [12]
     chord = Element(3) % Tonality(1, mode="m", octave=-1)
     result = note_to_pitch(note, chord, 0, 12, last_pitch)
-    res = [0, 12, 1, 66, 0, 0, 1]
+    res = [0, 12, 1, 66, 0, 0, 1, None, None]
     assert result == (res, last_pitch)
 
 
 def test_to_midi():
-    notes = [[0, 12, 1, 66, 0, 0, 0], [0, 12, 1, 66, 0, 0, 0]]
+    notes = [[0, 12, 1, 66, 0, 0, 0, None, None], [0, 12, 1, 66, 0, 0, 0, None, None]]
     res = to_midi(notes, output_file=None)
     assert res is not None
 
@@ -98,10 +98,10 @@ def test_create_melody_for_track():
     score = chord1 + chord2
 
     res = create_melody_for_track(score, 0, 'piano__0')
-    expected_res = [[0, 0, 1, 66, 0, 0, 0],
-                    [2, 1, 1, 66, 0, 0, 0],
-                    [4, 2, 1, 66, 0, 0, 0],
-                    [7, 3, 1, 66, 0, 0, 0],
-                    [9, 4, 1, 66, 0, 0, 0],
-                    [11, 5, 1, 66, 0, 0, 0]]
+    expected_res = [[0, 0, 1, 66, 0, 0, 0, None, None],
+                    [2, 1, 1, 66, 0, 0, 0, None, None],
+                    [4, 2, 1, 66, 0, 0, 0, None, None],
+                    [7, 3, 1, 66, 0, 0, 0, None, None],
+                    [9, 4, 1, 66, 0, 0, 0, None, None],
+                    [11, 5, 1, 66, 0, 0, 0, None, None]]
     assert res == expected_res

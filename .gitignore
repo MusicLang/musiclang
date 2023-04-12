@@ -21,5 +21,7 @@ build/
 musiclang.egg-info/
 documentation/build/
 documentation/_build/
-*.pickle
+**.pickle
 dist/
+documentation/auto_examples/
+*.ipynb

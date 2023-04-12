@@ -76,5 +76,69 @@ def test_octaver():
     expected = I(piano__0=(s0 + s1 + s2).o(-1), violin__0=(s0 + s1 + s4).o(1)) + II(piano__0=(s1 + s2).o(-1))
     assert score2 == expected
 
+def test_normalize_instruments():
+
+    score = (I % I.M)(piano__0=s0.h) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    expected_score = (I % I.M)(piano__0=s0.h, violin__1=r.h) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    assert score.normalize_instruments() == expected_score
+
+def test_remove_silenced_instruments():
+
+    score = (I % I.M)(piano__0=s0.h, violin__1=r + r) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    expected_score = (I % I.M)(piano__0=s0.h) + (V % V.M)(piano__0=s1 + s2, violin__1=s3 + s1)
+    assert score.remove_silenced_instruments() == expected_score
 
 
+def test_project_pattern_voicing():
+    from musiclang import Score
+
+    pattern = (I % I.M)(x0 + su1 + su2 + su1, x1.e + bu1.e + bd1 + bu1 + bd1)
+    voicing = [b0, b1]
+    expected_result = (I % I.M)(piano__0=b0 + su1 + su2 + su1, piano__1=b1.e + bu1.e + bd1 + bu1 + bd1)
+    # By voicing
+    result_voicing = pattern.project_pattern(voicing)
+    assert expected_result == result_voicing
+
+def test_project_pattern_score_restart():
+    # By Score
+    pattern = (I % I.M)(x0 + su1 + su2 + su1, x1.e + bu1.e + bd1 + bu1 + bd1)
+    expected_result = ((I % II.M)(
+	piano__0=b0 + su1,
+	piano__1=b1.e + bu1.e + bd1)+
+    (II % II.M)(
+	piano__0=b0 + su1,
+	piano__1=b1.e + bu1.e + bd1))
+
+    score_voicing = (I % II.M)(b0.h, b1.h) + (II % II.M)(b0.h, b1.h)
+
+    result_score = pattern.project_pattern(score_voicing, restart_each_chord=True)
+    assert expected_result == result_score
+
+
+def test_project_pattern_score_no_restart():
+    # By Score
+    pattern = (I % I.M)(x0 + su1 + su2 + su1, x1.e + bu1.e + bd1 + bu1 + bd1)
+    expected_result = ((I % II.M)(
+	piano__0=b0 + su1,
+	piano__1=b1.e + bu1.e + bd1)+
+(II % II.M)(
+	piano__0=su2 + su1,
+	piano__1=bu1 + bd1))
+
+    score_voicing = (I % II.M)(b0.h, b1.h) + (II % II.M)(b0.h, b1.h)
+
+    result_score = pattern.project_pattern(score_voicing, restart_each_chord=False)
+    assert expected_result == result_score
+
+
+def test_project_pattern_score_repeat_if_necessary():
+    # By Score
+    pattern = (I % I.M)(x0 + su1, x1.e + bu1.e + bd1)
+    expected_result = ((I % II.M)(
+	piano__0=b0 + su1 + b0 + su1,
+	piano__1=b1.e + bu1.e + bd1 + b1.e + bu1.e + bd1))
+
+    score_voicing = (I % II.M)(b0.w, b1.w)
+
+    result_score = pattern.project_pattern(score_voicing, restart_each_chord=False)
+    assert expected_result == result_score

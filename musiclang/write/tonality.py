@@ -38,6 +38,21 @@ class Tonality:
         self.tags = set(tags) if tags is not None else set()
 
 
+    @classmethod
+    def from_str(cls, text):
+        tab = 'CDEFGAB'
+        notes = [0, 2, 4, 5, 7, 9, 11]
+        note = text.replace(':', '').replace('#', '').replace('b', '').replace('-', '')
+        tone = notes[tab.index(note.upper())]
+        mode = 'M' if note.upper() == note else 'm'
+
+        tone += text.count('#')
+        tone += text.count('s')
+        tone -= text.count('b')
+        tone -= text.count('-')
+
+        return cls(tone, mode)
+
     def __hash__(self):
         return hash(self.__repr__())
 

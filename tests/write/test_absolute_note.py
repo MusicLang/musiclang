@@ -11,4 +11,4 @@ def test_absolute_note_basics():
 
 
 def test_absolute_note_no_octave():
-    assert C5.o(1) == C5
+    assert C5.o(1) == C6

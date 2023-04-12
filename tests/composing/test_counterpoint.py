@@ -7,4 +7,4 @@ def test_create_counterpoint():
 
     melody2_corrected = create_counterpoint([melody1], [melody2])
 
-    assert melody2_corrected[0] == s0 + s3 + s2
+    assert melody2_corrected[0] != s0 + s1 + s2

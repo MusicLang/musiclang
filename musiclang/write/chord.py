@@ -73,7 +73,8 @@ class Chord:
                 Represents the base octave of the chord
         """
         self.element = element
-        self.extension = extension
+        self.extension = str(extension)
+        self.extension = self.normalize_extension()
         self.tonality = tonality
         self.octave = octave
         self.score = {} if score is None else score
@@ -128,6 +129,23 @@ class Chord:
         cp.tags = cp.tags.union(set(tags))
         return cp
 
+    def clear_note_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        for k, v in cp.score.items():
+            cp.score[k] = v.clear_note_tags()
+        return cp
+
     def remove_tags(self, tags):
         """
         Remove several tags from the object.
@@ -179,6 +197,23 @@ class Chord:
         cp.tags = set()
         return cp
 
+    def has_pitch(self, pitch):
+        """
+        Check whether the pitch belong to the chord or not
+
+        Parameters
+        ----------
+        pitch: int
+        Pitch to check
+
+        Returns
+        -------
+        result: boolean
+            True if the chord has this pitch
+
+        """
+        return (pitch % 12) in [p % 12 for p in self.chord_pitches]
+
     def parse(self, pitch):
         """
         Parse an integer pitch (0=C5)
@@ -203,6 +238,19 @@ class Chord:
         idx = scale_mod.index(pitch % 12)
         oct = (pitch - scale[0]) // 12
         return Note(type, idx, oct, 1)
+
+    def project_on_score(self, score2, **kwargs):
+        """
+        Transform chord into a score and apply Score.project_on_score
+        Parameters
+        ----------
+        score2: other score on which to project
+        voice_leading:
+        kwargs
+        Returns
+        -------
+        """
+        return self.to_score().project_on_score(score2, **kwargs)
 
     def decompose_duration(self):
         """ """
@@ -243,6 +291,13 @@ class Chord:
         new_chord.tonality = new_chord.tonality.change_mode(mode)
         return new_chord
 
+    @property
+    def pedal(self):
+        """
+        Apply pedal on first note and release on last
+        """
+        return self(**{key: item.to_melody().pedal for key, item in self.score.items()}, tags=set(self.tags))
+
     def to_pitch(self, note, last_pitch=None):
         """
 
@@ -258,9 +313,19 @@ class Chord:
 
         """
         from .out.to_midi import note_to_pitch_result
+        if note.is_continuation:
+            return last_pitch
+
         if not note.is_note:
             return None
         return note_to_pitch_result(note, self, last_pitch=last_pitch)
+
+    def to_absolute_note(self):
+        return self(**{part: melody.to_absolute_note(self) for part, melody in self.score.items()})
+
+    @property
+    def bass_pitch(self):
+        return self.chord_extension_pitches[0]
 
     def to_sequence(self):
         """
@@ -272,10 +337,11 @@ class Chord:
 
         return sequence_dict
 
-    def to_score(self):
+    def to_score(self, copy=True):
         """ """
         from .score import Score
-        return Score([self])
+        chord = self if not copy else self.copy()
+        return Score([chord])
 
     def show(self, *args, **kwargs):
         """
@@ -358,6 +424,20 @@ class Chord:
         return Chord(**{key: val.remove_accidents() for key, val in self.score.items()}, tags=set(self.tags))
 
 
+    def get_scale_from_type(self, type):
+        if type == "h":
+            return self.chromatic_pitches
+        elif type == "s":
+            return self.scale_pitches
+        elif type == "b":
+            return self.chord_extension_pitches
+        elif type == "c":
+            return self.chord_pitches
+        else:
+            raise ValueError("This type is not associated to a scale")
+    @property
+    def chromatic_pitches(self):
+        return [self.scale_pitches[0] + i for i in range(12)]
     @property
     def scale_pitches(self):
         """
@@ -388,6 +468,7 @@ class Chord:
         scale_pitches = tonality_scale_pitches[start_idx:] + [t + 12 for t in tonality_scale_pitches[:start_idx]]
         scale_pitches = [n + 12 * self.octave for n in scale_pitches]
         return scale_pitches
+
 
     @property
     def chromatic_scale_pitches(self):
@@ -424,12 +505,18 @@ class Chord:
         return [self.to_pitch(n) for n in notes]
 
     @property
+    def chord_extension_pitch_classes(self):
+        return [i % 12 for i in self.chord_extension_pitches]
+    @property
     def parts(self):
         """
         Get the list of all parts names
         Same as :func:`~Chord.instruments`
         """
         return list(self.score.keys())
+
+    def to_drum(self):
+        return self(**{key: val.to_drum() if key.startswith('drum') else val for key, val in self.items()})
 
     @property
     def instruments(self):
@@ -596,12 +683,12 @@ class Chord:
         item = str(item)
         res = self.copy()
         res.extension = str(item)
-        res.extension = res.normalize_extension()
         try:
             n = res.extension_notes
         except Exception as e:
             raise e
             #raise ValueError(f'Could not parse extension : {item} {e}')
+        res.extension = res.normalize_extension()
 
         return res
 
@@ -624,6 +711,9 @@ class Chord:
         if len(self.score.keys()) == 0:
             return 0
         return max([self.score[key].duration for key in self.score.keys()])
+
+    def set_amp(self, amp):
+        return self(**{key: val.set_amp(amp) for key, val in self.items()}, tags=set(self.tags))
 
     def set_part(self, part, melody, inplace=False):
         """
@@ -827,6 +917,16 @@ class Chord:
         """Chord down one octave (=o(-1))"""
         return self.o(1)
 
+    def to_extension_note(self):
+        return self(**{key: val.to_extension_note(self) for key, val in self.items()}, tags=set(self.tags))
+
+    def to_chord_note(self):
+        return self(**{key: val.to_chord_note(self) for key, val in self.items()}, tags=set(self.tags))
+
+    def to_standard_note(self):
+        return self(**{key: val.to_standard_note(self) for key, val in self.items()}, tags=set(self.tags))
+
+
     def o_melody(self, octave):
         """Change the octave of the melody (not the chord)
 
@@ -845,6 +945,69 @@ class Chord:
             new_parts[part] = self.score[part].o(octave)
 
         return self(**new_parts).add_tags(self.tags)
+
+    def patternize(self,
+                 nb_excluded_instruments=0,
+                 fixed_bass=True,
+                 voice_leading=True,
+                 melody=False,
+                 instruments=None,
+                 voicing=None,
+                 add_metadata=True,
+                   max_duration=16,
+                   **kwargs):
+        """
+        Extract the pattern from the chord
+
+        Parameters
+        ----------
+        nb_excluded_instruments: int (Default value = 0)
+            Number of instruments to exclude from the pattern
+        fixed_bass: bool (Default value = True)
+            If True, the bass will be fixed in the pattern response
+        voice_leading: bool (Default value = True)
+            If True, the voice leading will be applied in the pattern response
+        melody: bool (Default value = False)
+            Do you want to extract a melody or an accompaniment pattern
+        instruments: list[str] (Default value = None)
+            List of instruments to use for the pattern
+        voicing: list[Note] or None (Default value = None)
+            Voicing to use for the pattern, otherwise extract the good one
+        add_metadata: bool (Default value = True)
+            If True, add metadata and features to the pattern
+        Returns
+        -------
+        score_pattern: Chord
+            Patternized chord or score
+        pattern: dict
+            Pattern data of the score
+
+        """
+        from musiclang.analyze.pattern_analyzer import PatternExtractor
+        if self.duration > max_duration:
+            raise Exception(f'Patternize only works on chords with duration <= {max_duration} increase the max_duration parameter if you want to use it on longer chords')
+
+        dict_pattern = PatternExtractor(
+                 nb_excluded_instruments=nb_excluded_instruments,
+                 fixed_bass=fixed_bass,
+                 voice_leading=voice_leading,
+                 melody=melody,
+                 instruments=instruments,
+                 voicing=voicing
+                 ).extract(self)
+
+        pattern = dict_pattern['orchestra']['pattern']
+        if add_metadata:
+            from musiclang.analyze.pattern_analyzer import PatternFeatureExtractor
+            dict_pattern = PatternFeatureExtractor().extract(dict_pattern,
+                                                             self,
+                                                             melody=melody,
+                                                             nb_excluded_instruments=nb_excluded_instruments,
+                                                             )
+        return dict_pattern, pattern
+
+    def project_pattern(self, score, restart_each_chord=False):
+        return self.to_score().project_pattern(score, restart_each_chord=restart_each_chord)
 
     def o(self, octave):
         """Chord up or down the amount of octave in parameter, it will change the chord octave, not the melody
@@ -939,12 +1102,18 @@ class Chord:
                 for idx, melody in enumerate(named_melodies[key]):
                     mel = melody.to_melody()
                     if key_obj.startswith('drums'):
-                        mel = Melody([n.convert_to_drum_note(self) for n in mel.notes])
+                        new_mel = None
+                        for n in mel.notes:
+                            new_mel += n.convert_to_drum_note(self)
+                        mel = new_mel
                     named_melodies_result[key_obj + '__' + str(number + idx)] = mel
             else:
                 mel = named_melodies[key].to_melody()
                 if key_obj.startswith('drums'):
-                    mel = Melody([n.convert_to_drum_note(self) for n in mel.notes])
+                    new_mel = None
+                    for n in mel.notes:
+                        new_mel += n.convert_to_drum_note(self)
+                    mel = new_mel
                 named_melodies_result[key_obj + '__' + str(number)] = mel
 
         return named_melodies_result
@@ -969,6 +1138,8 @@ class Chord:
     def set_duration(self, duration):
         from musiclang import Silence
         if self.empty_score:
+            if isinstance(duration, float):
+                duration = frac(duration).limit_denominator(8)
             silence = Silence(duration)
             return self(silence)
         else:
@@ -1051,6 +1222,32 @@ class Chord:
     def __repr__(self):
         return f"{self.to_code()}({self.melody_to_str()})"
 
+    @property
+    def full_octave(self):
+        return self.octave + self.tonality.octave
+
+    def replace_instruments(self, **instruments_dict):
+        """
+        Replace any instrument with another (use full part name (eg: piano__0)
+
+        Parameters
+        ----------
+        instruments_dict: dict[str, str]
+            Dictionary of parts name to replace
+
+        Returns
+        -------
+        chord: Chord
+
+        """
+        instruments_dict = {key: instruments_dict[key] if key in instruments_dict.keys() else key for key in self.parts}
+        new_chord_dict = {}
+        for ins_name, new_ins_name in instruments_dict.items():
+            if ins_name in self.score.keys():
+                new_chord_dict[new_ins_name] = self.score[ins_name]
+
+        return self(**new_chord_dict)
+
 
     def normalize_extension(self):
         extension, replacements, additions, removals = self.get_extension_properties()
@@ -1060,10 +1257,15 @@ class Chord:
         return extension + replacements + additions + removals
 
     def get_extension_properties(self):
-        replacements = sorted(re.findall(r'\((.*?)\)', self.extension))
-        additions = sorted(re.findall(r'\[(.*?)\]', self.extension))
-        removals = sorted(re.findall(r'\{(.*?)\}', self.extension))
-        extension = self.extension.split('(')[0].split('[')[0].split('{')[0]
+        extension = self.extension.split('|')[0]
+        replacements = sorted(re.findall(r'\((.*?)\)', extension))
+        additions = sorted(re.findall(r'\[(.*?)\]', extension))
+        removals = sorted(re.findall(r'\{(.*?)\}', extension))
+        ext = extension
+        for r in replacements + additions + removals:
+            ext = ext.replace(r, '')
+        ext = ext.replace('()', '').replace('[]', '').replace('{}', '')
+        extension = ext
         return extension, replacements, additions, removals
 
 
@@ -1072,19 +1274,28 @@ class Chord:
             DICT_REPLACEMENT, DICT_ADDITION, DICT_REMOVAL
         notes = BASE_EXTENSION_DICT[extension][:]
         notes_without_octave = [n.o(-n.octave) for n in notes]
+
+        dict_replaced = {}
+        for replacement in replacements:
+            note_replaced, new_note = DICT_REPLACEMENT[replacement]
+            if note_replaced not in notes_without_octave:
+                additions.append(replacement)
+            else:
+                idx = notes_without_octave.index(note_replaced)
+                notes[idx] = new_note.o(notes[idx].octave)
+                notes_without_octave[idx] = new_note.o(-new_note.octave)
+                dict_replaced[note_replaced] = notes_without_octave[idx]
+
         for addition in additions:
             note_after, new_note = DICT_ADDITION[addition]
-            idx = notes_without_octave.index(note_after) + 1
+            if note_after in dict_replaced.keys():
+                query_note = dict_replaced[note_after]
+            else:
+                query_note = note_after
+            idx = notes_without_octave.index(query_note) + 1
             new_note = new_note.o(note_after.octave)
             notes.insert(idx, new_note)
             notes_without_octave.insert(idx, new_note.o(-new_note.octave))
-
-        for replacement in replacements:
-            note_replaced, new_note = DICT_REPLACEMENT[replacement]
-            idx = notes_without_octave.index(note_replaced)
-            notes[idx] = new_note.o(notes[idx].octave)
-            notes_without_octave[idx] = new_note.o(-new_note.octave)
-
 
         for removal in removals:
             note_removed = DICT_REMOVAL[removal]

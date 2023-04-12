@@ -51,6 +51,10 @@ def test_very_complicated_chord2():
     chord = (I % I.M)['2[add4][M6](M3)(+)']
     assert chord.extension_notes == [s6.o(-1), s0, h4, s3, h8, h9]
 
+def test_replacement_become_addition():
+    chord = (I % I.M)['(M7)']
+    assert chord.extension_notes == [s0, s2, s4, h11]
+
 
 def test_replace_b9():
     chord = (I % I.M)['9(m9)']

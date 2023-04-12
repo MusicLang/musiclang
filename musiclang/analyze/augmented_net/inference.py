@@ -313,11 +313,7 @@ def predict(model, inputPath):
         bass.addLyric(formatChordLabel(chordLabel))
     rntxt = generateRomanText(schord, ts)
     filename, _ = inputPath.rsplit(".", 1)
-    annotatedScore = f"{filename}_annotated.musicxml"
-    annotationCSV = f"{filename}_annotated.csv"
     annotatedRomanText = f"{filename}_annotated.rntxt"
-    schord.stream().write(fp=annotatedScore)
-    dfout.to_csv(annotationCSV)
     with open(annotatedRomanText, "w") as fd:
         fd.write(rntxt)
 

@@ -19,11 +19,12 @@ V = v = Element(4)
 VI = vi = Element(5)
 VII = vii = Element(6)
 Atonal = (I % I.M)
+NC = (I % I.M)
 r = Silence(1)
 l = Continuation(1)
 
 # Chord scale
-c0 = Note('c', 0, 0, 1)  # b0 represents the first note in the chord.extension_notes
+c0 = Note('c', 0, 0, 1)  # c0 represents the first note in the chord.chord_notes
 c1 = Note('c', 1, 0, 1)
 c2 = Note('c', 2, 0, 1)
 c3 = Note('c', 3, 0, 1)
@@ -35,6 +36,33 @@ c8 = Note('c', 8, 0, 1)
 c9 = Note('c', 9, 0, 1)
 c10 = Note('c', 10, 0, 1)
 c11 = Note('c', 11, 0, 1)
+
+cu0 = Note('cu', 0, 0, 1)
+cu1 = Note('cu', 1, 0, 1)
+cu2 = Note('cu', 2, 0, 1)
+cu3 = Note('cu', 3, 0, 1)
+cu4 = Note('cu', 4, 0, 1)
+cu5 = Note('cu', 5, 0, 1)
+cu6 = Note('cu', 6, 0, 1)
+cu7 = Note('cu', 7, 0, 1)
+cu8 = Note('cu', 8, 0, 1)
+cu9 = Note('cu', 9, 0, 1)
+cu10 = Note('cu', 10, 0, 1)
+cu11 = Note('cu', 11, 0, 1)
+
+cd0 = Note('cd', 0, 0, 1)
+cd1 = Note('cd', 1, 0, 1)
+cd2 = Note('cd', 2, 0, 1)
+cd3 = Note('cd', 3, 0, 1)
+cd4 = Note('cd', 4, 0, 1)
+cd5 = Note('cd', 5, 0, 1)
+cd6 = Note('cd', 6, 0, 1)
+cd7 = Note('cd', 7, 0, 1)
+cd8 = Note('cd', 8, 0, 1)
+cd9 = Note('cd', 9, 0, 1)
+cd10 = Note('cd', 10, 0, 1)
+cd11 = Note('cd', 11, 0, 1)
+
 
 # Scale
 s0 = Note('s', 0, 0, 1)
@@ -58,6 +86,33 @@ b8 = Note('b', 8, 0, 1)
 b9 = Note('b', 9, 0, 1)
 b10 = Note('b', 10, 0, 1)
 b11 = Note('b', 11, 0, 1)
+
+bu0 = Note('bu', 0, 0, 1)  # b0 represents the first note in the chord.extension_notes
+bu1 = Note('bu', 1, 0, 1)  # b1 represents the second note in the chord.extension_notes
+bu2 = Note('bu', 2, 0, 1)
+bu3 = Note('bu', 3, 0, 1)
+bu4 = Note('bu', 4, 0, 1)
+bu5 = Note('bu', 5, 0, 1)
+bu6 = Note('bu', 6, 0, 1)
+bu7 = Note('bu', 7, 0, 1)
+bu8 = Note('bu', 8, 0, 1)
+bu9 = Note('bu', 9, 0, 1)
+bu10 = Note('bu', 10, 0, 1)
+bu11 = Note('bu', 11, 0, 1)
+
+bd0 = Note('bd', 0, 0, 1)  # b0 represents the first note in the chord.extension_notes
+bd1 = Note('bd', 1, 0, 1)  # b1 represents the second note in the chord.extension_notes
+bd2 = Note('bd', 2, 0, 1)
+bd3 = Note('bd', 3, 0, 1)
+bd4 = Note('bd', 4, 0, 1)
+bd5 = Note('bd', 5, 0, 1)
+bd6 = Note('bd', 6, 0, 1)
+bd7 = Note('bd', 7, 0, 1)
+bd8 = Note('bd', 8, 0, 1)
+bd9 = Note('bd', 9, 0, 1)
+bd10 = Note('bd', 10, 0, 1)
+bd11 = Note('bd', 11, 0, 1)
+
 
 
 # Absolute notes
@@ -106,11 +161,11 @@ mt = Note('d', 9, -2, 1)  # Medium tom
 oh = Note('d', 10, -2, 1)  # Open hat
 ht = Note('d', 11, -2, 1)  # High tom
 
-dr000 = Note('d', 0, -1, 1)
-dr010 = Note('d', 1, -1, 1)
-dr020 = Note('d', 2, -1, 1)
-dr030 = Note('d', 3, -1, 1)
-dr040 = Note('d', 4, -1, 1)
+hht = Note('d', 0, -1, 1)
+crash = Note('d', 1, -1, 1)
+other_hht = Note('d', 2, -1, 1)
+ride = Note('d', 3, -1, 1)
+ride_hard = Note('d', 4, -1, 1)
 dr050 = Note('d', 5, -1, 1)
 dr060 = Note('d', 6, -1, 1)
 dr070 = Note('d', 7, -1, 1)
@@ -472,6 +527,7 @@ DICT_REPLACEMENT = {
     "m3": (s2, h3),
     "M3": (s2, h4),
     "m6": (s5, h8),
+    "M2": (s2, h2),
     "M6": (s5, h9),
     "m7": (s6, h10),
     "M7": (s6, h11),
@@ -495,6 +551,7 @@ DICT_ADDITION = {
     "add2": (s0, s1),
     "add4": (s2, s3),
     "add6": (s4, s5),
+    "add7": (s4, s6),
     "add9": (s0, s1.o(1)),
     "add11": (s2, s3.o(1)),
     "add13": (s4, s5.o(1)),
@@ -512,6 +569,7 @@ DICT_ADDITION = {
     "m10": (s2, h3.o(1)),
     "M10": (s2, h4.o(1)),
     "#11": (s4, h6.o(1)),
+    "#4": (s4, h6),
     "m13": (s4, s5.o(1)),
     "M13": (s4, s5.o(1))
 }

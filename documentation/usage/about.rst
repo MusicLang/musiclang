@@ -16,6 +16,9 @@ This framework is not only another notation software but also
 an assistant that is able to automate some tasks that would normally be tedious for a composer.
 It is well suited to write new music or to manipulate existing music.
 
+Being a simple text language it aims to integrates
+naturally with Large language models.
+
 .. note :: This framework supposes that you have some basic knowledge on scales, tonalities and
     roman numeral notation of chords.
 

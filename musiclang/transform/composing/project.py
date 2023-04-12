@@ -20,10 +20,10 @@ def offset_between_chords(c1, c2):
 
     c1_degree = c1.tonality.degree if c1.tonality is not None else 0
     c2_degree = c2.tonality.degree if c2.tonality is not None else 0
-    c1_octave = c1.tonality.octave if c1.tonality is not None else 0
-    c2_octave = c2.tonality.octave if c2.tonality is not None else 0
+    c1_octave = c1.full_octave if c1.tonality is not None else 0
+    c2_octave = c2.full_octave if c2.tonality is not None else 0
     offset_tonalities = int(np.sign(c2_degree - c1_degree) * DEGREE_TO_SCALE_DEGREE[abs(c2_degree - c1_degree)])
-    offset_octave = c2_octave - c1_octave
+    offset_octave = c1_octave - c2_octave
     offset_octave_chords = c2.octave - c1.octave
 
     return offset_degrees + offset_tonalities + 7 * (offset_octave + offset_octave_chords)
@@ -67,7 +67,7 @@ def project_on_score_keep_notes(score1, score2):
     from musiclang import Score
     chord, _, _, _, chords = project_on_one_chord(score1)
     _, _, chords_offsets, _, _ = project_on_one_chord(score2)
-    projection = chord.to_score().project_on_score(score2, keep_score=False)
+    projection = chord.to_score().project_on_score(score2, voice_leading=False)
     projection = Score([s & (-i) for s, i in zip(projection.chords, chords_offsets)])
     return projection
 
@@ -313,6 +313,7 @@ def parse_relative_to_absolute(melody):
             new_note = note.copy()
             new_note.type = "s"
             new_note.val = DICT_NOTES[new_note.val]
+            result += new_note
         else:
             raise Exception('Could not handle type in project rhythm : {}'.format(note.type))
 
@@ -438,25 +439,6 @@ def get_nearest_note(candidates, note):
     candidate_val = min(candidates, key=lambda x: abs(x.val - note.val))
     return get_nearest_val(note, candidate_val.val)
 
-
-def get_nearest_note(candidates, note):
-    """
-
-    Parameters
-    ----------
-    candidates :
-        
-    note :
-        
-
-    Returns
-    -------
-
-    """
-    candidate_val = min(candidates, key=lambda x: abs(x.val - note.val))
-    return get_nearest_val(note, candidate_val.val)
-
-
 def get_nearest_val(n, new_val):
     """
 
@@ -575,33 +557,7 @@ def get_notes_candidate_in_context(rhythm_note, chord, dict_notes=None):
     return [rhythm_note]
 
 
-def get_nearest_note_in_context(rhythm_note, note, chord, dict_notes=None):
-    """
 
-    Parameters
-    ----------
-    rhythm_note :
-        
-    note :
-        
-    chord :
-        
-    dict_notes :
-         (Default value = None)
-
-    Returns
-    -------
-
-    """
-    if dict_notes is None:
-        dict_notes = {}
-    candidates = get_notes_candidate_in_context(rhythm_note, chord, dict_notes=dict_notes)
-    if len(candidates) == 0:
-        return note
-    elif note.is_note:
-        return get_nearest_note(candidates, note)
-    else:
-        return note
 
 
 def get_absolute_voice(voice):

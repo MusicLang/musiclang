@@ -259,6 +259,8 @@ def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, c
         if melody.notes[-1].duration == 0:
             melody.notes.pop()
 
+    from musiclang import Note
+    assert all([isinstance(m, Note) for m in melody.notes])
     assert melody.duration == (bar_time_end - bar_time_start) * tick_value
 
     return melody, return_cont

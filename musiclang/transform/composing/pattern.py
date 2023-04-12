@@ -2,11 +2,12 @@ from musiclang.library import *
 from musiclang import Note
 from fractions import Fraction as frac
 
+from musiclang import Score
 
 class Pattern:
 
     bar_duration = None
-    nb_instruments = None
+    nb_instruments = 8 # Maximum number of instruments
     drums = False
 
     def __call__(self, instruments=None, **kwargs):
@@ -15,8 +16,27 @@ class Pattern:
         if self.drums > 0:
             pattern_dict = self.get_drums(self.drums, pattern_dict)
 
-        score = NC(**pattern_dict)
-        return score
+        return pattern_dict
+
+
+    def to_json(self):
+        return {
+            "bar_duration": self.bar_duration,
+            "nb_instruments": self.nb_instruments,
+            "pattern": str(NC(**self.action([f'v__{i}' for i in range(self.nb_instruments)])))
+        }
+
+    @classmethod
+    def from_json(cls, json_dict: dict, instruments: list):
+        pattern: Score = Score.from_str(json_dict['pattern'])
+        nb_instruments = json_dict['nb_instruments']
+        all_instruments = pattern.score.keys()
+        instruments = [(f'v__{i}', instr) for i, instr in enumerate(instruments[:nb_instruments])]
+        pattern_dict = {new_instrument: pattern.score[base_instrument] for base_instrument, new_instrument in instruments}
+        for instr in all_instruments:
+            if not instr.startswith('v__'):
+                pattern_dict[instr] = pattern.score[instr]
+        return pattern_dict
 
     def action(self, instruments=None, **kwargs):
         raise NotImplemented
@@ -73,7 +93,7 @@ class Waltz(Pattern):
 
 class Nocturne(Pattern):
 
-    nb_instruments = 3
+    nb_instruments = 4
     bar_duration = 4
     spacing = frac(1)
 
@@ -81,8 +101,8 @@ class Nocturne(Pattern):
         pattern_dict = {}
         for i, instr in enumerate(instruments):
             if i == 0:
-                notes = [Note('x', i, 0, 1).set_duration(self.spacing) for i in range(3)]
-                local_melody = notes[0] + notes[1] + notes[2] + notes[1]
+                notes = [Note('x', i, 0, 1).set_duration(self.spacing) for i in range(self.nb_instruments)]
+                local_melody = notes[0] + notes[1] + notes[3] + notes[2]
             else:
                 local_melody = r.set_duration(self.bar_duration)
             pattern_dict[instr] = local_melody
@@ -91,28 +111,19 @@ class Nocturne(Pattern):
 
 
 class AlbertiBass(Pattern):
-    bar_duration = None
-    nb_instruments = 3
-    spacing = frac(1/2)
+    nb_instruments = 4
+    bar_duration = 4
+    spacing = frac(1)
 
-    def __call__(self, instruments=None, **kwargs):
+    def action(self, instruments=None, **kwargs):
         pattern_dict = {}
-
-        time = 0
-        local_melodies = [None, None, None]
-        idx = 0
-
-        while time < self.bar_duration:
-            template_note = Note('x', idx, 0, 1)
-
-            local_melodies[idx] += r.set_duration(self.spacing * idx)
-            local_melodies[idx] += template_note.set_duration(self.spacing)
-            local_melodies[idx] += l.set_duration(self.bar_duration - (idx + 1) * self.spacing)
-            time += self.spacing
-            idx = (idx + 1) % 3
-
-        for i, local_melody in enumerate(local_melodies):
-            pattern_dict[instruments[i]] = local_melody
+        for i, instr in enumerate(instruments):
+            if i == 0:
+                notes = [Note('x', i, 0, 1).set_duration(self.spacing) for i in range(self.nb_instruments)]
+                local_melody = notes[0] + notes[2] + notes[1] + notes[2]
+            else:
+                local_melody = r.set_duration(self.bar_duration)
+            pattern_dict[instr] = local_melody
 
         return pattern_dict
 

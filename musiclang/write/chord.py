@@ -129,6 +129,23 @@ class Chord:
         cp.tags = cp.tags.union(set(tags))
         return cp
 
+    def clear_note_tags(self):
+        """
+        Clear all tags from this object
+        Returns a copy of the object
+        Parameters
+        ----------
+        tag: str
+
+        Returns
+        -------
+        chord: Chord
+        """
+        cp = self.copy()
+        for k, v in cp.score.items():
+            cp.score[k] = v.clear_note_tags()
+        return cp
+
     def remove_tags(self, tags):
         """
         Remove several tags from the object.
@@ -407,6 +424,20 @@ class Chord:
         return Chord(**{key: val.remove_accidents() for key, val in self.score.items()}, tags=set(self.tags))
 
 
+    def get_scale_from_type(self, type):
+        if type == "h":
+            return self.chromatic_pitches
+        elif type == "s":
+            return self.scale_pitches
+        elif type == "b":
+            return self.chord_extension_pitches
+        elif type == "c":
+            return self.chord_pitches
+        else:
+            raise ValueError("This type is not associated to a scale")
+    @property
+    def chromatic_pitches(self):
+        return [self.scale_pitches[0] + i for i in range(12)]
     @property
     def scale_pitches(self):
         """
@@ -473,6 +504,9 @@ class Chord:
         notes = self.extension_notes
         return [self.to_pitch(n) for n in notes]
 
+    @property
+    def chord_extension_pitch_classes(self):
+        return [i % 12 for i in self.chord_extension_pitches]
     @property
     def parts(self):
         """
@@ -911,6 +945,69 @@ class Chord:
             new_parts[part] = self.score[part].o(octave)
 
         return self(**new_parts).add_tags(self.tags)
+
+    def patternize(self,
+                 nb_excluded_instruments=0,
+                 fixed_bass=True,
+                 voice_leading=True,
+                 melody=False,
+                 instruments=None,
+                 voicing=None,
+                 add_metadata=True,
+                   max_duration=16,
+                   **kwargs):
+        """
+        Extract the pattern from the chord
+
+        Parameters
+        ----------
+        nb_excluded_instruments: int (Default value = 0)
+            Number of instruments to exclude from the pattern
+        fixed_bass: bool (Default value = True)
+            If True, the bass will be fixed in the pattern response
+        voice_leading: bool (Default value = True)
+            If True, the voice leading will be applied in the pattern response
+        melody: bool (Default value = False)
+            Do you want to extract a melody or an accompaniment pattern
+        instruments: list[str] (Default value = None)
+            List of instruments to use for the pattern
+        voicing: list[Note] or None (Default value = None)
+            Voicing to use for the pattern, otherwise extract the good one
+        add_metadata: bool (Default value = True)
+            If True, add metadata and features to the pattern
+        Returns
+        -------
+        score_pattern: Chord
+            Patternized chord or score
+        pattern: dict
+            Pattern data of the score
+
+        """
+        from musiclang.analyze.pattern_analyzer import PatternExtractor
+        if self.duration > max_duration:
+            raise Exception(f'Patternize only works on chords with duration <= {max_duration} increase the max_duration parameter if you want to use it on longer chords')
+
+        dict_pattern = PatternExtractor(
+                 nb_excluded_instruments=nb_excluded_instruments,
+                 fixed_bass=fixed_bass,
+                 voice_leading=voice_leading,
+                 melody=melody,
+                 instruments=instruments,
+                 voicing=voicing
+                 ).extract(self)
+
+        pattern = dict_pattern['orchestra']['pattern']
+        if add_metadata:
+            from musiclang.analyze.pattern_analyzer import PatternFeatureExtractor
+            dict_pattern = PatternFeatureExtractor().extract(dict_pattern,
+                                                             self,
+                                                             melody=melody,
+                                                             nb_excluded_instruments=nb_excluded_instruments,
+                                                             )
+        return dict_pattern, pattern
+
+    def project_pattern(self, score, restart_each_chord=False):
+        return self.to_score().project_pattern(score, restart_each_chord=restart_each_chord)
 
     def o(self, octave):
         """Chord up or down the amount of octave in parameter, it will change the chord octave, not the melody

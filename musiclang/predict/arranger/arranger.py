@@ -40,7 +40,9 @@ class Arranger:
         return {key: pd.Series(val) for key, val in x.items()}
 
     def arrange(self, melody, tonality, candidates=None, instrument='piano',
-                temperature=0.0, eps=1e-5, zero_diag=True, weak_beat_importance=0.5):
+                temperature=0.0, eps=1e-5, zero_diag=True, weak_beat_importance=0.5,
+                return_score=False
+                ):
 
         # melody= [[(s0, 1), (s1, 0)], [], []]
         tone, mode = ChordElement.get_key_mode(tonality)
@@ -84,6 +86,9 @@ class Arranger:
                                               temperature=temperature,
                                               eps=eps,
                                               zero_diag=zero_diag)
+
+        if not return_score:
+            return chords
         # Re-arrange the melody inside the chords
         score = None
         for literal_chord, chord_change in zip(chords, melody):
@@ -156,8 +161,6 @@ class Arranger:
         for t in range(len(V) - 2, -1, -1):
             opt.insert(0, V[t + 1][previous]["prev"])
             previous = V[t + 1][previous]["prev"]
-        print(max_prob)
-        print(opt)
         return opt, max_prob
 
     def dptable(self, V):
@@ -174,14 +177,13 @@ class Arranger:
         obs = pitches
         # If temperature add random noise to each matrix
         if temperature > 0:
-            priors = {mode: prior + (temperature * np.random.randn(*prior.shape)) for mode, prior in priors.items()}
-            transitions = {mode: transition + (temperature * np.random.randn(*transition.shape)) for mode, transition in transitions.items()}
-            emissions = {mode: emission + (temperature * np.random.randn(*emission.shape)) for mode, emission in emissions.items()}
+            priors = {m: prior + (temperature * np.random.randn(*prior.shape)) for m, prior in priors.items()}
+            transitions = {m: transition + (temperature * np.random.randn(*transition.shape)) for m, transition in transitions.items()}
+            emissions = {m: emission + (temperature * np.random.randn(*emission.shape)) for m, emission in emissions.items()}
 
         if zero_diag:
-            for mode in transitions.keys():
-                transitions[mode] = transitions[mode] * (1 - np.eye(*transitions[mode].shape))
-
+            for mode_ in transitions.keys():
+                transitions[mode_] = transitions[mode_] * (1 - np.eye(*transitions[mode_].shape))
         chords, prob = self.viterbi(obs,
                                candidates,
                                states[mode],

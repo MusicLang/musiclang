@@ -4,6 +4,13 @@
 Changelog
 =========
 
+0.9.0
+-----
+
+First step toward integration of Deep learning model trained on musiclang language.
+
+- Add Score.predict_score method to predict the continuation of the current score. It currently takes no arguments
+
 0.8.0
 -----
 

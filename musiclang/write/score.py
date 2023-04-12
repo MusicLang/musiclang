@@ -415,6 +415,17 @@ class Score:
 
         return score
 
+    def to_events(self, tempo=120, **kwargs):
+        from musiclang.write.out import score_to_events
+        events = score_to_events(self, tempo=tempo, **kwargs)
+        return events
+
+    def to_events_pickle(self, filepath, tempo=120, **kwargs):
+        from musiclang.write.out import score_to_events
+        import pickle
+        events = score_to_events(self, tempo=tempo, **kwargs)
+        with open(filepath, 'wb') as f:
+            pickle.dump(events, f)
 
     def apply(self, keep_durations=True, **melodies):
         if keep_durations:
@@ -530,6 +541,157 @@ class Score:
         """
         from .time_utils import put_on_same_chord
         return put_on_same_chord(self)
+
+    @classmethod
+    def json_file_to_score(cls, filepath):
+        """
+        Load a score from an orchestrated json file
+        Parameters
+        ----------
+        filepath
+
+        Returns
+        -------
+
+        """
+        import json
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+
+        return cls.dict_to_score(data)
+
+    @classmethod
+    def from_file(cls, filepath):
+        """
+        Load a score from a musiclang text file
+        Parameters
+        ----------
+        filepath
+
+        Returns
+        -------
+
+        """
+        with open(filepath, 'r') as f:
+            data = f.read()
+        return cls.from_str(data)
+
+    def to_pickle(self, filepath, create_dir=False):
+        """
+        Save the score into a pickle file
+
+        Parameters
+        ----------
+        filepath : str
+                   Filepath on which to save the score
+        create_dir : bool (Default value = False)
+                    Create the directory if it does not exist
+        """
+        import pickle
+        import os
+        directory = os.path.dirname(filepath)
+        if create_dir and not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(filepath, 'wb') as f:
+            pickle.dump(self, f)
+
+    def predict_score(self):
+        """
+        Predict the score from the chords
+        Returns
+        -------
+        predicted_score: Score
+            The predicted score
+
+        """
+        from musiclang.predict.predictors import predict_score_from_hugginface
+        score_str = predict_score_from_hugginface(str(self))
+        return Score.from_str(score_str)
+
+
+    def to_text_file(self, filepath, create_dir=False):
+        """
+        Save as a musiclang txt file
+        Parameters
+        ----------
+        filepath
+        create_dir: bool (Default value = False)
+            Create the directory if it does not exist
+        Returns
+        -------
+
+        """
+        import os
+        directory = os.path.dirname(filepath)
+        if create_dir and not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(filepath, 'w') as f:
+            f.write(str(self))
+    @classmethod
+    def dict_to_score(cls, data):
+        """
+        Load a score from an orchestrated json file
+        Parameters
+        ----------
+        data
+
+        Returns
+        -------
+
+        """
+        from musiclang import PartComposer
+        score = PartComposer.compose(data)
+        return score
+
+
+
+
+    def get_patterns(self, nb_excluded_instruments=0, **kwargs):
+        metadata_base = {
+            "tempo": self.config['tempo']
+        }
+        metadata_base = {**metadata_base, **kwargs}
+        data = []
+        patterns = []
+        for chord_idx, chord in enumerate(self.chords):
+            if len(chord.parts) <= nb_excluded_instruments:
+                continue
+            try:
+                dict_pattern, pattern = chord.patternize(nb_excluded_instruments=nb_excluded_instruments, **kwargs)
+                dict_pattern['metadata'] = {**dict_pattern['metadata'], **metadata_base}
+                dict_pattern['metadata']['chord_idx'] = chord_idx
+                data.append(dict_pattern)
+                patterns.append(pattern)
+            except Exception as e:
+                print("Error with chord: ", chord)
+                print(e)
+        return data, patterns
+
+    def project_pattern(self, score, restart_each_chord=False):
+        """
+
+        Parameters
+        ----------
+        score: Score or list[Note]
+            - If score : Score on which the pattern will be projected
+            - If list : List of notes on which the pattern will be projected (It will replace the adequate "xi")
+
+        Returns
+        -------
+        score: Score
+            Score with the pattern projected on it
+        """
+        from musiclang.transform.composing import Patternator
+        if isinstance(score, list):
+            voicing = score
+            parts = self.parts
+            score = NC(**{part: Score.from_str(voicing[idx]).set_duration(self.duration)
+                          for idx, part in enumerate(parts)})
+        else:
+            pass
+
+        score_patterned = Patternator(restart_each_chord=restart_each_chord)(self, score)
+        return score_patterned
 
     def project_on_score(self, score2, keep_pitch=False, voice_leading=True, keep_score=False,
                          repeat_to_duration=False, allow_override=False):
@@ -689,19 +851,7 @@ class Score:
         from .arrange_utils import reduce
         return reduce(self, n_voices=n_voices, start_low=start_low, instruments=instruments)
 
-    def to_pickle(self, filepath):
-        """
-        Save the score into a pickle file
 
-        Parameters
-        ----------
-        filepath : str
-                   Filepath on which to save the score
-
-        """
-        import pickle
-        with open(filepath, 'wb') as f:
-            pickle.dump(self, f)
 
     @classmethod
     def from_annotation_file(cls, file):
@@ -791,14 +941,8 @@ class Score:
 
     @classmethod
     def from_str(cls, s):
-        from musiclang.library import I, II, III, IV, V, VI, VII
-        from musiclang.library import s0, s1, s2, s3, s4, s5, s6
-        from musiclang.library import h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11
-        from musiclang.library import su0, su1, su2, su3, su4, su5, su6
-        from musiclang.library import hu0, hu1, hu2, hu3, hu4, hu5, hu6, hu7, hu8, hu9, hu10, hu11
-        from musiclang.library import sd0, sd1, sd2, sd3, sd4, sd5, sd6
-        from musiclang.library import hd0, hd1, hd2, hd3, hd4, hd5, hd6, hd7, hd8, hd9, hd10, hd11
-        return eval(s.replace('\n', ''))
+
+        return eval(str(s).replace('\n', ''))
 
     @classmethod
     def from_sequence(cls, sequence, **kwargs):

@@ -5,7 +5,7 @@ All rights reserved.
 This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
-
+from ..constants import CONTINUATION, SILENCE
 from ..note_pitch import NotePitch
 from ..pitches.pitches_utils import note_to_pitch_result
 
@@ -201,6 +201,50 @@ def tracks_to_instruments(tracks):
     return instruments_idx, names
 
 
+
+
+def get_pitches_instruments(score):
+    tracks = get_track_list(score)
+
+    # For each track create melody
+    melodies = []
+    for track_idx, track in enumerate(tracks):
+        melody = create_melody_for_track(score, track_idx, track)
+        melodies.append([n[0] for n in melody if not n[CONTINUATION] and not n[SILENCE]])
+
+    return melodies
+def get_pitches(score):
+    notes = get_notes(score)
+    return [n[0] for n in notes if not n[CONTINUATION] and not n[SILENCE]]
+
+def get_notes(score):
+    """
+    Get all notes from a score
+
+    Parameters
+    ----------
+    score: Score
+        The score to get notes from
+
+    Returns
+    -------
+    notes: list
+        A list of notes
+
+    """
+    # Get all tracks
+    tracks = get_track_list(score)
+
+    # For each track create melody
+    notes = []
+    for track_idx, track in enumerate(tracks):
+        melody = create_melody_for_track(score, track_idx, track)
+        notes += melody
+
+    return notes
+
+
+
 def score_to_midi(score, filepath, **kwargs):
     """Transform a score to a midi file
 
@@ -224,12 +268,93 @@ def score_to_midi(score, filepath, **kwargs):
     tracks = get_track_list(score)
 
     # For each track create melody
-    notes = []
-    for track_idx, track in enumerate(tracks):
-        melody = create_melody_for_track(score, track_idx, track)
-        notes += melody
-
+    notes = get_notes(score)
     instruments, instrument_names = tracks_to_instruments(tracks)
 
     res = to_midi(notes, output_file=filepath, instruments=instruments, instrument_names=instrument_names, **kwargs)
     return res
+
+
+def score_to_events(score, **kwargs):
+    """Transform a score to a event list
+
+    Parameters
+    ----------
+    score :
+        param filepath:
+    kwargs :
+        return:
+    filepath :
+
+    **kwargs :
+
+
+    Returns
+    -------
+
+    """
+
+    # Get all tracks
+    tracks = get_track_list(score)
+
+    # For each track create melody
+    notes = get_notes(score)
+    instruments, instrument_names = tracks_to_instruments(tracks)
+
+    res = matrix_to_events(notes, instruments=instruments, instrument_names=instrument_names, **kwargs)
+    return res
+
+def matrix_to_events(matrix,
+                     ticks_per_beat=480,
+                     tempo=120,
+                     instruments={},
+                     time_signature=(4, 4),
+                     instrument_names=None, **kwargs):
+    matrix = list(sorted(matrix, key=lambda x: x[1]))
+    events = {}  # [(time, instrument, duration, message)]
+
+    for idx, el in enumerate(matrix):
+        pitch, offset, duration, velocity, track, silence, continuation, tempo_change, pedal = el
+        # Add note on, note off for each track
+        if tempo_change is not None:
+            tempo = tempo_change
+
+        real_instrument_name = instrument_names[track]
+        second_offset = offset * 60 / tempo
+        second_duration = float(duration * 60 / tempo)
+
+        if not continuation:
+            event = {
+                'event_name': 'note_on',
+                'duration': float(second_duration),
+                'pitch': int(pitch),
+                'offset': float(second_offset),
+                'velocity': int(velocity),
+                'instrument': real_instrument_name,
+                'silence': silence,
+                'pedal': pedal
+            }
+
+            events[track] = events.get(track, []) + [event]
+        if continuation:
+            last_event = events.get(track, None)
+            if last_event is not None:
+                last_event[-1]['duration'] += duration
+            else:
+                event = {
+                    'event_name': 'note_on',
+                    'duration': float(second_duration),
+                    'pitch': int(pitch),
+                    'offset': float(second_offset),
+                    'velocity': int(velocity),
+                    'instrument': real_instrument_name,
+                    'silence': True,
+                    'pedal': pedal
+                }
+                events[track] = events.get(track, []) + [event]
+
+    events = sum([ev for key, ev in events.items()], [])
+    events = [e for e in events if not e['silence']]
+    events = list(sorted(events, key=lambda x: x['offset']))
+
+    return events

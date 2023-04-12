@@ -31,7 +31,6 @@ class Composer:
 
         """
         text = self.assemble_progressions(self.progressions)
-        print(text)
         score = Score.from_annotation(text)
         # Use standard pipeline
         if self.continuation:

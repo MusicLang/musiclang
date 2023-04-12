@@ -40,18 +40,32 @@ DICT_TONALITY = {
         '#II': (3, 'M'),
         'bbii': (0, 'm'),
         'bbII': (0, 'M'),
+        "bbIII": (2, "M"),
+        "bbiii": (2, "m"),
         'bbvi': (7, 'm'),
         'bbVI': (7, 'M'),
+        'bbvii': (9, 'm'),
+        'bbVII': (9, 'M'),
         '#V': (8, 'M'),
         '#v': (8, 'm'),
         'biv': (4, 'm'),
+        "bbiv": (3, "m"),
+        "bbIV": (3, "M"),
+        'bbv': (5, 'm'),
+        'bbV': (5, 'M'),
         'bbI': (10, 'M'),
-        'bI': (11, 'M')
+        'bI': (11, 'M'),
+        'bi': (11, 'm'),
+        "bbi": (10, "m"),
+        "#III": (5, "M"),
+        "#iii": (5, "m"),
     },
     'm': {
         'I': (0, 'M'),
         'II': (2, 'M'),
         'III': (3, 'M'),
+        '#III': (4, 'M'),
+        'bIV': (4, 'M'),
         'IV': (5, 'M'),
         'V': (7, 'M'),
         'VI': (8, 'M'),
@@ -73,6 +87,8 @@ DICT_TONALITY = {
         'bvi': (8, 'M'),
         'bVII': (10, 'M'),
         'bvii': (10, 'm'),
+        'bbvii': (9, 'm'),
+        'bbVII': (9, 'M'),
         '#VII': (11, 'M'),
         '#vii': (11, 'm'),
         '#IV': (6, 'M'),
@@ -87,14 +103,28 @@ DICT_TONALITY = {
         '#II': (3, 'M'),
         'bbii': (0, 'm'),
         'bbII': (0, 'M'),
+        "bbIII": (1, "M"),
+        "bbiii": (1, "m"),
         'bbvi': (7, 'm'),
         'bbVI': (6, 'M'),
         '#V': (8, 'M'),
         '#v': (8, 'm'),
         'biv': (4, 'm'),
-        'bbI': (10, 'M'),
-        'bI': (11, 'M')
+        "bbiv": (3, "m"),
+        "bbIV": (3, "M"),
+        'bbv': (5, 'm'),
+        'bbV': (5, 'M'),
+        'bI': (11, 'M'),
+        'bi': (11, 'm'),
+        "bbi": (10, "m"),
+        "bbI": (10, "M"),
+        "#iii": (4, "m"),
     }
+}
+
+DICT_TONALITY_REVERSE = {
+    'M': {value: key for key, value in reversed(DICT_TONALITY['M'].items())},
+    'm': {value: key for key, value in reversed(DICT_TONALITY['m'].items())}
 }
 
 DICT_RELATIVE_CHANGE = {
@@ -151,7 +181,8 @@ DICT_RELATIVE_CHANGE = {
         '#ivo': (6, 'm', 7),
         '#ivø': (6, 'M', 7),
         "#iiio": (6, 'm', 5),
-        '#viio': (6, 'm', 0)
+        '#viio': (6, 'm', 0),
+        #"III+": (2, 'm', 1)
     },
     'm': {
         'I': (0, 'M', 0),  # Degree, mode, offset tonality

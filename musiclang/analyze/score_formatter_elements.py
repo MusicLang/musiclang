@@ -17,6 +17,21 @@ class Bar(BaseElement):
         real_idx = str(self.idx) if self.idx is not None else 'x'
         return f'\nm{real_idx}'
 
+
+class TonalityLine(BaseElement):
+
+    def __init__(self, text):
+        self.text = text
+        self.tonality = None
+        self.init()
+
+    def init(self):
+        self.tonality = self.text.split(':')[1].replace(' ', '')
+    def to_text(self):
+        return f'{self.key}:{self.mode}'
+
+    def parse(self, score, parent):
+        return CurrentTonality(self.tonality).parse(score, parent)
 class CurrentTonality(BaseElement):
 
     def __init__(self, text):

@@ -186,6 +186,10 @@ class Note:
         return cp
 
     @property
+    def interpolate(self):
+        return self.add_tag('interpolate')
+
+    @property
     def accent(self):
         return self.add_tag('accent')
 
@@ -243,113 +247,9 @@ class Note:
         return self.add_tag('retarded')
 
     def realize_tags(self, last_note=None, next_note=None):
-        import musiclang.library as L
-        new_note = self.copy()
-        duration = self.duration
-        if 'accent' in self.tags:
-            new_note.amp = min(120, new_note.amp + 10)
+        from .ornementation import realize_tags
 
-        if 'mordant' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(1, 8)
-            if duration >= frac(1, 4):
-                new_note = new_note.set_duration(mordant_duration) + L.su1.t + new_note.set_duration(self.duration - 2 * mordant_duration)
-        if 'inv_mordant' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(1, 8)
-            if duration >= frac(1, 4):
-                new_note = new_note.set_duration(mordant_duration) + L.sd1.t + new_note.set_duration(self.duration - 2 * mordant_duration)
-
-        if 'chroma_mordant' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(1, 8)
-            if duration >= frac(1, 4):
-                new_note = new_note.set_duration(mordant_duration) + L.hu1.t + new_note.set_duration(self.duration - 2 * mordant_duration)
-        if 'inv_chroma_mordant' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(1, 8)
-            if duration >= frac(1, 4):
-                new_note = new_note.set_duration(mordant_duration) + L.hd1.t + new_note.set_duration(self.duration - 2 * mordant_duration)
-
-        if 'grupetto' in self.tags:
-            duration = self.duration
-
-            if duration >= frac(1):
-                mordant_duration = frac(1, 4)
-                new_note = new_note.n + L.su1.set_duration(mordant_duration) + new_note.set_duration(mordant_duration)\
-                           + L.sd1.set_duration(mordant_duration) + L.su1.set_duration(duration - 3 * mordant_duration)
-            elif duration >= frac(1, 2):
-                mordant_duration = frac(2, 3) * frac(1, 8)
-                new_note = new_note.n + L.su1.set_duration(mordant_duration) + new_note.set_duration(mordant_duration)\
-                           + L.sd1.set_duration(mordant_duration) + L.su1.set_duration(duration - 3 * mordant_duration)
-
-        if 'inv_grupetto' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(2, 3) * frac(1, 8)
-            if duration >= frac(1, 2):
-                new_note = new_note.n + L.sd1.t3 + new_note.set_duration(mordant_duration)\
-                           + L.su1.t3 + L.sd1.set_duration(duration - 3 * mordant_duration)
-
-
-        if 'chroma_grupetto' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(2, 3) * frac(1, 8)
-            if duration >= frac(1, 2):
-                new_note = new_note.n + L.hu1.t3 + new_note.set_duration(mordant_duration)\
-                           + L.hd1.t3 + L.hu1.set_duration(duration - 3 * mordant_duration)
-
-
-        if 'inv_chroma_grupetto' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(2, 3) * frac(1, 8)
-            if duration >= frac(1, 2):
-                new_note = new_note.n + L.hd1.t3 + new_note.set_duration(mordant_duration)\
-                           + L.hu1.t3 + L.hd1.set_duration(duration - 3 * mordant_duration)
-
-        if 'roll' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(1, 4)
-            nb_rolls = int(duration / mordant_duration)
-            melody = None
-            for i in range(nb_rolls):
-                if (i % 2) == 0:
-                    melody += new_note.set_duration(mordant_duration)
-                else:
-                    melody += L.su1.set_duration(mordant_duration)
-
-            if nb_rolls != (duration / mordant_duration):
-                melody += L.l(duration - nb_rolls * mordant_duration)
-            new_note = melody
-
-        if 'roll_fast' in self.tags:
-            duration = self.duration
-            mordant_duration = frac(1, 6)
-            nb_rolls = int(duration / mordant_duration)
-            melody = None
-            for i in range(nb_rolls):
-                if (i % 2) == 0:
-                    melody += new_note.set_duration(mordant_duration)
-                else:
-                    melody += L.su1.set_duration(mordant_duration)
-
-            if nb_rolls != (duration / mordant_duration):
-                melody += L.l(duration - nb_rolls * mordant_duration)
-            new_note = melody
-
-        if 'suspension_prev' in self.tags:
-            if last_note:
-                new_note = L.l.set_duration(duration / 2) + new_note.set_duration(duration / 2)
-
-        if 'suspension_prev_repeat' in self.tags:
-            if last_note:
-                new_note = last_note.set_duration(duration / 2) + new_note.set_duration(duration / 2)
-
-        if 'retarded' in self.tags:
-            retarded_duration = frac(1, 12)
-            new_note = L.l.set_duration(retarded_duration) + new_note.set_duration(duration - retarded_duration)
-        assert new_note.duration == self.duration
-
-        return new_note
+        return realize_tags(self, last_note, next_note)
 
 
 
@@ -421,6 +321,8 @@ class Note:
         cp.tags = cp.tags - set(tags)
         return cp
 
+    def clear_note_tags(self):
+        return self.clear_tags()
 
     def remove_tag(self, tag):
         """
@@ -545,6 +447,8 @@ class Note:
 
     def set_amp(self, amp):
         new_note = self.copy()
+        if isinstance(amp, float):
+            amp = int(amp)
         if isinstance(amp, int):
             new_note.amp = amp
         elif isinstance(amp, str):
@@ -800,15 +704,21 @@ class Note:
                     result += f".augment(frac({self.duration.numerator}, {self.duration.denominator}))"
 
         if self.octave != 0 and self.is_note:
-            result += f".o({self.octave})"
+            if not self.is_relative:
+                result += f".o({self.octave})"
+            else:
+                result += f".oabs({self.octave})"
+
         if self.mode is not None and self.is_note:
             result += f".{self.mode}"
         if self.accident is not None and self.is_note:
             result += f".{self.accident}"
-        if self.is_note:
+        if self.is_note or self.type == "x":
             amp_figure = self.amp_figure
             if amp_figure != 'mf':
                 result += f".{self.amp_figure}"
+        if len(self.tags) > 0:
+            result += f".add_tags({self.tags})"
 
         return result
 
@@ -970,6 +880,14 @@ class Note:
             new_note = candidates[val % len(candidates)].o((val // len(candidates)) + octave)
             new_note = new_note.set_duration(self.duration)
             new_note.amp = self.amp
+            return new_note
+
+        elif self.type in ['a']:
+            new_note = self.copy()
+            base_note = chord.parse(chord.to_pitch(self))
+            new_note.type = base_note.type
+            new_note.val = base_note.val
+            new_note.octave = base_note.octave
             return new_note
         else:
             return self

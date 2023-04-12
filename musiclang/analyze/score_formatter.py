@@ -1,6 +1,6 @@
 
 from musiclang.library import *
-from .score_formatter_elements import BarLine, BarChord, Beat, MultiBar, Event, TimeSignature
+from .score_formatter_elements import BarLine, BarChord, Beat, MultiBar, Event, TimeSignature, TonalityLine
 import re
 """
 The roman numeral parsed language is an extension of this paper : 
@@ -15,12 +15,12 @@ class ScoreFormatter:
 
     def __init__(self, text, instruments=None, voicing=None):
         self.text = text
-        self.time_signature = None
-        self.prev_time_signature = None
+        self.time_signature = (4, 4)
+        self.prev_time_signature = (4, 4)
         self.elements = []
-
+        self.first_change_time_signature = True
         self.bar_elements = {}
-        self.allow_multi_signature = False
+        self.allow_multi_signature = True
         ## PARAMETERS
         self.rhythm = {}
         self.counterpoint = []
@@ -40,6 +40,21 @@ class ScoreFormatter:
         self.chord_started_time = (0, 0)  # Bar idx, beat idx
         ## Init elements
         self.init()
+
+    @classmethod
+    def convert_harmony_with_relative_tones(cls, text):
+        """
+        Convert roman numeral harmony to roman numeral with only one tonality at the beginning
+        Parameters
+        ----------
+        text
+
+        Returns
+        -------
+
+        """
+
+
 
     def add_chord(self, chord, score):
         if score is not None:
@@ -82,6 +97,11 @@ class ScoreFormatter:
             self.prev_time_signature = tuple(self.time_signature)
         else:
             self.prev_time_signature = time_signature
+
+        if self.first_change_time_signature:
+            self.first_change_time_signature = False
+            self.prev_time_signature = time_signature
+
         self.time_signature = time_signature
 
     def set_bar_number(self, idx):
@@ -102,6 +122,8 @@ class ScoreFormatter:
 
     @property
     def duration(self):
+        if self.time_signature is None:
+            return 4
         return 4 * self.time_signature[0] / self.time_signature[1]
 
     @property
@@ -118,6 +140,8 @@ class ScoreFormatter:
     def is_time_signature(self, line):
         return line.startswith('Time') or line.startswith('time')
 
+    def is_tonality(self, line):
+        return line.lower().startswith('tonality') or line.lower().startswith('key')
     def is_event(self, line):
         return line.startswith('!')
 
@@ -169,10 +193,16 @@ class ScoreFormatter:
                 score[start_idx:end_idx] = ScoreRhythm(rhythm_dict={key: metric})(score[start_idx: end_idx])
         return score
 
-    def parse(self, allow_multi_signature=False):
+    def parse(self, allow_multi_signature=True, tonality=None):
         """
         Parse the chord progression into music lang using voice leading
         """
+
+        if tonality is not None:
+            for idx, el in enumerate(self.elements):
+                if isinstance(el, TonalityLine):
+                    self.elements[idx] = TonalityLine("Tonality :" + tonality)
+
         self.allow_multi_signature = allow_multi_signature
         interpreter = ScoreInterpreter(self)
         score = interpreter.parse()
@@ -203,6 +233,8 @@ class ScoreFormatter:
             line = line.lstrip('\t').lstrip(' ')
             if self.is_time_signature(line):
                 self.elements.append(TimeSignature(line))
+            elif self.is_tonality(line):
+                self.elements.append(TonalityLine(line))
             elif self.is_event(line):
                 self.elements.append(Event(line, self))
             elif self.is_multibar(line):

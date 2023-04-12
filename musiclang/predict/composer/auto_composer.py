@@ -1,13 +1,17 @@
 from musiclang import Score
+
 from .composer import Composer
 
 from musiclang import Tonality, ScoreFormatter, Element
 from musiclang.transform.library import VoiceLeading
-
+from musiclang.library import NC
+from musiclang.transform.composing.pattern import Pattern
 def auto_compose(melody, harmony, orchestra, voicing, patternator,
                  tonality, solo_instrument, instruments, acc_amp='mf',
                  fixed_bass=True, voice_leading=True
                  ):
+    from musiclang.transform import Patternator
+
 
     if isinstance(melody, list):
         melodies = melody
@@ -48,13 +52,22 @@ def auto_compose(melody, harmony, orchestra, voicing, patternator,
     basses = [f'v_{j}__0' for j in range(len(instrumentss))]
     temp_instrumentss = [[f'v_{j}__{i}' for i in range(len(instr))] for j, instr in enumerate(instrumentss)]
 
-    score_theme = real_tonality(**{f'm__{idx}': melody for idx, melody in enumerate(melodies)}).to_absolute_note()
+    if len(melodies) > 0:
+        score_theme = real_tonality(**{f'm__{idx}': melody for idx, melody in enumerate(melodies)}).to_absolute_note()
+    else:
+        score_theme = None
 
     flat_temp_instruments = sum(temp_instrumentss, [])
     flat_voicings = sum(voicings, [])
     chords = ScoreFormatter(harmony, instruments=flat_temp_instruments, voicing=flat_voicings).parse()
-    score = score_theme.project_on_score(chords, keep_pitch=True, voice_leading=True, keep_score=True)
-    assert score.duration == score_theme.duration, f"Durations don't match between theme ({score_theme.duration}) and chords"
+
+    if score_theme is not None:
+        score = score_theme.project_on_score(chords, keep_pitch=True, voice_leading=True, keep_score=True)
+        assert score.duration == score_theme.duration, f"Durations don't match between theme ({score_theme.duration}) and chords"
+    else:
+        score = chords
+
+
     fixed_voices = [f'm__{i}' for i in range(len(melodies))]
     if fixed_bass:
         fixed_voices = fixed_voices + [bass for bass, fixed_bass in zip(basses, fixed_basses) if fixed_bass]
@@ -62,10 +75,12 @@ def auto_compose(melody, harmony, orchestra, voicing, patternator,
         if not voice_leading:
             fixed_voices = fixed_voices + instruments[1:]
 
-    score = VoiceLeading(fixed_voices=fixed_voices)(score)
+    score = VoiceLeading(fixed_voices=fixed_voices)(score, max_norm=3, max_norm_rules=1)
 
+    patternator = Patternator(**patternator)
     for orchestra, temp_instruments in zip(orchestras, temp_instrumentss):
-        score = patternator(orchestra(instruments=temp_instruments).set_amp(acc_amp), score)
+        realized_orchestra = NC(**Pattern.from_json(orchestra, instruments=temp_instruments))
+        score = patternator(realized_orchestra.set_amp(acc_amp), score)
 
     score = score.replace_instruments(**{temp_instr: instr for temp_instruments, instruments in zip(temp_instrumentss, instrumentss)
                                          for temp_instr, instr in zip(temp_instruments, instruments)})

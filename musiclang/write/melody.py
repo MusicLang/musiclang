@@ -382,6 +382,8 @@ class Melody:
     def to_standard_note(self, chord):
         return Melody([n.to_standard_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
 
+    def clear_note_tags(self):
+        return sum([n.clear_note_tags() for n in self.notes], None)
 
     def to_extension_note(self, chord):
         return Melody([n.to_extension_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))

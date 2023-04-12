@@ -28,6 +28,22 @@ def voice_to_channel(instrument_list, voice, instruments):
     return instrument_list.index(instrument_of_voice)
 
 
+
+def matrix_to_events(matrix, 
+                     output_file=None, 
+                     ticks_per_beat=480, 
+                     tempo=120, 
+                     instruments={}, 
+                     time_signature=(4, 4),
+                     instrument_names=None):
+    matrix = np.asarray(matrix)
+    events = [] # [(time, instrument, duration, message)]
+    for el in matrix:
+        pitch, offset, duration, velocity, track, silence, continuation, tempo, pedal = el
+        # Add note on, note off for each track
+
+    return events
+
 def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
                   instrument_names=None, **kwargs):
     """
@@ -59,7 +75,6 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     import os
 
     matrix = np.asarray(matrix)
-
     def number_to_channel(n):
         """
 

@@ -81,7 +81,6 @@ class VoiceLeading:
         if exclude_rules is not None:
             self.rules = [r for r in self.rules if r not in exclude_rules]
 
-
     def optimize(self, score, **kwargs):
         """
         Main entry point to optimize a score
@@ -222,7 +221,6 @@ class VoiceLeading:
             type_mask += 1 * (self.type == type)
         type_mask = 1 * (type_mask > 0)
         self.dvalsmask *= type_mask.astype(np.int16)
-
         self.candidates = [[self.candidates_raw[idxc][self.type[idxi, idxc]]
                             for idxc, chord in enumerate(score.chords)]
                            for idxi, instrument in enumerate(self.instruments)]
@@ -297,7 +295,7 @@ class VoiceLeading:
         # Move in direction of sgn
 
 
-    def optimize_rules(self, dvals, max_iter_rules=200, max_norm=3, temperature=1, **kwargs):
+    def optimize_rules(self, dvals, max_iter_rules=200, max_norm_rules=1, temperature=1, **kwargs):
 
         def eval_solution(dvals):
             pitches = self.get_pitch_solution(dvals)
@@ -306,15 +304,25 @@ class VoiceLeading:
 
         pitches = self.get_pitch_solution(dvals)
         problems = self.get_problems(pitches)
-
         min_score = eval_solution(dvals)
+        tried = set()
+        print(temperature)
         for i in range(max_iter_rules):
             pitches = self.get_pitch_solution(dvals)
             problems = self.get_problems(pitches)
-            proba = np.exp(problems/temperature)/np.sum(np.exp(problems/temperature))
-            delta = self.rg.randint(-1, 2, proba.shape) * (self.rg.random(proba.shape) < proba)
-            proposed_sol = (dvals + delta).clip(-max_norm, max_norm)
+            noise = 0.0
+            proba = np.exp((problems + noise)/temperature)/np.sum(np.exp((problems + noise)/temperature))
+            m, M = -1, 2
+            delta = self.rg.randint(-max_norm_rules, max_norm_rules+1, proba.shape) * (self.rg.random(proba.shape) < proba)
+            delta = delta.clip(-max_norm_rules, max_norm_rules)
+            proposed_sol = (dvals + delta)
             proposed_sol *= self.dvalsmask
+            proposed_set = tuple(proposed_sol.flatten().tolist())
+            if proposed_set in tried:
+                continue
+            else:
+                tried.add(proposed_set)
+
             score = eval_solution(proposed_sol)
             if score < min_score:
                 min_score = score
@@ -354,7 +362,7 @@ class VoiceLeading:
                 if v2 >= v1:
                     break
                 for idxc in range(pitches.shape[1]):
-                    rel_val = pitches[v2, idxc] - pitches[v1, idxc]
+                    rel_val = pitches[v1, idxc] - pitches[v2, idxc]
                     abs_val = abs(rel_val)
                     val = abs_val % 12
                     intervals[v1, v2, idxc] = val

@@ -137,6 +137,7 @@ class Melody:
         """
         cp = self.copy()
         cp.tags = set()
+
         return cp
 
     def set_amp(self, amp):

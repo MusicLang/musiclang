@@ -256,7 +256,7 @@ class Score:
         score: Score
         """
 
-        score = None
+        chords = []
         for chord_raw in self.chords:
             chord = chord_raw.copy()
             chord_score = chord.score
@@ -265,9 +265,9 @@ class Score:
                 if all([n.type == 'r' for n in chord_score[instrument]]):
                     del chord_score[instrument]
 
-            score += chord(**chord_score)
+            chords.append(chord(**chord_score))
 
-        return score
+        return sum(chords, None)
 
     def replace_instruments(self, **instruments_dict):
         """

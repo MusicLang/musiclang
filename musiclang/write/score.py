@@ -6,7 +6,7 @@ This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
 from musiclang.library import *
-
+import re
 
 class Score:
     """Represents a score in musiclang
@@ -1004,8 +1004,15 @@ class Score:
 
     @classmethod
     def from_str(cls, s):
-
-        return eval(str(s).replace('\n', ''))
+        try:
+            from musiclang import Chord
+            pattern = re.compile(r'(?<=\))\s*\+\s*(?=\()')
+            data = re.split(pattern, str(s))
+            chords = [eval(str(d).replace('\n', '')) for d in data]
+            assert isinstance(chords[0], Chord)
+            return Score(chords)
+        except:
+            return eval(str(s).replace('\n', ''))
 
     @classmethod
     def from_sequence(cls, sequence, **kwargs):

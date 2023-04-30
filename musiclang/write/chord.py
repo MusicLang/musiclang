@@ -270,6 +270,54 @@ class Chord:
             pass
 
 
+    def realize_tags(self, last_note=None, final_note=None):
+        new_chord_dict = {}
+        last_note = last_note or {}
+        final_note = final_note or {}
+        for key, melody in self.score.items():
+            new_chord_dict[key] = melody.realize_tags(last_note.get(key, None), final_note.get(key, None))
+        return self(**new_chord_dict)
+
+
+    def correct_chord_octave(self):
+        """
+        Correct chord octaves to minimize distance with central C
+
+        Returns
+        -------
+        score: Score
+        """
+        from musiclang.analyze import inverse_recursive_correct_octave
+        return inverse_recursive_correct_octave(self)
+
+    def split(self, max_length):
+        """
+        Split the chords that are too long into smaller chords
+        Parameters
+        ----------
+        max_length: fraction
+           The maximum length of a chord
+
+        Returns
+        -------
+        score: Score
+           The score with shorter chords
+
+        """
+        score = None
+        if self.duration <= max_length:
+            return self
+        nb_chords = 1 + (self.duration // max_length)
+        remaining_duration = self.duration % max_length
+        from musiclang.library import s0
+        chords = [self(s0.augment(max_length)) for i in range(nb_chords)]
+        if remaining_duration > 0:
+            chords[-1].score['piano__0'] = chords[-1].score['piano__0'].set_duration(remaining_duration)
+        else:
+            chords = chords[:-1]
+        chords = sum(chords, None)
+        return self.project_on_score(chords)
+
 
     @property
     def mode(self):

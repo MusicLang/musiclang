@@ -6,7 +6,7 @@ This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
 from musiclang.library import *
-
+import re
 
 class Score:
     """Represents a score in musiclang
@@ -256,7 +256,7 @@ class Score:
         score: Score
         """
 
-        score = None
+        chords = []
         for chord_raw in self.chords:
             chord = chord_raw.copy()
             chord_score = chord.score
@@ -265,9 +265,9 @@ class Score:
                 if all([n.type == 'r' for n in chord_score[instrument]]):
                     del chord_score[instrument]
 
-            score += chord(**chord_score)
+            chords.append(chord(**chord_score))
 
-        return score
+        return sum(chords, None)
 
     def replace_instruments(self, **instruments_dict):
         """
@@ -390,6 +390,32 @@ class Score:
 
         return list(sorted(result, key=lambda x: (x.split('__')[0], int(x.split('__')[1]))))
 
+
+    def normalize(self):
+        """
+        Normalize the score to be standardized for the language model
+        - Normalize instruments in each chord
+        - Convert relative notes to real notes
+        - Correct chord octaves to minimize distance with central C
+        FIXME : Relative notes should be converted first
+
+        Returns
+        -------
+        score: Score
+        """
+        score = self.to_standard_note()
+        score = score.correct_chord_octave()
+        score = score.split_too_long_chords(8)
+        return score
+
+    def correct_chord_octave(self):
+        """
+        Correct chord octaves to minimize distance with central C
+        Returns
+        -------
+        score: Score
+        """
+        return sum([c.correct_chord_octave() for c in self.chords], None)
 
     def octaver(self, **instruments_octaves):
         """
@@ -595,10 +621,10 @@ class Score:
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
 
-    def predict_score(self):
+    def predict_score(self, temperature=0.5, top_k=10):
         """
         Predict the continuation of the score given the current score
-        Currently it takes no argument.
+
         Please note that this method is still very experimental as we are
         currently improving our musiclang language model.
 
@@ -607,10 +633,42 @@ class Score:
         predicted_score: Score
             The predicted score
 
+        temperature: float
+            The temperature of the prediction. The higher the more random
+            To avoid syntax errors set lower than 0.75
+        top_k: int
+            The number of tokens to consider for the prediction.
+            The higher the more random
+            To avoid syntax errors set lower than 20
+
         """
         from musiclang.predict.predictors import predict_score_from_hugginface
-        score_str = predict_score_from_hugginface(str(self))
+        score_str = predict_score_from_hugginface(str(self.normalize()), temperature=temperature, top_k=top_k)
         return Score.from_str(score_str)
+
+
+    def split_too_long_chords(self, max_length):
+        """
+        Split the chords that are too long into smaller chords
+        Parameters
+        ----------
+        max_length: fraction
+            The maximum length of a chord
+
+        Returns
+        -------
+        score: Score
+            The score with shorter chords
+
+        """
+
+        new_score = None
+        for chord in self:
+            if chord.duration > max_length:
+                new_score += chord.split(max_length)
+            else:
+                new_score += chord
+        return new_score
 
     def to_text_file(self, filepath, create_dir=False):
         """
@@ -888,7 +946,9 @@ class Score:
         """
         from musiclang.analyze import parse_to_musiclang
         score, config = parse_to_musiclang(filename)
-        score.config = config
+        real_config = {**score.config, **config}
+        score = score.normalize()
+        score.config = real_config
         return score
 
     def to_extension_note(self):
@@ -944,8 +1004,15 @@ class Score:
 
     @classmethod
     def from_str(cls, s):
-
-        return eval(str(s).replace('\n', ''))
+        try:
+            from musiclang import Chord
+            pattern = re.compile(r'(?<=\))\s*\+\s*(?=\()')
+            data = re.split(pattern, str(s))
+            chords = [eval(str(d).replace('\n', '')) for d in data]
+            assert isinstance(chords[0], Chord)
+            return Score(chords)
+        except:
+            return eval(str(s).replace('\n', ''))
 
     @classmethod
     def from_sequence(cls, sequence, **kwargs):
@@ -1071,6 +1138,21 @@ class Score:
 
         code = chord_serie_to_code(self, **kwargs)
         return code
+
+
+    def realize_tags(self):
+        new_score = None
+        last_notes = {}
+        final_notes = {}
+        for idx, chord in enumerate(self.chords):
+            if idx > 0:
+                last_notes = {instrument: self.chords[idx-1].score[instrument].notes[-1] for instrument in self.chords[idx-1].score.keys()}
+            if idx < len(self.chords)-1:
+                final_notes = {instrument: self.chords[idx+1].score[instrument].notes[0] for instrument in self.chords[idx+1].score.keys()}
+
+            new_score += chord.realize_tags(last_note=last_notes, final_note=final_notes)
+
+        return new_score
 
     def to_code_file(self, filepath, **kwargs):
         """Export the chord serie as a file representing valid python code that recreates the score

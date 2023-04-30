@@ -142,3 +142,22 @@ def test_project_pattern_score_repeat_if_necessary():
 
     result_score = pattern.project_pattern(score_voicing, restart_each_chord=False)
     assert expected_result == result_score
+
+from musiclang.library import *
+
+def test_split_too_long_chords():
+    score = None + (I %V.M)(s0.augment(7) + s1.augment(2), s4.augment(9))
+
+    splitted_score = score.split_too_long_chords(8)
+
+    print(splitted_score)
+
+    expected_score = (
+    (I % V.M)(
+        piano__0=s0.augment(frac(7, 1)) + s1,
+        piano__1=s4.augment(frac(8, 1)))+
+    (I % V.M)(
+        piano__0=l,
+        piano__1=l)
+    )
+    assert splitted_score == expected_score

@@ -220,7 +220,7 @@ def interpolate(new_note, last_note, next_note):
     from musiclang import Note
     if next_note is None or not next_note.is_note or not new_note.is_note:
         return new_note
-
+    
     first_val = new_note.val if new_note.type == 's' else int(7 * new_note.val/12)
     first_val += 7 * new_note.octave
     second_val = next_note.val if next_note.type == 's' else int(7 * next_note.val / 12)
@@ -228,7 +228,8 @@ def interpolate(new_note, last_note, next_note):
     delta_scale = second_val - first_val
     if delta_scale == 0:
         return new_note
-    duration = frac(new_note.duration, abs(delta_scale))
+    duration = frac(new_note.duration, int(abs(delta_scale)))
+
     up = delta_scale > 0
     temp_note = L.su1.set_duration(duration) if up else L.sd1.set_duration(duration)
     melody = None

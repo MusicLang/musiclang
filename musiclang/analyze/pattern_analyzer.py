@@ -115,7 +115,43 @@ def exclude_instruments(chord, nb, ascending=True):
     return new_chord, parts
 
 
+def inverse_recursive_correct_octave(chord):
+    """
+    Transform a chord to a chord with bass pitch between -6 and 6
+    Parameters
+    ----------
+    chord
+
+    Returns
+    -------
+
+    """
+    bass_pitch = chord.bass_pitch
+    if bass_pitch > 6:
+        chord = chord.o(-1)
+        for voice, melody in chord.score.items():
+            chord.score[voice] = melody.o(1)
+        return inverse_recursive_correct_octave(chord)
+    elif bass_pitch <= -6:
+        chord = chord.o(1)
+        for voice, melody in chord.score.items():
+            chord.score[voice] = melody.o(-1)
+        return inverse_recursive_correct_octave(chord)
+    else:
+        new_chord = chord.copy()
+        return new_chord
+
 def recursive_correct_octave(chord):
+    """
+    Transform chord and melodies to normalize chord octaves
+    Parameters
+    ----------
+    chord
+
+    Returns
+    -------
+
+    """
     bass_pitch = chord.bass_pitch
     if bass_pitch > 6:
         chord = chord.o(-1)

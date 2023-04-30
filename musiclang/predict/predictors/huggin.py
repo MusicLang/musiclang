@@ -14,7 +14,7 @@ def preprocess(prompt):
     """
     return prompt.replace(' ', '').replace('\t', '').replace('\r', '').replace('\n', '')
 
-def predict_score_from_hugginface(prompt):
+def predict_score_from_hugginface(prompt, temperature=1.0, top_k=20):
     """
 
     Parameters
@@ -45,8 +45,10 @@ def predict_score_from_hugginface(prompt):
     end_prompt = prompt[-block_size//2:]
     start_prompt = prompt[:-block_size//2]
     prompt = end_prompt
+    # Predict until we find ')+(' sequence or we reach the maximum number of iterations
+
     while not eos in text and (i < max_iter):
-        res = predictor(prompt, max_length=block_size, temperature=0.75, do_sample=True, top_k=10)[0]['generated_text']
+        res = predictor(prompt, max_length=block_size, temperature=temperature, do_sample=True, top_k=top_k)[0]['generated_text']
         remaining = block_size//2
         text += res[:remaining]
         prompt = res[remaining:]

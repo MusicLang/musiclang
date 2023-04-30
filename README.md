@@ -107,7 +107,7 @@ score = ((V % III.b.M)(
 	piano__6=s4.ed.o(-1).mp + r.s))
 
 # Predict a continuation of the score using hugginface musiclang model
-predicted_score = score.predict_score()
+predicted_score = score.predict_score(temperature=0.5)
 # Save it to midi
 predicted_score.to_midi('test.mid')
 ```

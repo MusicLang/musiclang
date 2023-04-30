@@ -475,6 +475,8 @@ class Note:
         """
         if isinstance(value, float):
             value = frac(value).limit_denominator(8)
+        elif isinstance(value, int):
+            value = frac(value, 1)
         result = self.copy()
         result.duration = value
         return result
@@ -505,7 +507,8 @@ class Note:
         """
         if isinstance(value, float):
             value = frac(value).limit_denominator(8)
-
+        if isinstance(value, int):
+            value = frac(value, 1)
         result = self.copy()
         result.duration *= value
         return result
@@ -890,7 +893,7 @@ class Note:
             new_note.octave = base_note.octave
             return new_note
         else:
-            return self
+            return self.add_tags(self.tags)
 
     def to_absolute_note(self, chord):
         if not self.is_note:

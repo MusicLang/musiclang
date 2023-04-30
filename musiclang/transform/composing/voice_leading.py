@@ -277,7 +277,7 @@ class VoiceLeading:
             sgn_mov = np.sign(mov)
             # Find probabilities of moving an index
             proba = np.exp(mov/temperature)/np.sum(np.exp(mov/temperature))
-            assert np.max(proba) < 1
+            assert np.max(proba) <= 1
             # Sample index given proba
             delta1 = sgn_mov * (self.rg.random(mov.shape) < proba)
             delta1 = (np.c_[delta1, np.zeros(len(delta1))])

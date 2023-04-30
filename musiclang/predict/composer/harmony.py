@@ -53,10 +53,13 @@ def auto_enrich_melody(melody, proba_enrich=1.0):
     for note in melody.notes:
         random_number = np.random.random()
         if random_number < proba_enrich:
-            if np.random.random() < 0.2:
+            second_random_number = np.random.random()
+            if second_random_number < 0.2:
                 new_note = note.add_tag(np.random.choice(ORNEMENTATIONS))
-            else:
+            elif note.duration >= 0.5:
                 new_note = note.add_tag(np.random.choice(INTERPOLATE))
+            else:
+                new_note = note.copy()
         else:
             new_note = note.copy()
 
@@ -82,7 +85,8 @@ def melody_to_harmony(melody, tonality, arranger, time_signature=(4, 4), tempera
     chord_progression = arranger.arrange(melody_arranger, tonality, temperature=temperature)
     # Convert to harmony grid
     bar_duration = 4 * frac(time_signature[0], time_signature[1])
-    text = [f"Time Signature : {time_signature[0]}/{time_signature[1]}"]
+    text = [f"Time Signature : {time_signature[0]}/{time_signature[1]}",
+            f"Tonality : {tonality}"]
     current_bar_idx = 0
     current_beat = 0
     time = 0

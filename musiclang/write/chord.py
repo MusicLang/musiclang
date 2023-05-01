@@ -471,6 +471,12 @@ class Chord:
     def remove_accidents(self):
         return Chord(**{key: val.remove_accidents() for key, val in self.score.items()}, tags=set(self.tags))
 
+    def predict_score(self, **kwargs):
+        """
+        Predict the continuation of the chord/score with a LLM model.
+        See :func:`~Score.predict_score()`
+        """
+        return self.to_score().predict_score(**kwargs)
 
     def get_scale_from_type(self, type):
         if type == "h":

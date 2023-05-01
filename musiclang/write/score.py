@@ -621,18 +621,42 @@ class Score:
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
 
-    def predict_score(self, temperature=0.5, top_k=10):
+    @classmethod
+    def generate_score(cls, n_chords=1, prompt='(', temperature=0.5, top_k=10):
+        """
+        Generate a musical idea from a prompt
+        Parameters
+        ----------
+        n_chords: int
+            The number of new chords to predict
+        prompt: str
+            The prompt to start the generation
+        temperature: float
+            The temperature of the prediction. The higher the more random
+        top_k: int
+            The number of tokens to consider for the prediction.
+
+        Returns
+        -------
+        score: Score
+            The generated score
+
+        """
+        from musiclang.predict.predictors import predict_score_from_huggingface
+        score_str = predict_score_from_huggingface(prompt, n_chords=n_chords, temperature=temperature, top_k=top_k)
+        return Score.from_str(score_str)
+
+    def predict_score(self, n_chords=1, temperature=0.5, top_k=10):
         """
         Predict the continuation of the score given the current score
 
         Please note that this method is still very experimental as we are
         currently improving our musiclang language model.
 
-        Returns
-        -------
-        predicted_score: Score
-            The predicted score
-
+        Parameters
+        ----------
+        n_chords: int
+            The number of new chords to predict
         temperature: float
             The temperature of the prediction. The higher the more random
             To avoid syntax errors set lower than 0.75
@@ -641,9 +665,14 @@ class Score:
             The higher the more random
             To avoid syntax errors set lower than 20
 
+        Returns
+        -------
+        predicted_score: Score
+            The predicted score
+
         """
-        from musiclang.predict.predictors import predict_score_from_hugginface
-        score_str = predict_score_from_hugginface(str(self.normalize()), temperature=temperature, top_k=top_k)
+        from musiclang.predict.predictors import predict_score_from_huggingface
+        score_str = predict_score_from_huggingface(str(self.normalize()), n_chords=n_chords, temperature=temperature, top_k=top_k)
         return Score.from_str(score_str)
 
 

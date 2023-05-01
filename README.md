@@ -106,8 +106,8 @@ score = ((V % III.b.M)(
 	piano__5=s0.ed.o(-1).mp + r.s, 
 	piano__6=s4.ed.o(-1).mp + r.s))
 
-# Predict a continuation of the score using hugginface musiclang model
-predicted_score = score.predict_score(temperature=0.5)
+# Predict the next two chords of the score using huggingface musiclang model
+predicted_score = score.predict_score(n_chords=2, temperature=0.5)
 # Save it to midi
 predicted_score.to_midi('test.mid')
 ```

@@ -26,13 +26,14 @@ def predict_score_from_hugginface(prompt, temperature=1.0, top_k=20):
 
     """
     from transformers import pipeline, GPT2LMHeadModel, GPT2TokenizerFast
-
-    prompt = preprocess(prompt)
-    block_size=1024
     hub_model_path = "floriangardin/musiclang"
+    tokenizer = GPT2TokenizerFast.from_pretrained(hub_model_path)
+    prompt = preprocess(prompt)
+    prompt = tokenizer.eos_token + prompt
+    block_size=1024
     predictor = pipeline('text-generation',
                        model=GPT2LMHeadModel.from_pretrained(hub_model_path),
-                 tokenizer=GPT2TokenizerFast.from_pretrained(hub_model_path)
+                 tokenizer=tokenizer
                  )
 
     eos = '<|endoftext|>'
@@ -46,8 +47,7 @@ def predict_score_from_hugginface(prompt, temperature=1.0, top_k=20):
     start_prompt = prompt[:-block_size//2]
     prompt = end_prompt
     # Predict until we find ')+(' sequence or we reach the maximum number of iterations
-
-    while not eos in text and (i < max_iter):
+    while not eos in text[1:] and (i < max_iter):
         res = predictor(prompt, max_length=block_size, temperature=temperature, do_sample=True, top_k=top_k)[0]['generated_text']
         remaining = block_size//2
         text += res[:remaining]
@@ -55,6 +55,12 @@ def predict_score_from_hugginface(prompt, temperature=1.0, top_k=20):
         i+= 1
 
     if i < max_iter:
-        return start_prompt + text.split(eos)[0]
+        result = start_prompt + text.split(eos)[0]
+        result = result[len(eos):]
+        print(result)
+        return result
     else:
-        return start_prompt + chord_sep.join(text.split(chord_sep)[:-1]) + ')'
+        result = start_prompt + chord_sep.join(text.split(chord_sep)[:-1]) + ')'
+        result = result[len(eos):]
+        print(result)
+        return result

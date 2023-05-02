@@ -517,7 +517,7 @@ class Chord:
         """
         min_duration = min([melody.duration for melody in self.score.values()])
         base_chord = self.to_chord().set_duration(min_duration)
-        return self.project_on_score(base_chord)
+        return self.project_on_score(base_chord).chords[0]
 
     def get_scale_from_type(self, type):
         if type == "h":

@@ -478,6 +478,47 @@ class Chord:
         """
         return self.to_score().predict_score(**kwargs)
 
+    def apply_pattern(self, chords, instruments=None, voicing=None, restart_each_chord=False,
+                      fixed_bass=True, voice_leading=True, amp='mf'):
+        """
+        Apply a chord progression to a pattern
+        Parameters
+        ----------
+        pattern: Score or Chord
+            Pattern to use
+        chords: Score or list or Chord
+            Chord progression to use
+        instruments: list[str] or None
+            Instruments to use, by default use only piano
+        voicing: list[Note] or None
+            Voicing to use in the pattern. By default, spread the voicing between root -2 octave and fifth +1 octave
+        restart_each_chord: bool
+            If True, the pattern will be restarted at each chord
+        fixed_bass: bool
+            If True, the bass will be fixed in the voice leading
+        voice_leading: bool
+            If True, the voice leading optimizer will be applied
+        amp: str
+            Amplitude of the pattern (in ppp, pp, p, mp, mf, f, ff, fff)
+
+        Returns
+        -------
+        Score
+
+        """
+        from musiclang.predict.composer import apply_pattern
+        return apply_pattern(self, chords, instruments=instruments, voicing=voicing, restart_each_chord=restart_each_chord,
+                      fixed_bass=fixed_bass, voice_leading=voice_leading, amp=amp)
+
+    def normalize_chord_duration(self):
+        """
+        Normalize the duration of the chord (project on the melody with the shortest duration)
+        See :func:`~Score.normalize_chord_duration()`
+        """
+        min_duration = min([melody.duration for melody in self.score.values()])
+        base_chord = self.to_chord().set_duration(min_duration)
+        return self.project_on_score(base_chord)
+
     def get_scale_from_type(self, type):
         if type == "h":
             return self.chromatic_pitches

@@ -1,11 +1,82 @@
-from musiclang import Score
 
 from .composer import Composer
 
-from musiclang import Tonality, ScoreFormatter, Element
+from musiclang import Tonality, ScoreFormatter, Element, Chord, Note, Score
 from musiclang.transform.library import VoiceLeading
-from musiclang.library import NC
 from musiclang.transform.composing.pattern import Pattern
+from musiclang.library import NC
+
+import numpy as np
+
+def apply_pattern(pattern, chords, instruments=None, voicing=None, restart_each_chord=False,
+                  fixed_bass=True, voice_leading=True, amp='mf'):
+    """
+    Apply a pattern to a chord progression
+    Parameters
+    ----------
+    pattern: Score or Chord
+        Pattern to use
+    chords: Score or list
+        Chord progression to use
+    instruments: list[str] or None
+        Instruments to use, by default use only piano
+    voicing: list[Note] or None
+        Voicing to use in the pattern. By default, spread the voicing between root -2 octave and fifth +1 octave
+    restart_each_chord: bool
+        If True, the pattern will be restarted at each chord
+    fixed_bass: bool
+        If True, the bass will be fixed in the voice leading
+    voice_leading: bool
+        If True, the voice leading optimizer will be applied
+    amp: str
+        Amplitude of the pattern (in ppp, pp, p, mp, mf, f, ff, fff)
+
+    Returns
+    -------
+    Score
+
+    """
+
+    orchestra = {'bar_duration': pattern.duration, 'nb_instruments': len(pattern.instruments), 'pattern': pattern}
+
+    if isinstance(chords, (list, tuple)):
+        chords = sum(chords, None)
+    if isinstance(chords, Chord):
+        chords = Score(chords)
+    if instruments is None:
+        instruments = [f'piano' for i in range(orchestra['nb_instruments'])]
+
+    # Clean instruments
+    real_instruments = _clean_instrument_names(instruments)
+
+    if voicing is None:
+        values = np.linspace(-6, 5, orchestra['nb_instruments']).astype(int)
+        voicing = [Note('b', value % 3, value // 3, 1) for value in values]
+
+    patternator = {'restart_each_chord': restart_each_chord}
+    return auto_compose([], chords, orchestra, voicing, patternator,
+                 "C", [], real_instruments, acc_amp=amp,
+                 fixed_bass=fixed_bass, voice_leading=voice_leading
+                 )
+
+def _clean_instrument_names(instruments):
+    """
+    Given a list of raw instrument, spread the voice indexes accordingly
+    eg : ['piano', 'piano'] -> ['piano__0', 'piano__1']
+    Returns
+    -------
+    list[str]
+    """
+    real_instruments = []
+    instrument_dict = {}
+    for instrument in instruments:
+        clean_instrument = ''.join(instrument.split('__')[:-1])
+        instrument_dict[clean_instrument] = instrument_dict.get(clean_instrument, -1) + 1
+        index = instrument_dict[clean_instrument]
+        real_instruments.append(instrument + f'__{index}')
+
+    return instruments
+
 def auto_compose(melody, harmony, orchestra, voicing, patternator,
                  tonality, solo_instrument, instruments, acc_amp='mf',
                  fixed_bass=True, voice_leading=True
@@ -59,7 +130,11 @@ def auto_compose(melody, harmony, orchestra, voicing, patternator,
 
     flat_temp_instruments = sum(temp_instrumentss, [])
     flat_voicings = sum(voicings, [])
-    chords = ScoreFormatter(harmony, instruments=flat_temp_instruments, voicing=flat_voicings).parse()
+    if isinstance(harmony, str):
+        chords = ScoreFormatter(harmony, instruments=flat_temp_instruments, voicing=flat_voicings).parse()
+    else:
+        chords = sum([chord(**{ins: voicing.set_duration(chord.duration)
+                               for ins, voicing in zip(flat_temp_instruments, flat_voicings)}) for chord in harmony.to_score().chords], None)
 
     if score_theme is not None:
         score = score_theme.project_on_score(chords, keep_pitch=True, voice_leading=True, keep_score=True)

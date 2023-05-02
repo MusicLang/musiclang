@@ -1,1 +1,1 @@
-from .auto_composer import auto_compose
+from .auto_composer import auto_compose, apply_pattern

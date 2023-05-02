@@ -643,8 +643,36 @@ class Score:
 
         """
         from musiclang.predict.predictors import predict_score_from_huggingface
-        score_str = predict_score_from_huggingface(prompt, n_chords=n_chords, temperature=temperature, top_k=top_k)
-        return Score.from_str(score_str)
+        base_chords = 0
+        result = prompt
+        for i in range(n_chords):
+            score_str = predict_score_from_huggingface(str(result), n_chords=1, temperature=temperature,
+                                                       top_k=top_k)
+            result = Score.from_str(score_str)
+            result = Score(result.chords[:base_chords + i + 1])
+            result = result.normalize_chord_duration()
+
+        return result
+
+    @classmethod
+    def generate_chord(cls, prompt='(', temperature=0.5, top_k=10):
+        """
+        Generate one chord from AI model
+        Parameters
+        ----------
+        prompt
+        temperature
+        top_k
+
+        Returns
+        -------
+
+        """
+        from musiclang.predict.predictors import predict_score_from_huggingface
+        score_str = predict_score_from_huggingface(prompt, n_chords=1, temperature=temperature, top_k=top_k)
+        score = Score.from_str(score_str)
+        return score.chords[0].normalize_chord_duration()
+
 
     def predict_score(self, n_chords=1, temperature=0.5, top_k=10):
         """
@@ -672,9 +700,25 @@ class Score:
 
         """
         from musiclang.predict.predictors import predict_score_from_huggingface
-        score_str = predict_score_from_huggingface(str(self.normalize()), n_chords=n_chords, temperature=temperature, top_k=top_k)
-        return Score.from_str(score_str)
+        base_chords = len(self.chords)
+        result = self
+        for i in range(n_chords):
+            score_str = predict_score_from_huggingface(str(result.normalize()), n_chords=1, temperature=temperature, top_k=top_k)
+            result = Score.from_str(score_str)
+            result = Score(result.chords[:base_chords + i + 1])
+            result = result.normalize_chord_duration()
 
+        return result
+
+
+    def normalize_chord_duration(self):
+        """
+        Normalize the duration of each chord in the score (project on the melody with the shortest duration for each chord)
+        See :func:`~Chord.normalize_chord_duration()`
+        Returns
+        -------
+        """
+        return Score([chord.normalize_chord_duration() for chord in self.chords])
 
     def split_too_long_chords(self, max_length):
         """
@@ -732,7 +776,6 @@ class Score:
         from musiclang import PartComposer
         score = PartComposer.compose(data)
         return score
-
 
 
 
@@ -1039,7 +1082,10 @@ class Score:
             data = re.split(pattern, str(s))
             chords = [eval(str(d).replace('\n', '')) for d in data]
             assert isinstance(chords[0], Chord)
-            return Score(chords)
+            result = Score(chords)
+            if len(result.chords) == 1:
+                return result.chords[0]
+            return result
         except:
             return eval(str(s).replace('\n', ''))
 

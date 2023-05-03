@@ -55,7 +55,7 @@ def voice_separation_algorithm(splitted_notes, beam_size=1, max_states=1):
     Parameters
     ----------
     splitted_notes :
-        param beam_size: Number of best states to keep for each iteration
+    beam_size: Number of best states to keep for each iteration
     max_states :
         Number of state to keep for each iteration (Default value = 1)
     beam_size :
@@ -81,13 +81,9 @@ def evaluate_new_states(S, logprob, n, beam_size):
     Parameters
     ----------
     S :
-        param logprob:
+    logprob:
     n :
-        param beam_size:
-    logprob :
-        
-    beam_size :
-        
+    beam_size:
 
     Returns
     -------

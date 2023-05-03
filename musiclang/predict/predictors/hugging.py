@@ -42,15 +42,23 @@ def generate_one_chord(input_text, model, tokenizer,
                                  top_k=20,
                                  target_sequence=')+('):
     # Tokenize the input text
+    import torch
+    block_size = 1024
     input_ids = tokenizer.encode(tokenizer.eos_token + input_text, return_tensors='pt')
     target_ids = tokenizer.encode(target_sequence)
     target_length = len(target_ids)
     start_length = len(input_ids[0])
-    output = input_ids
+
+    # split between block size and predicted sequence
+    # Divide start_length between block_size - max_length
+    end_ids = input_ids[:, -(block_size-max_length):]
+    start_ids = input_ids[:, :-(block_size-max_length)]
+    assert len(end_ids[0]) + len(start_ids[0]) == start_length
+
     while True:
         # Generate text with the model
-        output = model.generate(
-            output,
+        end_ids = model.generate(
+            end_ids,
             max_new_tokens=max_length,
             num_return_sequences=1,
             do_sample=True,
@@ -59,12 +67,14 @@ def generate_one_chord(input_text, model, tokenizer,
             pad_token_id=tokenizer.eos_token_id,
         )
 
+        output = torch.cat((start_ids, end_ids), 1)
+        end_ids = output[:, -(block_size - max_length):]
+        start_ids = output[:, :-(block_size - max_length)]
         # Decode the generated text
         output_text = tokenizer.decode(output[0], skip_special_tokens=True)
         if target_sequence in output_text[start_length+target_length:]:
             output_text = target_sequence.join(output_text.split(target_sequence)[:-1]) + ')'
             return output_text
-
 
 
 

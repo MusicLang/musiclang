@@ -29,10 +29,13 @@ class Element:
 
 
     def __add__(self, other):
+        from musiclang import Chord, Score
         if isinstance(other, int):
             return Element(self.val + other)
         if isinstance(other, Element):
-            return Element((self.val + other.val) % 7)
+            return self() + other()
+        elif isinstance(Element, (Chord, Score)):
+            return self() + other
         else:
             raise Exception('Cannot add if not type int or Element')
 

@@ -178,6 +178,9 @@ class Score:
         cp.tags = cp.tags - set(tags)
         return cp
 
+    def set_duration(self, duration):
+        return Score([c.set_duration(duration) for c in self.chords], tags=set(self.tags))
+
     def remove_tag(self, tag):
         """
         Remove a tag from this object

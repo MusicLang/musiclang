@@ -75,7 +75,7 @@ def _clean_instrument_names(instruments):
         index = instrument_dict[clean_instrument]
         real_instruments.append(instrument + f'__{index}')
 
-    return instruments
+    return real_instruments
 
 def auto_compose(melody, harmony, orchestra, voicing, patternator,
                  tonality, solo_instrument, instruments, acc_amp='mf',

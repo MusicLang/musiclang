@@ -35,7 +35,7 @@ def m21Parse(f, fmt=None, remove_perc=True):
     Parameters
     ----------
     f :
-        
+
     fmt :
          (Default value = None)
 

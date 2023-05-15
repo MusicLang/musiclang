@@ -25,6 +25,7 @@ MODEL = None
 
 def get_model():
     global MODEL
+    print('LOADING MODEL')
     if MODEL is not None:
         return MODEL
     else:
@@ -32,7 +33,6 @@ def get_model():
         MODEL = keras.models.load_model(modelPath)
         return MODEL
 
-MODEL = get_model()
 
 
 inversions = {

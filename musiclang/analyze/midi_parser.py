@@ -9,7 +9,8 @@ LICENSE file in the root directory of this source tree.
 import pandas as pd
 import numpy as np
 from mido import MidiFile
-
+import time
+import warnings
 
 TYPE = "type"
 TIME = "time"
@@ -39,10 +40,11 @@ def parse_midi(filename, **kwargs):
     -------
 
     """
-    notes, config = _load_midi(filename, **kwargs)
+    notes, config, bars = _load_midi(filename, **kwargs)
     instruments = config['instruments']
     tempo = config['tempo']
-    return notes, instruments, tempo
+    time_signature = config['bar_duration']
+    return notes, instruments, tempo, time_signature, bars
 
 
 """
@@ -70,14 +72,15 @@ def _load_midi(filename, ignore_file_with_bar_change=False, **kwargs):
     -------
 
     """
-    notes, config = _parse(filename)
+    notes, config, bars = _parse(filename)
     if len(config['bar_durations']) > 1 and ignore_file_with_bar_change:
         raise MusicLangIgnoreException('Bar duration change events in midifile, MusicLang cannot parse that')
     elif len(config['bar_durations']) == 1:
         config['bar_duration'] = config['bar_durations'][0]
     else:
         config['bar_duration'] = None
-    return notes, config
+    return notes, config, bars
+
 
 
 def _parse(filename, **kwargs):
@@ -95,35 +98,37 @@ def _parse(filename, **kwargs):
 
     """
     from fractions import Fraction as frac
-
+    from .load_score import load_score
     mf = MidiFile(filename)
     instruments = _infer_instruments(mf)
     notes = []
     bar_durations = []
     tempos = []
-
     for track_idx, track in enumerate(mf.tracks):
-        time = 0
+        t = 0
         for note in track:
             if note.type == 'note_on':
-                notes.append([1, time + note.time, note.note, note.velocity, note.channel, track_idx])
+                notes.append([1, t + note.time, note.note, note.velocity, note.channel, track_idx])
             elif note.type == 'note_off':
-                notes.append([0, time + note.time, note.note, note.velocity, note.channel, track_idx])
+                notes.append([0, t + note.time, note.note, note.velocity, note.channel, track_idx])
             elif note.type == 'time_signature':
                 bar_durations.append(note.numerator * frac(4, note.denominator))
             elif note.type == 'set_tempo':
                 tempos.append((time, note.tempo))
-            time = time + note.time
-    notes = np.asarray(notes)
+            t = t + note.time
     first_tempo = int(60/(tempos[0][1]/1e6))
     config = {'ticks_per_beats': mf.ticks_per_beat,
              'instruments': instruments,
              'tempo': first_tempo, 'tempos': tempos, 'bar_durations': bar_durations}
-
-    notes = _get_notes_dataframe(notes)
-    notes = _get_notes_in_beats(notes, mf.ticks_per_beat)
-    notes = np.asarray(notes[[START_TIME, NOTE, DURATION, VEL, TRACK, CHANNEL, VOICE]])
-    return notes, config
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        notes_score, bars = load_score(filename)
+    notes_score_df = pd.DataFrame(notes_score, columns=[START_TIME, END_TIME, VEL, NOTE, TRACK, CHANNEL, VOICE])
+    notes_score_df[TRACK] = (notes_score_df[TRACK] + 1).astype(int)
+    notes_score_df[DURATION] = notes_score_df[END_TIME] - notes_score_df[START_TIME]
+    notes_score_df[VOICE] = (notes_score_df[VOICE] - 1).astype(int)
+    notes = np.asarray(notes_score_df[[START_TIME, NOTE, DURATION, VEL, TRACK, CHANNEL, VOICE]])
+    return notes, config, bars
 
 
 def _get_notes_in_beats(df, ticks_per_beats):

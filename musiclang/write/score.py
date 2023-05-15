@@ -239,7 +239,7 @@ class Score:
         Normalize score
         """
         from musiclang import Silence
-        score = None
+        score = []
         instruments = set(self.instruments)
         for chord_raw in self.chords:
             chord = chord_raw.copy()
@@ -247,8 +247,8 @@ class Score:
             chord_score = chord.score
             for instrument in missing_instruments:
                 chord_score[instrument] = Silence(chord.duration)
-            score += chord(**chord_score)
-        return score
+            score.append(chord(**chord_score))
+        return Score(score)
 
     def remove_silenced_instruments(self):
         """
@@ -272,6 +272,27 @@ class Score:
 
         return sum(chords, None)
 
+    def normalize_instrument_names(self):
+        """
+        Normalize the instrument idx for all instrument.
+        The first voice of an instrument encountered will always have idx 0, the second idx 1, etc...
+        Returns
+        -------
+        score: Score
+        """
+
+        instruments = self.instruments
+
+        replace_dic = {}
+        replace_dic_ins = {}
+        for ins in instruments:
+            name, idx = '__'.join(ins.split('__')[:-1]), ins.split('__')[-1]
+            replace_dic_ins[name] = replace_dic_ins.get(name, -1) + 1
+            replace_dic[ins] = name + '__' + str(replace_dic_ins[name])
+
+        score = self.replace_instruments(**replace_dic)
+        return score
+
     def replace_instruments(self, **instruments_dict):
         """
         Replace any instrument with another (use full part name (eg: piano__0)
@@ -286,16 +307,16 @@ class Score:
         score: Score
 
         """
-        score = None
+        score = []
         instruments_dict = {key: instruments_dict[key] if key in instruments_dict.keys() else key for key in self.parts}
         for chord in self.chords:
             new_chord_dict = {}
             for ins_name, new_ins_name in instruments_dict.items():
                 if ins_name in chord.score.keys():
                     new_chord_dict[new_ins_name] = chord.score[ins_name]
-            score += chord(**new_chord_dict)
+            score.append(chord(**new_chord_dict))
 
-        return score
+        return Score(score)
 
 
     def clean(self):
@@ -385,13 +406,18 @@ class Score:
             :return:
 
         """
+
+        def f7(seq):
+            seen = set()
+            seen_add = seen.add
+            return [x for x in seq if not (x in seen or seen_add(x))]
+
         result = []
         for chord in self:
             insts = list(chord.score.keys())
             result += insts
-            result = list(set(result))
-
-        return list(sorted(result, key=lambda x: (x.split('__')[0], int(x.split('__')[1]))))
+            result = f7(result)
+        return result
 
 
     def normalize(self):
@@ -406,8 +432,11 @@ class Score:
         -------
         score: Score
         """
+        import time
+        start = time.time()
         score = self.to_standard_note()
         score = score.correct_chord_octave()
+        score = score.normalize_instrument_names()
         score = score.split_too_long_chords(8)
         return score
 
@@ -418,7 +447,7 @@ class Score:
         -------
         score: Score
         """
-        return sum([c.correct_chord_octave() for c in self.chords], None)
+        return Score([c.correct_chord_octave() for c in self.chords])
 
     def octaver(self, **instruments_octaves):
         """
@@ -738,13 +767,13 @@ class Score:
 
         """
 
-        new_score = None
+        new_score = []
         for chord in self:
             if chord.duration > max_length:
-                new_score += chord.split(max_length)
+                new_score += (chord.split(max_length)).chords
             else:
-                new_score += chord
-        return new_score
+                new_score.append(chord)
+        return Score(new_score)
 
     def to_text_file(self, filepath, create_dir=False):
         """
@@ -1002,7 +1031,7 @@ class Score:
 
 
     @classmethod
-    def from_midi(cls, filename):
+    def from_midi(cls, filename, fast_chord_inference=True):
         """
         Load a midi score into musiclang
 
@@ -1020,9 +1049,8 @@ class Score:
 
         """
         from musiclang.analyze import parse_to_musiclang
-        score, config = parse_to_musiclang(filename)
+        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference)
         real_config = {**score.config, **config}
-        score = score.normalize()
         score.config = real_config
         return score
 
@@ -1037,7 +1065,7 @@ class Score:
 
 
     @classmethod
-    def from_xml(cls, filename):
+    def from_xml(cls, filename, fast_chord_inference=False):
         """
         Load a musicxml score into musiclang
 
@@ -1058,7 +1086,7 @@ class Score:
 
         """
         from musiclang.analyze import parse_to_musiclang
-        score, config = parse_to_musiclang(filename)
+        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference)
         score.config.update(config)
         return score
 

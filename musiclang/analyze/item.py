@@ -102,7 +102,8 @@ def convert_to_items(notes):
         pitch = int(note[1])
         track = int(note[4])
         channel = int(note[5])
-        items.append(Item("name", start, end, vel=vel, pitch=pitch, track=track, channel=channel, voice=0))
+        voice = int(note[6])
+        items.append(Item("name", start, end, vel=vel, pitch=pitch, track=track, channel=channel, voice=voice))
 
     # Quantize notes in integer
     items = quantize_notes_raw(items)

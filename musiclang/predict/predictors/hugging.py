@@ -33,7 +33,6 @@ def preprocess(prompt, tokenizer):
     prompt = tokenizer.eos_token + prompt
     return prompt
 
-import torch
 
 
 
@@ -77,6 +76,48 @@ def generate_one_chord(input_text, model, tokenizer,
             return output_text
 
 
+import re
+
+
+def deduplicate_chord_instruments(text):
+    # Split the text into parts
+    parts = re.split('([a-zA-Z0-9_]+=)', text)
+
+    # Create a new list to hold the modified parts
+    modified_parts = []
+
+    # Keep track of the keys we've seen
+    seen_keys = {}
+
+    # Process each part
+    for part in parts:
+        if part.endswith('='):
+            # This part is a key, check if we've seen it before
+            key = part[:-1]  # remove the '='
+            ins, idx = key.split('__')
+            idx = int(idx)
+            modified_key = None
+            if (ins, idx) in seen_keys:
+                # We've seen this key before, append a unique identifier
+                while (ins, idx) in seen_keys:
+                    ind, idx = ins, idx + 1
+                    modified_key = ins + '__' + str(idx)
+
+                seen_keys[(ins, idx)] = True
+            else:
+                # This is a new key, add it to the dictionary
+                modified_key = key
+                seen_keys[(ins, idx)] = True
+
+            # Add the modified key to the list
+            modified_parts.append(modified_key + '=')
+        else:
+            # This part is not a key, just add it to the list
+            modified_parts.append(part)
+
+    # Join the parts back together and return
+    return ''.join(modified_parts)
+
 
 def generate_n_chords(text, model, tokenizer, n, **kwargs):
     """
@@ -98,6 +139,9 @@ def generate_n_chords(text, model, tokenizer, n, **kwargs):
     """
     for i in range(n):
         text = generate_one_chord(text, model, tokenizer, **kwargs)
+        chords = text.split(')+(')
+        chords[-1] = deduplicate_chord_instruments(chords[-1])
+        text = ')+('.join(chords)
     return text
 
 def predict_score_from_huggingface(prompt, n_chords=1, temperature=0.75, top_k=20):

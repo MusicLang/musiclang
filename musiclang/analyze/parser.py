@@ -10,7 +10,7 @@ LICENSE file in the root directory of this source tree.
 This file groups a set of functions to parse files into MusicLang objects
 """
 
-def parse_to_musiclang(input_file: str):
+def parse_to_musiclang(input_file: str, **kwargs):
     """Parse an input file into a musiclang Score
     - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
     - Get voice separation and parsing
@@ -31,13 +31,13 @@ def parse_to_musiclang(input_file: str):
     """
     extension = input_file.split('.')[-1]
     if extension.lower() in ['mid', 'midi']:
-        return parse_midi_to_musiclang(input_file)
+        return parse_midi_to_musiclang(input_file, **kwargs)
     elif extension.lower() in ['mxl', 'xml', 'musicxml', 'krn']:
-        return parse_mxl_to_musiclang(input_file)
+        return parse_mxl_to_musiclang(input_file, **kwargs)
     else:
         raise Exception('Unknown extension {}'.format(extension))
 
-def parse_midi_to_musiclang(input_file: str):
+def parse_midi_to_musiclang(input_file: str, **kwargs):
     """Parse a midi input file into a musiclang Score
     - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
     - Get voice separation and parsing
@@ -59,18 +59,17 @@ def parse_midi_to_musiclang(input_file: str):
     import tempfile
     import os
     import shutil
-    from .augmented_net import m21Parse
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         mxl_file = os.path.join(di, 'data.mxl')
-        obj = m21Parse(input_file, remove_perc=True)
-        obj.write('musicxml', fp=os.path.join(di, mxl_file))
+        #obj = _m21Parse(input_file, remove_perc=True)
+        #obj.write('musicxml', fp=os.path.join(di, mxl_file))
         shutil.copy(input_file, midi_file)
-        result = parse_directory_to_musiclang(di)
+        result = parse_directory_to_musiclang(di, **kwargs)
     return result
 
 
-def parse_mxl_to_musiclang(input_file: str):
+def parse_mxl_to_musiclang(input_file: str, **kwargs):
     """Parse a music xml input file into a musiclang Score
     - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
     - Separate into monophonic voice with the proper instrument
@@ -93,17 +92,16 @@ def parse_mxl_to_musiclang(input_file: str):
     import os
     import music21
     import shutil
-    from .augmented_net import m21Parse
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         mxl_file = os.path.join(di, 'data.mxl')
-        obj = m21Parse(input_file)
+        obj = _m21Parse(input_file)
         obj.write('midi', fp=os.path.join(di, midi_file))
         shutil.copy(input_file, mxl_file)
-        result = parse_directory_to_musiclang(di)
+        result = parse_directory_to_musiclang(di, **kwargs)
     return result
 
-def parse_directory_to_musiclang(directory: str):
+def parse_directory_to_musiclang(directory: str, fast_chord_inference=True, **kwargs):
     """Parse a directory containing a 'data.mid' and 'data_annotated.rntxt' file (midi file and chord annotation file)
 
     Parameters
@@ -121,18 +119,47 @@ def parse_directory_to_musiclang(directory: str):
 
     """
     import os
-    from .augmented_net import infer_chords
-    print('1/4 : Analyze the score (This may takes a while)')
-    annotation_file = os.path.join(directory, 'data_annotated.rntxt')
     midi_file = os.path.join(directory, 'data.mid')
     mxl_file = os.path.join(directory, 'data.mxl')
-    infer_chords(mxl_file)
-    score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
-    score = score.clean()
+    if not fast_chord_inference:
+        from .augmented_net import infer_chords
+        print('1/4 : Analyze the score (This may takes a while)')
+        annotation_file = os.path.join(directory, 'data_annotated.rntxt')
+        infer_chords(mxl_file)
+        score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+    else:
+        score, config = parse_midi_to_musiclang_without_annotation(midi_file)
+
+    score = score.to_drum()
     return score, config
 
 
 
+def parse_midi_to_musiclang_without_annotation(midi_file: str):
+    """
+
+    Parameters
+    ----------
+    midi_file: str :
+        Filepath to the midi file to parse
+
+    annotation_file: str :
+        Filepath to the anotation file to parse
+
+
+    Returns
+    -------
+    score: Score
+        MusicLang score parsed
+
+    config: dict
+        Config of the score
+
+    """
+    config = {}
+    score, tempo = parse_musiclang_sequence_and_chords(midi_file)
+    config.update({'tempo': tempo})
+    return score, config
 
 def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str):
     """
@@ -151,10 +178,11 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
     score: Score
         MusicLang score parsed
 
-    tempo: int
-        Tempo of the score
+    config: dict
+        Config of the score
 
     """
+
 
     chords = get_chords_from_analysis(annotation_file)
     config = chords.config
@@ -315,6 +343,38 @@ def get_duration(roman):
     return frac(roman.duration.quarterLength).limit_denominator(8)
 
 
+def parse_musiclang_sequence_and_chords(midi_file):
+    """Parse a midi file into MusicLang and chords
+
+    Parameters
+    ----------
+    midi_file : str
+        Path to the midi file
+    """
+    from musiclang import Score
+    from .midi_parser import parse_midi
+    from .item import convert_to_items
+    from .to_musiclang import infer_score_with_chords_durations
+    from .chord_inference import fast_chord_inference
+
+    print('1/4 : Performing voice separation (This may takes a while)')
+    notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
+
+    print('2/4 : Now infering chords with fast inference')
+    chords = fast_chord_inference(notes, bars)
+    sequence = convert_to_items(notes)
+    print('3/4 : Create the score')
+    import time
+    start = time.time()
+    score = infer_score_with_chords_durations(sequence, chords, instruments)
+    print('Finished creating score in {} seconds'.format(time.time() - start))
+    print('Finished creating score')
+    print('4/4 Normalize the score...')
+    score = score.normalize()
+
+    return score, tempo
+
+
 def parse_musiclang_sequence(midi_file, chords):
     """Parse a midi file into MusicLang and chords with chords duration
 
@@ -332,15 +392,17 @@ def parse_musiclang_sequence(midi_file, chords):
     from musiclang import Score
     from .midi_parser import parse_midi
     from .item import convert_to_items
-    from .to_musiclang import infer_voices_per_tracks, infer_score_with_chords_durations
-    notes, instruments, tempo = parse_midi(midi_file)
-    sequence = convert_to_items(notes)
+    from .to_musiclang import infer_score_with_chords_durations
+
+
     print('2/4 : Performing voice separation (This may takes a while)')
-    sequence = infer_voices_per_tracks(sequence)
+    notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
+    sequence = convert_to_items(notes)
     print('3/4 : Create the score')
     score = infer_score_with_chords_durations(sequence, chords, instruments)
     print('Finished creating score')
-    print('4/4 Create a copy of the score...')
+    print('4/4 Normalize the score...')
+    score = score.normalize()
 
     return score, tempo
 
@@ -491,3 +553,35 @@ def old_annotation_to_musiclang(file):
     chords = music21_roman_analysis_to_chords(analysis)
     score = chords_to_musiclang(chords)
     return score
+
+
+def _m21Parse(f, fmt=None, remove_perc=True):
+    """
+
+    Parameters
+    ----------
+    f :
+
+    fmt :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
+    import music21
+    s = music21.converter.parse(f, format=fmt, forceSource=True)
+    if remove_perc:
+
+        for el in s.recurse():
+            if set(el.classes).intersection(['PercussionChord', 'Unpitched']):  # or 'Piano'
+                # el.activeSite.replace(el, instrument.Violin())
+                el.activeSite.remove(el)
+
+        # perc = [
+        #     p
+        #     for p in s.parts
+        #     if list(p.recurse().getElementsByClass(["PercussionClef", "PercussionChord"]))
+        # ]
+        # s.remove(perc, recurse=True)
+    return s

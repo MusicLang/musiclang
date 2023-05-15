@@ -37,6 +37,7 @@ setuptools.setup(
         "xmlschema==2.1.1",
         "transformers==4.26.1",
         "tokenizers==0.13.2",
+        "partitura==1.2.1",
         "torch"
                       ],
     packages=setuptools.find_packages(include='*'),

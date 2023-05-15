@@ -6,5 +6,5 @@ import glob
 __author__ = "Néstor Nápoles López"
 __version__ = "1.9.0"
 
-from .inference import infer_chords, get_model, m21Parse
+from .inference import get_model, m21Parse
 

@@ -9,7 +9,7 @@ LICENSE file in the root directory of this source tree.
 from .voice_separation import separate_voices
 from musiclang.write.note import Silence, Continuation
 from musiclang.write.constants import OCTAVES
-
+from musiclang import Score
 
 def infer_score_with_chords_durations(sequence, chords, instruments):
     """Get the score from a note sequence, the chords with durations and the instruments assigned to each tracks
@@ -30,7 +30,7 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
     # Split each chords, instruments, voices
     time_start = 0
     time_end = 0
-    score = None
+    score = []
     continuations = {}
     offsets_voices = {}  # Store the offset of voice to deduplicate voice idx between tracks
     offsets_voices_raw = {}  # Store the offset of voice to deduplicate voice idx between tracks
@@ -64,10 +64,9 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
                                                             time_start, time_end, 1, cont)
                     if cont is not None:
                         continuations[voice_name] = cont
-                    chord_dict[voice_name] = chord_dict[voice_name].o(- OCTAVES.get(instrument, 0))
 
-        score += chord(**chord_dict)
-    return score
+        score.append(chord(**chord_dict))
+    return Score(score)
 
 
 def infer_score(sequence, chords, instruments, bar_duration_in_ticks, offset_in_ticks, tick_value):
@@ -221,45 +220,46 @@ def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, c
         value.amp = note.vel
         return value.augment(tick_value)
 
-    melody = None
+    melody = []
     return_cont = None
     local_time_end = voice_notes[0].start
     if cont is not None:
-        melody += cont
+        melody.append(cont)
         local_time_end = bar_time_start + (cont.duration / tick_value)
 
     elif local_time_end > bar_time_start:
-        melody += Silence((local_time_end - bar_time_start) * tick_value)
+        melody.append(Silence((local_time_end - bar_time_start) * tick_value))
 
     for note in voice_notes:
         overlap = local_time_end - note.start
         if overlap > 0:
-            melody.notes[-1].duration -= overlap * tick_value
-            if melody.notes[-1].duration == 0:
-                melody.notes.pop()
+            melody[-1].duration -= overlap * tick_value
+            if melody[-1].duration == 0:
+                melody.pop()
             duration = note.end - note.start
-            melody += _parse_note(note, duration, chord, tick_value)
+            melody.append(_parse_note(note, duration, chord, tick_value))
         elif overlap < 0:
-            melody += Silence(- overlap * tick_value)
+            melody.append(Silence(- overlap * tick_value))
             duration = note.end - note.start
             if duration > 0:
-                melody += _parse_note(note, duration, chord, tick_value)
+                melody.append(_parse_note(note, duration, chord, tick_value))
         else:
             duration = note.end - note.start
             if duration > 0:
-                melody += _parse_note(note, duration, chord, tick_value)
+                melody.append(_parse_note(note, duration, chord, tick_value))
 
         local_time_end = note.end
         # Find scale note
     if local_time_end < bar_time_end:
-        melody += Silence((bar_time_end - local_time_end) * tick_value)
+        melody.append(Silence((bar_time_end - local_time_end) * tick_value))
     if local_time_end > bar_time_end:
         return_cont = Continuation((local_time_end - bar_time_end) * tick_value)
-        melody.notes[-1].duration -= (local_time_end - bar_time_end) * tick_value
-        if melody.notes[-1].duration == 0:
-            melody.notes.pop()
+        melody[-1].duration -= (local_time_end - bar_time_end) * tick_value
+        if melody[-1].duration == 0:
+            melody.pop()
 
-    from musiclang import Note
+    from musiclang import Note, Melody
+    melody = Melody(melody)
     assert all([isinstance(m, Note) for m in melody.notes])
     assert melody.duration == (bar_time_end - bar_time_start) * tick_value
 

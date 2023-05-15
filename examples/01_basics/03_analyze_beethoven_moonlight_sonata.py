@@ -18,32 +18,19 @@ print(score.config['annotation'])
 
 # Convert the score as valid musiclang python code
 print('Saving it to code in "beethoven_musiclang.py" ...')
-score.to_code_file('beethoven_musiclang.py')
+score.to_text_file('beethoven.txt')
 
 # Save the score in pickle to reuse it later
 score.to_pickle('beethoven.pickle')
 
 
 """
-Convert it to a pandas dataframe to do some analytics (we called it a "sequence" in musiclang) ...
+Print the 10 first chords
 """
-df = score.to_sequence()
-
-
-# For example compute the value counts of tonalities mode
-print('Value counts of tonalities mode per chord : ')
-print(df.groupby('chord_idx').first()['tonality_mode'].value_counts())
+print(score[0:10])
 
 """
-We can also transform our sequence, let's change all the modes to be major :
+Save it to midi
 """
 
-df['tonality_mode'] = 'M'
-
-"""
-Finally let's convert it back to a score to hear it
-"""
-from musiclang import Score
-score_result = Score.from_sequence(df)
-
-score_result.show('midi', tempo=score.config['tempo'])
+score.to_midi('beethoven.mid', tempo=score.config['tempo'])

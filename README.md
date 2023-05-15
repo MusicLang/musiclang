@@ -13,12 +13,14 @@ What is MusicLang ?
 --------------------
 
 MusicLang which simply stands for "music language" is a Python framework
-that allows composers to write symbolic music in a condensed and high level manner.
-It can be used to write, arrange, transform or predict new music.
-This framework is not only another notation software but also
-an assistant that is able to automate some tasks that would normally be tedious for a composer.
-It is naturally good at analyzing and manipulating existing
-pieces of music in musicxml or midi format.
+implementing a new language for tonal music.
+This language allows composers to load, write, transform and predict symbolic music in a simple,
+condensed and high level manner.
+MusicLang internally uses  a [LLM (Large Language Model)](https://huggingface.co/floriangardin/musiclang)  to predict what could happen next in a musical score.
+This framework is well suited to :
+- Generate musical ideas quickly.
+- Predict what could happen next in an existing midi file
+- Create an interpretable and information rich text representation of a midi file
 
 [Read our documentation](https://musiclang.readthedocs.io/en/latest).
 
@@ -30,12 +32,6 @@ MusicLang is available on Pypi :
 
 ```
 pip install musiclang
-```
-
-Or use this repo for the latest version :
-
-```
-pip install git+https://github.com/MusicLang/musiclang
 ```
     
 
@@ -107,7 +103,7 @@ score = ((V % III.b.M)(
 	piano__6=s4.ed.o(-1).mp + r.s))
 
 # Predict the next two chords of the score using huggingface musiclang model
-predicted_score = score.predict_score(n_chords=2, temperature=0.5)
+predicted_score = score.predict_score(n_chords=4, temperature=0.5)
 # Save it to midi
 predicted_score.to_midi('test.mid')
 ```

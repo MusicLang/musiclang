@@ -1118,6 +1118,7 @@ class Score:
                 return result.chords[0]
             return result
         except:
+            print('Error with', s)
             return eval(str(s).replace('\n', ''))
 
     @classmethod

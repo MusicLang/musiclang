@@ -9,7 +9,7 @@ def _load_models():
     if _TOKENIZER is not None:
         return _TOKENIZER, _MODEL
     hub_model_path = "floriangardin/musiclang"
-    TOKENIZER = GPT2TokenizerFast.from_pretrained(hub_model_path)
+    TOKENIZER = GPT2TokenizerFast.from_pretrained(hub_model_path, padding_side='left')
     MODEL = GPT2LMHeadModel.from_pretrained(hub_model_path)
     _TOKENIZER = TOKENIZER
     _MODEL = MODEL
@@ -43,7 +43,7 @@ def generate_one_chord(input_text, model, tokenizer,
     # Tokenize the input text
     import torch
     block_size = 1024
-    input_ids = tokenizer.encode(tokenizer.eos_token + input_text, return_tensors='pt')
+    input_ids = tokenizer.encode(input_text, return_tensors='pt')
     target_ids = tokenizer.encode(target_sequence)
     target_length = len(target_ids)
     start_length = len(input_ids[0])
@@ -53,9 +53,10 @@ def generate_one_chord(input_text, model, tokenizer,
     end_ids = input_ids[:, -(block_size-max_length):]
     start_ids = input_ids[:, :-(block_size-max_length)]
     assert len(end_ids[0]) + len(start_ids[0]) == start_length
-
+    idx = 0
     while True:
         # Generate text with the model
+        idx += 1
         end_ids = model.generate(
             end_ids,
             max_new_tokens=max_length,
@@ -63,6 +64,7 @@ def generate_one_chord(input_text, model, tokenizer,
             do_sample=True,
             temperature=temperature,
             top_k=top_k,
+            bad_words_ids=[[tokenizer.eos_token_id]],
             pad_token_id=tokenizer.eos_token_id,
         )
 
@@ -70,7 +72,10 @@ def generate_one_chord(input_text, model, tokenizer,
         end_ids = output[:, -(block_size - max_length):]
         start_ids = output[:, :-(block_size - max_length)]
         # Decode the generated text
-        output_text = tokenizer.decode(output[0], skip_special_tokens=True)
+        output_text = tokenizer.decode(output[0], skip_special_tokens=False)
+        output_text = output_text.replace(tokenizer.eos_token, '+')
+        if output_text.startswith('+'):
+            output_text = output_text[1:]
         if target_sequence in output_text[start_length+target_length:]:
             output_text = target_sequence.join(output_text.split(target_sequence)[:-1]) + ')'
             return output_text

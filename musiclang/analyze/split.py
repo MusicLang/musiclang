@@ -30,18 +30,17 @@ class SplitTrainTest:
 def prepare_dataset(directory, output_file):
     file_pattern = os.path.join(directory, "*.txt")
     files = glob.glob(file_pattern)
-    tokenized_texts = []
     end_of_text = '<|endoftext|>'
     texts = []
     for file in files:
         with open(file, encoding="utf-8") as f:
             text = f.read()
+            text = text.replace('\n', '')
         # Add start-of-text and end-of-text symbols
         text = text + end_of_text
         texts.append(text)
 
-    full_text = "".join(texts)
-    full_text = full_text.replace('\n', '')
+    full_text = "\n".join(texts)
     full_text = full_text.replace('\t', '')
     full_text = full_text.replace(' ', '')
     with open(output_file, 'w') as f:

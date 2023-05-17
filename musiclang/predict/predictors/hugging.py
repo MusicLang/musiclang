@@ -49,7 +49,7 @@ def generate_one_chord(input_text, model, tokenizer,
     # Tokenize the input text
     import torch
     block_size = 1024
-    input_ids = tokenizer.encode(input_text, return_tensors='pt')
+    input_ids = tokenizer.encode(input_text, return_tensors='pt').to(_DEVICE)
     target_ids = tokenizer.encode(target_sequence)
 
     target_length = len(target_ids)
@@ -65,7 +65,7 @@ def generate_one_chord(input_text, model, tokenizer,
         # Generate text with the model
         idx += 1
         end_ids = model.generate(
-            end_ids.to(_DEVICE),
+            end_ids,
             max_new_tokens=max_length,
             num_return_sequences=1,
             do_sample=True,

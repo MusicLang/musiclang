@@ -2,15 +2,21 @@
 
 _TOKENIZER = None
 _MODEL = None
-
+_GPU = False
+_DEVICE = None
 def _load_models():
-    global _TOKENIZER, _MODEL
+    global _TOKENIZER, _MODEL, _GPU, _DEVICE
     from transformers import GPT2LMHeadModel, GPT2TokenizerFast
+    import torch
     if _TOKENIZER is not None:
         return _TOKENIZER, _MODEL
     hub_model_path = "floriangardin/musiclang"
     TOKENIZER = GPT2TokenizerFast.from_pretrained(hub_model_path, padding_side='left')
     MODEL = GPT2LMHeadModel.from_pretrained(hub_model_path)
+    _GPU = torch.cuda.is_available()
+    _DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if _GPU:
+        MODEL = MODEL.to('cuda')
     _TOKENIZER = TOKENIZER
     _MODEL = MODEL
 
@@ -43,8 +49,9 @@ def generate_one_chord(input_text, model, tokenizer,
     # Tokenize the input text
     import torch
     block_size = 1024
-    input_ids = tokenizer.encode(input_text, return_tensors='pt')
+    input_ids = tokenizer.encode(input_text, return_tensors='pt').to(_DEVICE)
     target_ids = tokenizer.encode(target_sequence)
+
     target_length = len(target_ids)
     start_length = len(input_ids[0])
 

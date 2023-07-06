@@ -19,6 +19,9 @@ def filter_notes(notes, start, end):
     pass
 
 def get_chroma_vectors(notes, bars):
+    drums_array = notes[:, 5] == 9
+    # Remove drums
+    notes = notes[~drums_array]
     times_array = np.asarray([notes[:, 0], notes[:, 0] + notes[:, 2]])
     pitches_class_array = notes[:, 1] % 12
     # Convert pitch class array to a 12xnb_notes matrix with each row being the indexes of the pitch class
@@ -29,7 +32,14 @@ def get_chroma_vectors(notes, bars):
     intersections = np.maximum(0, np.minimum(times_array[1, :, None], ends[None, :]) - np.maximum(times_array[0, :, None], starts[None, :])).T
     bar_chroma_vectors = intersections.dot(pitches_class_matrix)
     # Normalize each rows
-    bar_chroma_vectors = bar_chroma_vectors / bar_chroma_vectors.sum(axis=1)[:, None]
+    try:
+        normalizer = bar_chroma_vectors.sum(axis=1)[:, None]
+    except:
+        bar_chroma_vectors = np.zeros((len(bars), 12))
+        normalizer = bar_chroma_vectors.sum(axis=1)[:, None]
+
+    normalizer[normalizer == 0] = 1
+    bar_chroma_vectors = bar_chroma_vectors / normalizer
     return bar_chroma_vectors
 
 
@@ -45,6 +55,8 @@ def get_bass_note_bar(notes, bars):
     -------
 
     """
+    drums_array = notes[:, 5] == 9
+    notes = notes[~drums_array]
     start_times, end_times = notes[:, 0], notes[:, 0] + notes[:, 2]
     bass_notes = []
     for bar in bars:
@@ -114,7 +126,6 @@ def fast_chord_inference(notes, bars):
     bar_chroma_vectors = get_chroma_vectors(notes, bars)
     # Get the lowest note of each bar
     bass_notes = get_bass_note_bar(notes, bars)
-
 
     chord_roots, chord_types = max_correlation_index(bar_chroma_vectors, CHROMA_VECTORS_MATRIX)
     # Get maximum

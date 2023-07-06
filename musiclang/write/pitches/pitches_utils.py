@@ -27,7 +27,7 @@ def relative_scale_up_value(delta, last_pitch, scale_pitches):
     if delta == 0:
         new_pitch = last_pitch
     else:
-        whole_scale = [s + octave * 12 for octave in range(-7, 7) for s in scale_mod]
+        whole_scale = [s + octave * 12 for octave in range(-10, 10) for s in scale_mod]
         dists = np.asarray(whole_scale) - last_pitch
         dists = dists[dists >= 0] + last_pitch
         new_pitch = dists[delta - 1 * (last_pitch not in whole_scale)]
@@ -55,7 +55,7 @@ def relative_scale_down_value(delta, last_pitch, scale_pitches):
     if delta == 0:
         new_pitch = last_pitch
     else:
-        whole_scale = [s + octave * 12 for octave in range(-7, 7) for s in scale_mod]
+        whole_scale = [s + octave * 12 for octave in range(-10, 10) for s in scale_mod]
         dists = np.asarray(whole_scale) - last_pitch
         dists = dists[dists <= 0] + last_pitch
         new_pitch = dists[-(delta + 1) + 1 * (last_pitch not in whole_scale)]

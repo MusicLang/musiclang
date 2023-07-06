@@ -36,6 +36,7 @@ INSTRUMENTS_DICT = {
     "steel_guitar": 25,
     "jazz_guitar": 26,
     "clean_guitar": 27,
+    "muted_guitar": 28,
     "overdriven_guitar": 29,
     "distortion_guitar": 30,
     "harmonic_guitar": 31,

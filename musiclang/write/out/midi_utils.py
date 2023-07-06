@@ -7,6 +7,7 @@ LICENSE file in the root directory of this source tree.
 """
 
 import numpy as np
+import mido
 
 def voice_to_channel(instrument_list, voice, instruments):
     """
@@ -44,7 +45,8 @@ def matrix_to_events(matrix,
 
     return events
 
-def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
+def matrix_to_mid(matrix, output_file=None, ticks_per_beat=384, tempo=120, instruments={}, time_signature=(4, 4),
+                  anachrusis_time=0,
                   instrument_names=None, **kwargs):
     """
 
@@ -96,6 +98,9 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     mid.ticks_per_beat = ticks_per_beat
     mid.type = 1
 
+    bar_duration = time_signature[0] * 4 / time_signature[1]
+    start_time = (-anachrusis_time) % bar_duration
+    matrix[:, OFFSET] = matrix[:, OFFSET] + start_time
     # Take care of continuation
     # matrix = matrix[(matrix['pitch'] > 0) | (matrix['continuation'] > 0)]
     # Remove all continuations that follows a silence
@@ -124,7 +129,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
         mid.tracks[0].append(MetaMessage("track_name", name=os.path.split(output_file)[1], time=int(0)))
     else:
         mid.tracks[0].append(MetaMessage("track_name", name='track', time=int(0)))
-    mid.tracks[0].append(MetaMessage("set_tempo", tempo=(480000 * 120) // tempo, time=int(0)))
+    mid.tracks[0].append(MetaMessage("set_tempo", tempo=mido.bpm2tempo(tempo), time=int(0)))
     mid.tracks[0].append(MetaMessage("time_signature", numerator=time_signature[0], denominator=time_signature[1], time=int(0)))
 
 

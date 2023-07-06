@@ -1,5 +1,7 @@
+import time
+
 from musiclang.write.pitches.pitches_utils import get_relative_scale_value
-from musiclang import Note
+from musiclang import Note, Melody
 import numpy as np
 from musiclang.library import *
 from musiclang import Score
@@ -59,9 +61,11 @@ def transform_note_to_relative_note_with_chord_note(note, chord, last_pitch, voi
     chord_pitch_classes = chord.chord_extension_pitch_classes
     new_pitch = chord.to_pitch(note)
     pitch_class = new_pitch % 12
+    start = time.time()
     if pitch_class in chord_pitch_classes:
         # Transform to chord extension note
         real_note = transform_note_to_chord_extension(note, chord)
+
         # If voicing is None, then attribute voicing
         if voicing is None:
             new_note = real_note.copy()
@@ -88,12 +92,17 @@ def transform_melody_to_relative(melody, chord, idx_instrument, prev_voicing=Non
     last_pitch = None
     new_melody = None
     voicing = None
+    new_melody = []
     for note in melody.notes:
         new_note, last_pitch, voicing = transform_note_to_relative_note_with_chord_note(note, chord,
                                                                                         last_pitch, voicing,
                                                                                         idx_instrument)
-        new_melody += new_note
+        if isinstance(new_note, Note):
+            new_melody.append(new_note)
+        else:
+            new_melody += new_note.notes
 
+    new_melody = Melody(new_melody)
     if voicing is None:
         voicing = prev_voicing
 
@@ -230,9 +239,11 @@ class PatternExtractor:
                                                                                             len(chord.score.items()) - 1,
                                                                                                 ascending=False)
         else:
+            start = time.time()
             result_score, voicing, instruments, bar_duration = transform_chord_to_relative(chord,
                                                                                             self.nb_excluded_instruments,
                                                                                             ascending=True)
+            print('transform chord to relative', time.time() - start)
 
         if self.instruments is not None:
             instruments = self.instruments[:len(instruments)] + instruments[len(self.instruments):]

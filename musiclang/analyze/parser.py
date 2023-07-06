@@ -359,7 +359,6 @@ def parse_musiclang_sequence_and_chords(midi_file):
 
     print('1/4 : Performing voice separation (This may takes a while)')
     notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
-
     print('2/4 : Now infering chords with fast inference')
     chords = fast_chord_inference(notes, bars)
     sequence = convert_to_items(notes)

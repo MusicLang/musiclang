@@ -876,13 +876,6 @@ class Score:
         return pattern, score_pattern
 
 
-    @classmethod
-    def apply_patterns(cls, patterns, chords, **kwargs):
-        # Get all the voicing of the patterns
-
-        voicings = [pattern['voicing'] for pattern in patterns]
-
-
 
     def get_patterns(self, nb_excluded_instruments=0, **kwargs):
         metadata_base = {

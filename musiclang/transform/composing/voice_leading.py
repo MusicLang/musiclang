@@ -266,7 +266,7 @@ class VoiceLeading:
         best = np.argmin(scores)
         return solutions[best]
 
-    def voices_optim(self, dvals, max_iter=1000, max_norm=3, temperature=8, min_temperature=1, **kwargs):
+    def voices_optim(self, dvals, max_iter=100, max_norm=3, temperature=8, min_temperature=1, **kwargs):
         min_score = self.eval_solution(dvals)
         start_temp = temperature
         end_temp = min_temperature
@@ -295,7 +295,7 @@ class VoiceLeading:
         # Move in direction of sgn
 
 
-    def optimize_rules(self, dvals, max_iter_rules=200, max_norm_rules=1, temperature=1, **kwargs):
+    def optimize_rules(self, dvals, max_iter_rules=100, max_norm_rules=1, temperature=1, **kwargs):
 
         def eval_solution(dvals):
             pitches = self.get_pitch_solution(dvals)

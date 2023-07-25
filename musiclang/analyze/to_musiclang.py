@@ -35,7 +35,6 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
     offsets_voices = {}  # Store the offset of voice to deduplicate voice idx between tracks
     offsets_voices_raw = {}  # Store the offset of voice to deduplicate voice idx between tracks
     tracks = list(set([s.track for s in sequence]))
-
     for channel, instrument in instruments.items():
         for track_idx in tracks:
             track_notes = [n for n in sequence if n.track == track_idx]
@@ -45,7 +44,6 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
                 offsets_voices_raw[channel] = max(voices) + 1
             else:
                 offsets_voices_raw[channel] += max(voices) + 1
-
     for idx, chord in enumerate(chords):
         time_start = 0 if idx == 0 else time_start + chords[idx - 1].duration
         time_end += chord.duration
@@ -57,15 +55,15 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
             for voice in voices:
                 voice_notes = [n for n in track_notes if n.voice == voice]
                 if len(voice_notes) > 0:
-                    instrument = instruments[voice_notes[0].channel]
-                    voice_name = instrument + '__' + str(offsets_voices[track] + int(voice))
+                    instrument = instruments.get(voice_notes[0].channel, 'piano')
+                    voice_name = instrument + '__' + str(offsets_voices.get(track, 0) + int(voice))
                     cont = continuations.get(voice_name, None)
-                    chord_dict[voice_name], cont = _parse_voice(voice_notes, chord,
-                                                            time_start, time_end, 1, cont)
+                    chord_dict[voice_name], cont = _parse_voice(voice_notes, chord,time_start, time_end, 1, cont, is_drum=instrument.startswith('drum'))
                     if cont is not None:
                         continuations[voice_name] = cont
 
         score.append(chord(**chord_dict))
+
     return Score(score)
 
 
@@ -173,7 +171,7 @@ Utils
 """
 
 
-def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, cont):
+def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, cont, is_drum=False):
     """Parse a single voice to a musicLang melody between start time and end time
 
     Parameters
@@ -224,29 +222,45 @@ def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, c
     return_cont = None
     local_time_end = voice_notes[0].start
     if cont is not None:
-        melody.append(cont)
+        if cont.duration > 0:
+            melody.append(cont)
         local_time_end = bar_time_start + (cont.duration / tick_value)
 
     elif local_time_end > bar_time_start:
-        melody.append(Silence((local_time_end - bar_time_start) * tick_value))
+        duration = (local_time_end - bar_time_start) * tick_value
+        if duration > 0:
+            melody.append(Silence(duration))
 
-    for note in voice_notes:
+    for idx, note in enumerate(voice_notes):
+        if is_drum:
+            if idx < len(voice_notes) - 1:
+                next_note = voice_notes[idx + 1]
+                note.end = next_note.start
+            else:
+                note.end = bar_time_end
+
         overlap = local_time_end - note.start
         if overlap > 0:
             melody[-1].duration -= overlap * tick_value
             if melody[-1].duration == 0:
                 melody.pop()
             duration = note.end - note.start
-            melody.append(_parse_note(note, duration, chord, tick_value))
+            n = _parse_note(note, duration, chord, tick_value)
+            if n.duration > 0:
+                melody.append(n)
         elif overlap < 0:
             melody.append(Silence(- overlap * tick_value))
             duration = note.end - note.start
             if duration > 0:
-                melody.append(_parse_note(note, duration, chord, tick_value))
+                n = _parse_note(note, duration, chord, tick_value)
+                if n.duration > 0:
+                    melody.append(n)
         else:
             duration = note.end - note.start
             if duration > 0:
-                melody.append(_parse_note(note, duration, chord, tick_value))
+                n = _parse_note(note, duration, chord, tick_value)
+                if n.duration > 0:
+                    melody.append(n)
 
         local_time_end = note.end
         # Find scale note
@@ -261,8 +275,9 @@ def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, c
     from musiclang import Note, Melody
     melody = Melody(melody)
     assert all([isinstance(m, Note) for m in melody.notes])
-    assert melody.duration == (bar_time_end - bar_time_start) * tick_value
-
+    delta_t = abs(melody.duration -  ((bar_time_end - bar_time_start) * tick_value))
+    assert delta_t < 0.25, f"Issue with melody duration {delta_t}"
+    assert melody.notes[0].duration >0, "Issue with note duration"
     return melody, return_cont
 
 

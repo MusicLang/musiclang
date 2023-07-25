@@ -5,6 +5,7 @@ All rights reserved.
 This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
+from functools import cached_property
 
 from .constants import *
 import re
@@ -371,7 +372,7 @@ class Chord:
     def to_absolute_note(self):
         return self(**{part: melody.to_absolute_note(self) for part, melody in self.score.items()})
 
-    @property
+    @cached_property
     def bass_pitch(self):
         return self.chord_extension_pitches[0]
 
@@ -406,7 +407,7 @@ class Chord:
         return self.to_score().to_music21(*args, **kwargs)
 
 
-    @property
+    @cached_property
     def scale_degree(self):
         """
 
@@ -417,7 +418,7 @@ class Chord:
         tonic = self.scale_pitches[0]
         return DEGREE_TO_SCALE_DEGREE[tonic % 12] + tonic // 12
 
-    @property
+    @cached_property
     def pitch_set(self):
         """
         Get a frozenset of :func:`~Chord.chord_pitches`
@@ -432,14 +433,14 @@ class Chord:
         return {**chromatic_dict, **diatonic_dict}
 
 
-    @property
+    @cached_property
     def scale_set(self):
         """
         Get a frozenset of :func:`~Chord.scale_pitches`
         """
         return frozenset({s % 12 for s in self.scale_pitches})
 
-    @property
+    @cached_property
     def chord_pitches(self):
         """
         Get the chord absolute pitches (integers) starting with the chord root.
@@ -530,10 +531,10 @@ class Chord:
             return self.chord_pitches
         else:
             raise ValueError("This type is not associated to a scale")
-    @property
+    @cached_property
     def chromatic_pitches(self):
         return [self.scale_pitches[0] + i for i in range(12)]
-    @property
+    @cached_property
     def scale_pitches(self):
         """
         Get the scale absolute pitches (integers) starting with the chord root.
@@ -565,12 +566,12 @@ class Chord:
         return scale_pitches
 
 
-    @property
+    @cached_property
     def chromatic_scale_pitches(self):
         """ """
         return [self.scale_pitches[0] + i for i in range(12)]
 
-    @property
+    @cached_property
     def chord_extension_pitches(self):
         """
         Get the chord absolute pitches (integers) starting with the chord bass as indicated by the extension.
@@ -1049,7 +1050,7 @@ class Chord:
                  instruments=None,
                  voicing=None,
                  add_metadata=True,
-                   max_duration=16,
+                   max_duration=32,
                    **kwargs):
         """
         Extract the pattern from the chord
@@ -1099,10 +1100,15 @@ class Chord:
                                                              melody=melody,
                                                              nb_excluded_instruments=nb_excluded_instruments,
                                                              )
+        dict_pattern['multi_chord'] = False
         return dict_pattern, pattern
 
     def project_pattern(self, score, restart_each_chord=False):
         return self.to_score().project_pattern(score, restart_each_chord=restart_each_chord)
+
+    def remove_drums(self):
+        return self(**{ins: val for ins, val in self.score.items() if not ins.startswith('drums')})
+
 
     def o(self, octave):
         """Chord up or down the amount of octave in parameter, it will change the chord octave, not the melody
@@ -1320,6 +1326,36 @@ class Chord:
     @property
     def full_octave(self):
         return self.octave + self.tonality.octave
+
+
+    def replace_instruments_names(self, **instruments_dict):
+        """
+        Replace any instrument with another (use part name (eg: piano__0)
+
+        Parameters
+        ----------
+        instruments_dict: dict[str, str]
+            Dictionary of parts name to replace
+
+        Returns
+        -------
+        chord: Chord
+
+        """
+        new_chord_dict = {}
+        idx_instruments = {}
+        instruments = sorted(self.score.keys(), key=lambda x: (x.split('__')[0], int(x.split('__')[1])))
+        for ins in instruments:
+            name, idx = ins.split('__')
+            idx = int(idx)
+            new_name = instruments_dict.get(name, name)
+            if new_name not in idx_instruments.keys():
+                idx_instruments[new_name] = -1
+            chosen_idx = idx_instruments[new_name] + 1 if idx <= idx_instruments[new_name] else idx
+            new_chord_dict[new_name + '__' + str(chosen_idx)] = self.score[ins]
+            idx_instruments[new_name] = max(idx, idx_instruments[new_name])
+
+        return self(**new_chord_dict)
 
     def replace_instruments(self, **instruments_dict):
         """

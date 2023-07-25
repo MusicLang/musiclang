@@ -122,11 +122,22 @@ def _parse(filename, **kwargs):
              'tempo': first_tempo, 'tempos': tempos, 'bar_durations': bar_durations}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        notes_score, bars = load_score(filename)
+        notes_score, bars = load_score(filename, ticks_per_beat=mf.ticks_per_beat)
     notes_score_df = pd.DataFrame(notes_score, columns=[START_TIME, END_TIME, VEL, NOTE, TRACK, CHANNEL, VOICE])
     notes_score_df[TRACK] = (notes_score_df[TRACK] + 1).astype(int)
     notes_score_df[DURATION] = notes_score_df[END_TIME] - notes_score_df[START_TIME]
     notes_score_df[VOICE] = (notes_score_df[VOICE] - 1).astype(int)
+
+    if notes_score_df[START_TIME].min() < 0:
+        # Add bar duration in notes_score[START_TIME]
+        bar_duration = config['bar_durations'][0]
+        notes_score_df[START_TIME] += bar_duration
+        for idx in range(len(bars)):
+            bars[idx] = bars[idx][0] + bar_duration, bars[idx][1] + bar_duration
+
+    if len(bars) > 1 and (bars[-1][1] - bars[-1][0] != bars[-2][1] - bars[-2][0]):
+        bars[-1] = bars[-1][0], bars[-1][0] + bars[-2][1] - bars[-2][0]
+    #notes_score_df[START_TIME] = notes_score_df[START_TIME] - notes_score_df[START_TIME].min() # Start at 0
     notes = np.asarray(notes_score_df[[START_TIME, NOTE, DURATION, VEL, TRACK, CHANNEL, VOICE]])
     return notes, config, bars
 

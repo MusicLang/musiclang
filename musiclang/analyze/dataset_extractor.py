@@ -62,7 +62,7 @@ class DatasetExtractor:
     """
 
     def __init__(self, input_pattern, output_directory,
-                 remove_drums=True, fast_chord_inference=True,
+                 remove_drums=False, fast_chord_inference=True,
                  time_budget_per_file=120
                  ):
 

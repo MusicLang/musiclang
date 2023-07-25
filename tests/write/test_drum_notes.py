@@ -19,7 +19,7 @@ def test_drums_auto_converted():
 def test_unexisting_drum_lead_to_error():
 
     chord = (I % I.M)(drums=s0.o(-2) + s0)
-    assert chord == (I % I.M)(drums=s0.o(-2) + r)
+    assert chord == (I % I.M)(drums=s0.o(-2) + d0)
 
 def test_drum_note_evaluation_ok():
     score = (I % I.M)(drums=[sn + bd, hh + hh]) + (I % I.M)(drums=[sn + bd, hh + hh])

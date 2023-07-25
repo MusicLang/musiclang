@@ -144,6 +144,7 @@ x7 = Note('x', 7, 0, 1)
 x8 = Note('x', 8, 0, 1)
 x9 = Note('x', 9, 0, 1)
 x10 = Note('x', 10, 0, 1)
+x11 = Note('x', 11, 0, 1)
 x12 = Note('x', 12, 0, 1)
 x13 = Note('x', 13, 0, 1)
 x14 = Note('x', 14, 0, 1)
@@ -171,6 +172,19 @@ ch = Note('d', 8, -2, 1)  # Closed hat
 mt = Note('d', 9, -2, 1)  # Medium tom
 oh = Note('d', 10, -2, 1)  # Open hat
 ht = Note('d', 11, -2, 1)  # High tom
+
+d0 = Note('d', 0, 0, 1)
+d1 = Note('d', 1, 0, 1)
+d2 = Note('d', 2, 0, 1)
+d3 = Note('d', 3, 0, 1)
+d4 = Note('d', 4, 0, 1)
+d5 = Note('d', 5, 0, 1)
+d6 = Note('d', 6, 0, 1)
+d7 = Note('d', 7, 0, 1)
+d8 = Note('d', 8, 0, 1)
+d9 = Note('d', 9, 0, 1)
+d10 = Note('d', 10, 0, 1)
+d11 = Note('d', 11, 0, 1)
 
 hht = Note('d', 0, -1, 1)
 crash = Note('d', 1, -1, 1)

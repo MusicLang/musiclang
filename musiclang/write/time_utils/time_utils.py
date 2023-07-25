@@ -5,6 +5,8 @@ All rights reserved.
 This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
+from musiclang import Melody
+
 
 def put_on_same_chord(score):
     """Take the first chord as reference,
@@ -105,7 +107,7 @@ def get_chord_between(chord, start, end):
     for part in chord.score.keys():
         time = 0
         voice = chord.score[part]
-        new_voice = None
+        new_voice = []
         to_break = False
         for note in voice:
             add_continuation = False
@@ -126,21 +128,20 @@ def get_chord_between(chord, start, end):
 
             if add_continuation:
                 from ..note import Continuation
-                new_voice += Continuation(new_note.duration)
+                new_voice.append(Continuation(new_note.duration))
             else:
-                new_voice += new_note
+                new_voice.append(new_note)
 
 
             if new_note.duration < 0:
                 raise Exception('Get a negative duration in get_chord_between')
-            if new_voice.duration > end - start:
-                raise Exception('New voice duration should never be more than boundaries')
+
 
             time += new_note.duration
 
             if to_break:
                 break
-
+        new_voice = Melody(new_voice)
         new_parts[part] = new_voice
 
     if len(new_parts.keys()) == 0:

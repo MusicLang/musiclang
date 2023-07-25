@@ -319,6 +319,27 @@ class Score:
         return Score(score)
 
 
+    def replace_instruments_names(self, **instruments_dict):
+        """
+        Replace any instrument name with another (use only instrument name (eg: piano)
+
+        Parameters
+        ----------
+        instruments_dict: dict[str, str]
+            Dictionary of parts name to replace
+
+        Returns
+        -------
+        score: Score
+
+        """
+        score = []
+        for chord in self.chords:
+            score.append(chord.replace_instruments_names(**instruments_dict))
+
+        return Score(score)
+
+
     def clean(self):
         return self.to_drum().decompose_duration()
 
@@ -438,7 +459,12 @@ class Score:
         score = score.correct_chord_octave()
         score = score.normalize_instrument_names()
         score = score.split_too_long_chords(8)
+        #score = score.remove_drums()
+        score = score.remove_empty_chords()
         return score
+
+    def remove_empty_chords(self):
+        return Score([c for c in self.chords if c.duration > 0])
 
     def correct_chord_octave(self):
         """
@@ -811,6 +837,46 @@ class Score:
 
 
 
+    def patternize(self,
+                   **kwargs):
+        """
+        Extract the pattern from the chord
+
+        Parameters
+        ----------
+        nb_excluded_instruments: int (Default value = 0)
+            Number of instruments to exclude from the pattern
+        fixed_bass: bool (Default value = True)
+            If True, the bass will be fixed in the pattern response
+        voice_leading: bool (Default value = True)
+            If True, the voice leading will be applied in the pattern response
+        melody: bool (Default value = False)
+            Do you want to extract a melody or an accompaniment pattern
+        instruments: list[str] (Default value = None)
+            List of instruments to use for the pattern
+        voicing: list[Note] or None (Default value = None)
+            Voicing to use for the pattern, otherwise extract the good one
+        add_metadata: bool (Default value = True)
+            If True, add metadata and features to the pattern
+        Returns
+        -------
+        score_pattern: Chord
+            Patternized chord or score
+        pattern: dict
+            Pattern data of the score
+
+        """
+        # Project all on same chord
+        first_chord = self.chords[0].to_chord().augment(self.duration)
+        one_chord_score = self.project_on_score(first_chord, voice_leading=False)
+        chord = one_chord_score.chords[0]
+        pattern, score_pattern = chord.patternize(**kwargs)
+        pattern['chords'] = [str(chord.to_chord()(r.augment(chord.duration))) for chord in self.chords]
+        pattern['multi_chord'] = True
+        return pattern, score_pattern
+
+
+
     def get_patterns(self, nb_excluded_instruments=0, **kwargs):
         metadata_base = {
             "tempo": self.config['tempo']
@@ -951,7 +1017,7 @@ class Score:
         return Score([c.pedal for c in self.chords], tags=set(self.tags))
 
     def doubling(self, **args):
-        new_score = None
+        new_score = []
         for chord in self.chords:
             score = chord.copy().score
             for part, new_parts in args.items():
@@ -960,9 +1026,9 @@ class Score:
                 for new_part in new_parts:
                     if part in score.keys():
                         score[new_part] = score[part].copy()
-            new_score += chord(**score)
+            new_score.append(chord(**score))
 
-        return new_score
+        return Score(new_score)
 
     def get_score_between(self, start=None, end=None):
         """
@@ -1197,6 +1263,9 @@ class Score:
 
     def remove_accidents(self):
         return Score([chord.remove_accidents() for chord in self.chords], tags=set(self.tags))
+
+    def remove_drums(self):
+        return Score([chord.remove_drums() for chord in self.chords])
 
 
     def __mul__(self, other):

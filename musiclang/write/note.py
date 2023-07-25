@@ -7,7 +7,7 @@ LICENSE file in the root directory of this source tree.
 """
 
 from .constants import *
-
+LIMIT_DENOM = int(1e4)
 
 class Note:
     """
@@ -127,7 +127,7 @@ class Note:
         self.type = type
         self.val = val
         self.octave = octave
-        self.duration = duration
+        self.duration = frac(duration).limit_denominator(LIMIT_DENOM)
         self.amp = amp
         self.accident = accident
         self.mode = mode
@@ -474,11 +474,12 @@ class Note:
 
         """
         if isinstance(value, float):
-            value = frac(value).limit_denominator(8)
+            value = frac(value).limit_denominator(LIMIT_DENOM)
         elif isinstance(value, int):
             value = frac(value, 1)
         result = self.copy()
         result.duration = value
+        result.duration = result.duration.limit_denominator(LIMIT_DENOM)
         return result
 
     def augment(self, value):
@@ -506,11 +507,12 @@ class Note:
 
         """
         if isinstance(value, float):
-            value = frac(value).limit_denominator(8)
+            value = frac(value).limit_denominator(LIMIT_DENOM)
         if isinstance(value, int):
             value = frac(value, 1)
         result = self.copy()
         result.duration *= value
+        result.duration = result.duration.limit_denominator(LIMIT_DENOM)
         return result
 
     def change_type(self, new_type):
@@ -690,7 +692,9 @@ class Note:
         if self.is_note:
             result = f"{self.type}{self.val}"
         elif self.is_drum:
-            result = DRUMS_DICT.get((self.val, self.octave), 'r')
+            result = f'd{self.val}'
+            if self.octave != 0:
+                result += f".oabs({self.octave})"
         elif self.type == 'x':
             result = f"{self.type}{self.val}"
         else:

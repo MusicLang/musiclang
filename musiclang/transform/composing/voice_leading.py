@@ -47,7 +47,7 @@ class VoiceLeading:
     TYPES = ['b', 'c', 's', 'h']
     RULES = Rules
 
-    def __init__(self, types=None, rules=None, exclude_rules=None, fixed_voices=None, change_octave_fixed=True, seed=None, method='voices_and_rules', **kwargs):
+    def __init__(self, types=None, rules=None, exclude_rules=None, fixed_voices=None, change_octave_fixed=True, seed=34, method='voices_and_rules', **kwargs):
         """
 
         Parameters

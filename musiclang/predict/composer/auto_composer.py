@@ -150,7 +150,7 @@ def auto_compose(melody, harmony, orchestra, voicing, patternator,
         if not voice_leading:
             fixed_voices = fixed_voices + instruments[1:]
 
-    score = VoiceLeading(fixed_voices=fixed_voices)(score, max_norm=3, max_norm_rules=1)
+    score = VoiceLeading(fixed_voices=fixed_voices)(score, max_norm=2, max_norm_rules=2)
 
     patternator = Patternator(**patternator)
     for orchestra, temp_instruments in zip(orchestras, temp_instrumentss):

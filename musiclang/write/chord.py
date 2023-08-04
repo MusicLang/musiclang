@@ -111,6 +111,12 @@ class Chord:
         cp.tags.add(tag)
         return cp
 
+
+    def transpose(self, interval):
+        cp = self.copy()
+        cp.tonality.degree += interval
+        return cp
+
     def add_tags(self, tags):
         """
         Add several tags to the object.

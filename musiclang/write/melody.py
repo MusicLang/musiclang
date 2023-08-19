@@ -247,7 +247,7 @@ class Melody:
         for note in self.notes:
             if note.type == "x":
                 try:
-                    new_melody.append(voicing[note.val].set_duration(note.duration).o(note.octave))
+                    new_melody.append(voicing[note.val].set_duration(note.duration).o(note.octave).set_amp(note.amp))
                 except:
                     raise ValueError(f'Unexisting voicing index : {note.val}')
             else:

@@ -8,6 +8,7 @@ LICENSE file in the root directory of this source tree.
 
 import numpy as np
 import mido
+from fractions import Fraction as frac
 
 def voice_to_channel(instrument_list, voice, instruments):
     """
@@ -47,7 +48,7 @@ def matrix_to_events(matrix,
 
 def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
                   anachrusis_time=0,
-                  instrument_names=None, one_track_per_instrument=False, **kwargs):
+                  instrument_names=None, one_track_per_instrument=True, **kwargs):
     """
 
     Parameters
@@ -77,6 +78,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     import os
 
     matrix = np.asarray(matrix)
+
 
 
     #
@@ -120,7 +122,9 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
 
     bar_duration = time_signature[0] * 4 / time_signature[1]
     start_time = (-anachrusis_time) % bar_duration
-    matrix[:, OFFSET] = matrix[:, OFFSET] + start_time
+
+    from fractions import Fraction as frac
+    matrix[:, OFFSET] = matrix[:, OFFSET] + frac(start_time).limit_denominator(24)
     # Take care of continuation
     # matrix = matrix[(matrix['pitch'] > 0) | (matrix['continuation'] > 0)]
     # Remove all continuations that follows a silence
@@ -250,6 +254,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
             mid.save(output_file)
         else:
             mid.save(file=output_file)
+
     return mid
 
 

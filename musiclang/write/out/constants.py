@@ -140,6 +140,8 @@ INSTRUMENTS_DICT = {
 REVERSE_INSTRUMENT_DICT = {
     val: key for key, val in INSTRUMENTS_DICT.items()
 }
+INSTRUMENTS_DICT['drums_0'] = 0
+INSTRUMENTS_DICT['drums'] = 0
 
 OCTAVES = {
     INSTRUMENTS_DICT['piccolo']: 1,

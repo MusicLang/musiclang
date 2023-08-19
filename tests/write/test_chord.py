@@ -63,7 +63,7 @@ def test_patternize_melody():
         piano__3=s0.h.o(-1).p + s4.o(-2).p))
     expected_pattern = (
     (I % I.M)(
-        v__0=x0.h.mp + bu2.oabs(-1).mp))
+        v__0=x0.h.mp + bd1.mp))
 
     data, pattern = chord.patternize(melody=True)
 
@@ -79,7 +79,7 @@ def test_patternize_melody_with_octave_voicing():
         piano__3=s0.h.o(-1).p + s4.o(-2).p))
     expected_pattern = (
     (I % I.M)(
-        v__0=x0.h.mp + bu2.oabs(-1).mp))
+        v__0=x0.h.mp + bd1.mp))
 
     data, pattern = chord.patternize(melody=True)
 
@@ -95,7 +95,7 @@ def test_patternize_acc():
         piano__3=s0.h.o(-1).p + s4.o(-2).p))
     expected_pattern = (
     (I % I.M)(
-        v__0=x0.h.p + bu2.oabs(-1).p))
+        v__0=x0.h.p + bd1.p))
 
     data, pattern = chord.patternize(melody=False, nb_excluded_instruments=1)
 

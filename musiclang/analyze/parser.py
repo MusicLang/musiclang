@@ -37,9 +37,33 @@ def parse_to_musiclang(input_file: str, **kwargs):
     else:
         raise Exception('Unknown extension {}'.format(extension))
 
+
+
+def tokenize_midi_file(input_file, output_file):
+    from miditok import REMI, REMIPlus
+    from miditok.constants import ADDITIONAL_TOKENS
+    from miditoolkit import MidiFile
+
+    tokenizer = REMIPlus(
+        additional_tokens={
+            **ADDITIONAL_TOKENS,
+            "Chord": False,
+            "chord_tokens_with_root_note": False,
+            "Program": True,
+            "Tempo": True,
+            "TimeSignature": True,
+        },
+        max_bar_embedding=None,
+        beat_res={(0, 8): 16}
+    )
+
+    tokens = tokenizer.midi_to_tokens(MidiFile(input_file))
+    midi = tokenizer.tokens_to_midi(tokens)
+    midi.dump(output_file)
+
 def parse_midi_to_musiclang(input_file: str, **kwargs):
     """Parse a midi input file into a musiclang Score
-    - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
+    - Get chords with dynamic programming
     - Get voice separation and parsing
 
     Parameters
@@ -57,14 +81,13 @@ def parse_midi_to_musiclang(input_file: str, **kwargs):
 
     """
     import tempfile
+    import time
     import os
     import shutil
+    # First tokenize the midi file
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
-        mxl_file = os.path.join(di, 'data.mxl')
-        #obj = _m21Parse(input_file, remove_perc=True)
-        #obj.write('musicxml', fp=os.path.join(di, mxl_file))
-        shutil.copy(input_file, midi_file)
+        tokenize_midi_file(input_file, midi_file)
         result = parse_directory_to_musiclang(di, **kwargs)
     return result
 

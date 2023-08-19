@@ -946,6 +946,10 @@ class Note:
             return self.copy()
 
 
+    def apply_pattern(self, *voicing):
+        return self.to_melody().apply_pattern(*voicing)
+
+
     def __hash__(self):
         return hash(self.__repr__())
 

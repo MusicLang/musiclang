@@ -351,6 +351,12 @@ class Score:
         res = [chord.to_chord() for chord in self.chords]
         return res
 
+    def to_chords_with_duration(self):
+        durations = [chord.duration for chord in self.chords]
+        res = [chord.to_chord()(r.set_duration(duration)) for duration, chord in zip(durations, self.chords)]
+        return res
+
+
     def copy(self):
         """
         Copy the score
@@ -1417,3 +1423,40 @@ class Score:
 
         return score_to_midi(self, filepath, **kwargs)
 
+
+    @classmethod
+    def from_orchestration(cls, orchestration, chords):
+
+        def parse_one_data(ins, data, score, idx=None):
+            notes = parse_notes(chord, data['note'], data['octave'])
+            if idx is None:
+                score[ins] = parse_pattern(data['pattern']).apply_pattern(*notes)
+            else:
+                score[f'{ins}__{idx}'] =  parse_pattern(data['pattern']).apply_pattern(*notes)
+            return score
+
+        def parse_pattern(pattern):
+
+            if isinstance(pattern, str):
+                return Score.from_str(pattern)
+            else:
+                return pattern
+        def parse_notes(chord, note, octave):
+            if isinstance(note, str):
+                return chord.__getattribute__(note).o(octave)
+            else:
+                return [chord.__getattribute__(n).o(octave) for n in note]
+
+        all_chords = []
+        for chord in chords:
+            score = {}
+            for ins, data in orchestration.items():
+                if isinstance(data, dict):
+                    score = parse_one_data(ins, data, score, idx=None)
+                else:
+                    for idx, d in enumerate(data):
+                        score = parse_one_data(ins, d, score, idx=idx)
+
+            all_chords.append(chord(**score))
+        final_score = Score(all_chords)
+        return final_score

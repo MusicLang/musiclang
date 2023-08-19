@@ -224,6 +224,38 @@ class Melody:
             pitches.append(result)
         return pitches
 
+    def apply_pattern(self, *voicing):
+        """
+        Replace pattern notes by voicing
+
+        Examples
+        ---------
+
+        >>> melody = x0.h + x1.h
+        >>> melody.apply_pattern(s1, s0)
+        s1.h + s0.h
+
+        Parameters
+        ----------
+        voicing: List[Note] : Voicing used to replace in the template
+
+        Returns
+        -------
+        melody: Patternized melody
+        """
+        new_melody =[]
+        for note in self.notes:
+            if note.type == "x":
+                try:
+                    new_melody.append(voicing[note.val].set_duration(note.duration).o(note.octave))
+                except:
+                    raise ValueError(f'Unexisting voicing index : {note.val}')
+            else:
+                new_melody.append(note)
+
+        return Melody(new_melody)
+
+
     def decompose_duration(self):
         """ """
         return Melody(sum([note.decompose_duration() for note in self.notes], None).notes, nb_bars=self.nb_bars, tags=set(self.tags))

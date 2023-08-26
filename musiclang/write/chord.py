@@ -1575,6 +1575,36 @@ class Chord:
         from .score import Score
         return Score([self]).to_midi(filepath, **kwargs)
 
+
+    def to_scale_notes(self):
+        """
+        Convert the notes of a chord in scale notes
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        """
+        return self(**{ins: n.to_scale_notes(self) for ins, n in self.score.items()})
+
+    def set_degree(self, degree):
+        res = self.copy()
+        res.element = degree
+        return res
+
+    def set_octave(self, octave):
+        res = self.copy()
+        res.octave = octave
+        return res
+    def set_element(self, element):
+        return self.set_degree(element)
+
+    def to_custom_chords(self, nb_voices=4):
+
+        return self.to_score().to_custom_chords(nb_voices=nb_voices)
+
     def get_orchestration(self):
         from .melody import Melody
         def voicing_to_quality(voicing, chord):

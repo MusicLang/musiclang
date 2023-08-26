@@ -256,6 +256,9 @@ class Melody:
         return Melody(new_melody)
 
 
+    def to_scale_notes(self, chord):
+        return Melody([n.to_scale_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
+
     def decompose_duration(self):
         """ """
         return Melody(sum([note.decompose_duration() for note in self.notes], None).notes, nb_bars=self.nb_bars, tags=set(self.tags))

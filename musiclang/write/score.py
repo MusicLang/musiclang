@@ -1424,6 +1424,23 @@ class Score:
         return score_to_midi(self, filepath, **kwargs)
 
 
+    def to_scale_notes(self):
+
+        return Score([chord.to_scale_notes() for chord in self.chords])
+
+
+    def to_custom_chords(self, nb_voices=4, *args, **kwargs):
+
+        from musiclang.transform import VoiceLeading
+        from musiclang import CustomChord
+        chords = Score([c(*[Note("b", i, 0, c.duration) for i in range(nb_voices)]) for c in self.chords])
+        score = VoiceLeading(*args)(Score(chords), **kwargs)
+        score = score.to_scale_notes()
+        return Score([CustomChord(list(sorted([chord.set_degree(0).set_octave(0).parse(chord.to_pitch(n.notes[0]))
+                                               for n in chord.score.values()], key=lambda x: chord.to_pitch(x))),
+                                  tonality=chord.tonality).set_duration(chord.duration)
+                      for chord in score.chords])
+
     @classmethod
     def from_orchestration(cls, orchestration, chords):
 

@@ -461,6 +461,14 @@ class Note:
         note.val = val
         return note
 
+
+    def to_scale_note(self, chord):
+        return chord.parse(chord.to_pitch(self))
+
+    def to_scale_notes(self, chord):
+        from musiclang import Melody
+        return Melody([chord.parse(chord.to_pitches(self))], tags=self.tags)
+
     def set_duration(self, value):
         """
         Set the duration of a note

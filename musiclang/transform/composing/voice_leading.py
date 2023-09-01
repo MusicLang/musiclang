@@ -306,7 +306,6 @@ class VoiceLeading:
         problems = self.get_problems(pitches)
         min_score = eval_solution(dvals)
         tried = set()
-        print(temperature)
         for i in range(max_iter_rules):
             pitches = self.get_pitch_solution(dvals)
             problems = self.get_problems(pitches)
@@ -330,8 +329,6 @@ class VoiceLeading:
             if min_score == 0:
                 break
         score = self.eval_solution(dvals)
-        print('Problem score :', min_score)
-        print('SCORE after tuning :', score)
         return dvals
 
     def get_val(self, pitches, v1, v2, idxc):

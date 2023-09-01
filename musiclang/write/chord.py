@@ -877,7 +877,7 @@ class Chord:
         """
         return self.score is not None
 
-    def to_chord(self):
+    def to_chord(self, duration=False):
         """
         Returns a copy of the chord without the chord score
 
@@ -889,6 +889,8 @@ class Chord:
         """
         result = self.copy()
         result.score = {}
+        if duration:
+            result = result.set_duration(self.duration)
         return result
 
     @property
@@ -1588,6 +1590,9 @@ class Chord:
 
         """
         return self(**{ins: n.to_scale_notes(self) for ins, n in self.score.items()})
+
+    def project_on_rhythm(self, rhythm, **kwargs):
+        return self(**{ins: n.project_on_rhythm(rhythm, chord=self, **kwargs) for ins, n in self.score.items()})
 
     def set_degree(self, degree):
         res = self.copy()

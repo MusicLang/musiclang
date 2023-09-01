@@ -197,6 +197,21 @@ class Melody:
     def to_absolute_note(self, chord):
         return Melody([n.to_absolute_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
 
+
+    def get_between(self, start, end):
+        """
+        Get the notes between start and end time
+        Parameters
+        ----------
+        start: int
+        end: int
+
+        Returns
+        -------
+        melody: Melody
+        """
+        from musiclang.write.time_utils import get_melody_between
+        return get_melody_between(self, start, end)
     def get_pitches(self, chord, track_idx, time, last_note_array=None):
         """
 
@@ -309,6 +324,11 @@ class Melody:
         new_melody = self.copy()
         new_melody.notes[0] = new_melody.notes[0].set_tempo(tempo)
         return new_melody
+
+
+    def project_on_rhythm(self, rhythm, chord=None, **kwargs):
+        from musiclang.transform.composing import project_on_rhythm
+        return project_on_rhythm(rhythm, self, chord=chord)
 
     def accelerando(self, start, end):
         """

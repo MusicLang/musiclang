@@ -462,12 +462,15 @@ class Note:
         return note
 
 
+    def project_on_rhythm(self, rhythm, **kwargs):
+        return self.to_melody().project_on_rhythm(rhythm, **kwargs)
+
     def to_scale_note(self, chord):
-        return chord.parse(chord.to_pitch(self))
+        return chord.parse(chord.to_pitch(self)).set_duration(self.duration).set_amp(self.amp).add_tags(self.tags)
 
     def to_scale_notes(self, chord):
         from musiclang import Melody
-        return Melody([chord.parse(chord.to_pitches(self))], tags=self.tags)
+        return Melody(self.to_scale_note(chord))
 
     def set_duration(self, value):
         """

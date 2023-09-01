@@ -28,8 +28,6 @@ def merge_and_update(left, right, on):
         on = [on]
     new_columns = list(set(right.columns) - set(on))
     final = left.merge(right, on=on, how='left')
-    print(final.columns)
-    print(new_columns)
     colsx = [col + '_x' for col in new_columns]
     colsy = [col + '_y' for col in new_columns]
     for col in new_columns:

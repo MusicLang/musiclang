@@ -15,7 +15,6 @@ def get_candidate(candidates, scale, new_pitch, last_pitch):
         if candidate_pitch_class == new_pitch % 12:
             delta_octave = (new_pitch - candidate_pitch) // 12
             if ("u" in candidate.type and delta_octave < 0) or ("d" in candidate.type and delta_octave > 0):
-                print(new_pitch, candidate)
                 continue
             return candidate.oabs(delta_octave if "u" in candidate.type else - delta_octave)
 
@@ -246,7 +245,6 @@ class PatternExtractor:
             result_score, voicing, instruments, bar_duration = transform_chord_to_relative(chord,
                                                                                             self.nb_excluded_instruments,
                                                                                             ascending=True)
-            print('transform chord to relative', time.time() - start)
 
         if self.instruments is not None:
             instruments = self.instruments[:len(instruments)] + instruments[len(self.instruments):]

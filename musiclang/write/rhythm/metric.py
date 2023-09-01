@@ -29,6 +29,8 @@ class Metric:
 
         self.signature = signature
         self.tatum = tatum
+        if isinstance(self.tatum, (tuple, list)):
+            self.tatum = frac(*self.tatum)
         self.nb_bars = nb_bars
         self.array = array
         if (self.duration / self.tatum) != len(array):

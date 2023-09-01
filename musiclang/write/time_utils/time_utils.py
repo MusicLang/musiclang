@@ -85,6 +85,56 @@ def project_on_score(score, score2, keep_score=False):
     return new_score
 
 
+
+def get_melody_between(voice, start, end):
+    """
+    Get the melody between start and end
+    Parameters
+    ----------
+    voice
+    start
+    end
+
+    Returns
+    -------
+
+    """
+    time = 0
+    new_voice = []
+    to_break = False
+    for note in voice:
+        add_continuation = False
+        note_duration = note.duration
+        new_note = note.copy()
+        if time >= end:
+            break
+        if (time < start) and (time + note_duration <= start):
+            time += new_note.duration
+            continue
+        if time + note_duration >= end:
+            new_note.duration = end - time
+            to_break = True
+        if time < start:
+            new_note.duration = new_note.duration - (start - time)
+            time += start - time
+            add_continuation = True
+
+        if add_continuation:
+            from ..note import Continuation
+            new_voice.append(Continuation(new_note.duration))
+        else:
+            new_voice.append(new_note)
+
+        if new_note.duration < 0:
+            raise Exception('Get a negative duration in get_chord_between')
+
+        time += new_note.duration
+
+        if to_break:
+            break
+    new_voice = Melody(new_voice)
+    return new_voice
+
 def get_chord_between(chord, start, end):
     """Get the chord with melodies that are between start and end
 
@@ -105,43 +155,7 @@ def get_chord_between(chord, start, end):
     """
     new_parts = {ins: None for ins in chord.instruments}
     for part in chord.score.keys():
-        time = 0
-        voice = chord.score[part]
-        new_voice = []
-        to_break = False
-        for note in voice:
-            add_continuation = False
-            note_duration = note.duration
-            new_note = note.copy()
-            if time >= end:
-                break
-            if (time < start) and (time + note_duration <= start):
-                time += new_note.duration
-                continue
-            if time + note_duration >= end:
-                new_note.duration = end - time
-                to_break = True
-            if time < start:
-                new_note.duration = new_note.duration - (start - time)
-                time += start - time
-                add_continuation = True
-
-            if add_continuation:
-                from ..note import Continuation
-                new_voice.append(Continuation(new_note.duration))
-            else:
-                new_voice.append(new_note)
-
-
-            if new_note.duration < 0:
-                raise Exception('Get a negative duration in get_chord_between')
-
-
-            time += new_note.duration
-
-            if to_break:
-                break
-        new_voice = Melody(new_voice)
+        new_voice = get_melody_between(chord.score[part], start, end)
         new_parts[part] = new_voice
 
     if len(new_parts.keys()) == 0:

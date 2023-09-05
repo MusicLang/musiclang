@@ -447,6 +447,16 @@ class Melody:
     def to_chord_note(self, chord):
         return Melody([n.to_chord_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
 
+
+    def get_note_times(self):
+        t = 0
+        times = []
+        for n in self.notes:
+            if n.is_note:
+                times.append(t)
+            t += n.duration
+        return times
+
     def to_code(self):
         """ """
         return " + ".join([n.to_code() for n in self.notes])

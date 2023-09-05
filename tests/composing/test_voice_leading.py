@@ -39,7 +39,6 @@ def test_voice_leading_use_types():
 
     assert new_score == (I % I.M)(cello__0=s5.o(-1), violin__0=h2)+ (I % I.M)(cello__0=s0,	violin__0=h2)
 
-
 def test_voice_leading_correct_parallel_dissonnances():
     score = (I % I.M)(cello=s0, violin=s1) + (I % I.M)(cello=s0, violin=s1)
     vl = VoiceLeading(

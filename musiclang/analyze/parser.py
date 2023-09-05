@@ -39,7 +39,26 @@ def parse_to_musiclang(input_file: str, **kwargs):
 
 
 
-def tokenize_midi_file(input_file, output_file):
+def tokenize_midi_file(input_file, output_file, chord_range=None):
+    import itertools
+
+    def get_chord_range(tokens, tokenizer, start, end):
+        bar_none = tokenizer['Bar_None']
+        # Split tokens per bar_none token (like a str.split) (list to list of list)
+        tokens = [list(g) for k, g in itertools.groupby(tokens, lambda x: x == bar_none) if not k]
+        # Get the sublist between start and end
+        tokens = tokens[start:end]
+        # Add bar_none to each sublist
+        tokens = [[bar_none] + t for t in tokens]
+        # Flatten the list adding bar_none between each sublist
+        tokens = list(itertools.chain.from_iterable(tokens))
+
+        return tokens
+
+
+
+
+
     from miditok import REMI, REMIPlus
     from miditok.constants import ADDITIONAL_TOKENS
     from miditoolkit import MidiFile
@@ -58,10 +77,13 @@ def tokenize_midi_file(input_file, output_file):
     )
 
     tokens = tokenizer.midi_to_tokens(MidiFile(input_file))
+    if chord_range is not None:
+        tokens = get_chord_range(tokens, tokenizer, *chord_range)
+
     midi = tokenizer.tokens_to_midi(tokens)
     midi.dump(output_file)
 
-def parse_midi_to_musiclang(input_file: str, **kwargs):
+def parse_midi_to_musiclang(input_file: str, chord_range=None, **kwargs):
     """Parse a midi input file into a musiclang Score
     - Get chords with dynamic programming
     - Get voice separation and parsing
@@ -87,7 +109,7 @@ def parse_midi_to_musiclang(input_file: str, **kwargs):
     # First tokenize the midi file
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
-        tokenize_midi_file(input_file, midi_file)
+        tokenize_midi_file(input_file, midi_file, chord_range=chord_range)
         result = parse_directory_to_musiclang(di, **kwargs)
     return result
 

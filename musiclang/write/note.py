@@ -466,6 +466,8 @@ class Note:
         return self.to_melody().project_on_rhythm(rhythm, **kwargs)
 
     def to_scale_note(self, chord):
+        if not self.is_note:
+            return self.copy()
         return chord.parse(chord.to_pitch(self)).set_duration(self.duration).set_amp(self.amp).add_tags(self.tags)
 
     def to_scale_notes(self, chord):

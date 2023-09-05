@@ -1104,7 +1104,7 @@ class Score:
 
 
     @classmethod
-    def from_midi(cls, filename, fast_chord_inference=True):
+    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None):
         """
         Load a midi score into musiclang
 
@@ -1122,7 +1122,7 @@ class Score:
 
         """
         from musiclang.analyze import parse_to_musiclang
-        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference)
+        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference, chord_range=chord_range)
         real_config = {**score.config, **config}
         score.config = real_config
         return score
@@ -1430,12 +1430,13 @@ class Score:
         return Score([chord.to_scale_notes() for chord in self.chords])
 
 
-    def to_custom_chords(self, nb_voices=4, *args, **kwargs):
+    def to_custom_chords(self, nb_voices=4, fixed_bass=True, **kwargs):
 
         from musiclang.transform import VoiceLeading
         from musiclang import CustomChord
         chords = Score([c(*[Note("b", i, 0, c.duration) for i in range(nb_voices)]) for c in self.chords])
-        score = VoiceLeading(*args)(Score(chords), **kwargs)
+        fixed_voices = ['piano__0'] if fixed_bass else None
+        score = VoiceLeading(fixed_voices=fixed_voices)(Score(chords), **kwargs)
         score = score.to_scale_notes()
         return Score([CustomChord(list(sorted([chord.set_degree(0).set_octave(0).parse(chord.to_pitch(n.notes[0]))
                                                for n in chord.score.values()], key=lambda x: chord.to_pitch(x))),

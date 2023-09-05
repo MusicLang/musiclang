@@ -271,7 +271,7 @@ def reproject_on_multiple_chords(chords, new_chord, idx_stops, offsets, offset=T
 
     return new_score
 
-def parse_relative_to_absolute(melody, chord):
+def parse_relative_to_absolute(melody, chord=None):
     """
 
     Parameters

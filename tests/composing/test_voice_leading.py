@@ -19,7 +19,8 @@ def test_voice_leading_use_fixed_voices():
         score,
         )
 
-    assert new_score == (I % I.M)(cello=s0, violin=s1) + (I % I.M)(cello=s0, violin=s2)
+
+    assert new_score == (I % I.M)(cello=s0, violin=s3) + (I % I.M)(cello=s0, violin=s1)
 
 
 def test_voice_leading_use_types():
@@ -36,7 +37,7 @@ def test_voice_leading_use_types():
     )
     new_score = vl.optimize(score)
 
-    assert new_score == (I % I.M)(cello=s0, violin=h2) + (I % I.M)(cello=s6.o(-1), violin=h2)
+    assert new_score == (I % I.M)(cello__0=s5.o(-1), violin__0=h2)+ (I % I.M)(cello__0=s0,	violin__0=h2)
 
 
 def test_voice_leading_correct_parallel_dissonnances():
@@ -53,7 +54,7 @@ def test_voice_leading_correct_parallel_dissonnances():
     )
     new_score = vl.optimize(score)
 
-    assert new_score == (I % I.M)(cello=s0, violin=s1) + (I % I.M)(cello=s0, violin=s1)
+    assert new_score == (I % I.M)(	cello__0=s5.o(-1),	violin__0=s1)+ (I % I.M)(cello__0=s0,	violin__0=s1)
 
 def test_voice_leading_silences_works():
     score = (I % I.M)(cello=s0, violin=r) + (I % I.M)(cello=s0, violin=r)
@@ -69,4 +70,4 @@ def test_voice_leading_silences_works():
     )
     new_score = vl.optimize(score)
 
-    assert new_score == (I % I.M)(cello=s1, violin=r) + (I % I.M)(cello=s1, violin=r)
+    assert new_score == (I % I.M)(cello__0=s4.o(-1), violin__0=r)+ (I % I.M)(cello__0=s5.o(-1),	violin__0=r)

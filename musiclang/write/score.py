@@ -346,10 +346,16 @@ class Score:
     def to_drum(self):
         return Score([chord.to_drum() for chord in self.chords], tags=set(self.tags))
 
-    def to_chords(self):
+    def to_chords(self, duration=False):
         """ """
-        res = [chord.to_chord() for chord in self.chords]
+        res = [chord.to_chord(duration=duration) for chord in self.chords]
         return res
+
+    def to_chords_with_duration(self):
+        durations = [chord.duration for chord in self.chords]
+        res = [chord.to_chord()(r.set_duration(duration)) for duration, chord in zip(durations, self.chords)]
+        return res
+
 
     def copy(self):
         """
@@ -984,10 +990,11 @@ class Score:
         if keep_score:
             if not allow_override and len(set(result_score.parts).intersection(score2.parts)) != 0:
                 raise Exception('If keep_score flag is True, parts should be differents between the scores')
-
             result_score = sum([c1(**{**c2.score, **c1.score}) for c1, c2 in zip(result_score.chords, score2.chords)], None)
-
         return result_score
+
+    def project_on_rhythm(self, rhythm, **kwargs):
+        return Score([chord.project_on_rhythm(rhythm, **kwargs) for chord in self.chords], tags=self.tags)
 
     def to_absolute_note(self):
         return Score([chord.to_absolute_note() for chord in self.chords], tags=self.tags)
@@ -1097,7 +1104,7 @@ class Score:
 
 
     @classmethod
-    def from_midi(cls, filename, fast_chord_inference=True):
+    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None):
         """
         Load a midi score into musiclang
 
@@ -1115,7 +1122,7 @@ class Score:
 
         """
         from musiclang.analyze import parse_to_musiclang
-        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference)
+        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference, chord_range=chord_range)
         real_config = {**score.config, **config}
         score.config = real_config
         return score
@@ -1417,3 +1424,91 @@ class Score:
 
         return score_to_midi(self, filepath, **kwargs)
 
+
+    def to_scale_notes(self):
+
+        return Score([chord.to_scale_notes() for chord in self.chords])
+
+
+    def to_custom_chords(self, nb_voices=4, fixed_bass=True, **kwargs):
+
+        from musiclang.transform import VoiceLeading
+        from musiclang import CustomChord
+        chords = Score([c(*[Note("b", i, 0, c.duration) for i in range(nb_voices)]) for c in self.chords])
+        fixed_voices = ['piano__0'] if fixed_bass else None
+        score = VoiceLeading(fixed_voices=fixed_voices)(Score(chords), **kwargs)
+        score = score.to_scale_notes()
+        return Score([CustomChord(list(sorted([chord.set_degree(0).set_octave(0).parse(chord.to_pitch(n.notes[0]))
+                                               for n in chord.score.values()], key=lambda x: chord.to_pitch(x))),
+                                  tonality=chord.tonality).set_duration(chord.duration)
+                      for chord in score.chords])
+
+    @classmethod
+    def from_orchestration(cls, orchestration, chords):
+        def parse_one_data(ins, data, score, chord, rhythm=None, idx=None):
+            notes = parse_notes(chord, data['note'], data['octave'])
+            instrument_name = ins if idx is None else f'{ins}__{idx}'
+            score[instrument_name] =  parse_pattern(data['pattern']).apply_pattern(*notes)
+            if chord.duration != 0:
+                score[instrument_name] = score[instrument_name].get_between(0, chord.duration)
+            if rhythm is not None:
+                score[instrument_name] = apply_rhythm(score[instrument_name], rhythm)
+            return score
+
+        def parse_pattern(pattern):
+
+            if isinstance(pattern, str):
+                return Score.from_str(pattern)
+            else:
+                return pattern
+        def parse_notes(chord, note, octave):
+            if isinstance(note, str):
+                return chord.__getattribute__(note).o(octave)
+            else:
+                return [chord.__getattribute__(n).o(octave) for n in note]
+
+        def parse_dict(orchestration, chord):
+            score = {}
+
+            for ins, data in orchestration.items():
+                if isinstance(data, dict):
+                    score = parse_one_data(ins, data, score, chord, idx=None)
+                else:
+                    for idx, d in enumerate(data):
+                        score = parse_one_data(ins, d, score, chord, idx=idx)
+            return score
+
+        def apply_rhythm(melody, rhythm):
+            # Create rhythm
+            from musiclang import Metric
+            metric = Metric(rhythm['rhythm'], signature=rhythm['time_signature'], tatum=rhythm['tatum'])
+            return metric.apply_to_melody(melody)
+
+
+        def parse_list(orchestration, chord):
+            score = {}
+            instrument_counter = {}
+            for data in orchestration:
+                if isinstance(data, dict):
+                    ins = data['instrument']
+                    instrument_counter[ins] = instrument_counter.get(ins, -1) + 1
+                    idx = instrument_counter[ins]
+                    score = parse_one_data(ins, data, score, chord, rhythm=data.get('rhythm', None), idx=idx)
+
+                else:
+                    for i, d in enumerate(data):
+                        ins = d['instrument']
+                        instrument_counter[ins] = instrument_counter.get(ins, -1) + 1
+                        idx = instrument_counter[ins]
+                        score = parse_one_data(ins, d, score, chord, rhythm=data.get('rhythm', None), idx=idx)
+            return score
+
+        all_chords = []
+        for chord in chords:
+            if isinstance(orchestration, dict):
+                score = parse_dict(orchestration, chord)
+            else:
+                score = parse_list(orchestration, chord)
+            all_chords.append(chord(**score))
+        final_score = Score(all_chords)
+        return final_score

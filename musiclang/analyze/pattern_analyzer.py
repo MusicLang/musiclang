@@ -14,8 +14,10 @@ def get_candidate(candidates, scale, new_pitch, last_pitch):
         candidate_pitch_class = candidate_pitch % 12
         if candidate_pitch_class == new_pitch % 12:
             delta_octave = (new_pitch - candidate_pitch) // 12
+            if ("u" in candidate.type and delta_octave < 0) or ("d" in candidate.type and delta_octave > 0):
+                continue
+            return candidate.oabs(delta_octave if "u" in candidate.type else - delta_octave)
 
-            return candidate.oabs(delta_octave)
     return None
 
 
@@ -42,7 +44,7 @@ def transform_note_to_relative_note(note, chord, last_pitch):
 def transform_note_to_chord_extension(note, chord):
     pitch = chord.to_pitch(note)
     pitch_class = pitch % 12
-    chord_pitches = chord.chord_extension_pitches
+    chord_pitches = list(sorted(set(chord.chord_extension_pitches)))
     chord_pitch_classes = [c % 12 for c in chord_pitches]
     extension_val = chord_pitch_classes.index(pitch_class)
     extension_octave = (pitch - chord_pitches[extension_val]) // 12
@@ -58,7 +60,7 @@ def transform_note_to_relative_note_with_chord_note(note, chord, last_pitch, voi
     if not note.is_note:
         return note, last_pitch, voicing
     # First transform to chord extension note if possible
-    chord_pitch_classes = chord.chord_extension_pitch_classes
+    chord_pitch_classes = list(sorted(set(chord.chord_extension_pitch_classes)))
     new_pitch = chord.to_pitch(note)
     pitch_class = new_pitch % 12
     start = time.time()
@@ -243,7 +245,6 @@ class PatternExtractor:
             result_score, voicing, instruments, bar_duration = transform_chord_to_relative(chord,
                                                                                             self.nb_excluded_instruments,
                                                                                             ascending=True)
-            print('transform chord to relative', time.time() - start)
 
         if self.instruments is not None:
             instruments = self.instruments[:len(instruments)] + instruments[len(self.instruments):]

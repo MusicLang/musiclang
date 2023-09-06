@@ -244,14 +244,24 @@ class VoiceLeading:
 
         return pitches
 
+
+    def crossing_and_unisson_score(self, dvals):
+        pitches = self.get_pitch_solution(dvals)
+        crossings = np.std(pitches.argsort(axis=0), axis=1)
+        crossing_score = np.sum(np.power(crossings, 2))
+        return crossing_score
+
     def eval_solution(self, dvals):
         pitches = self.get_pitch_solution(dvals)
         # Minimize movement
         movement = self.get_movement(pitches)
         movement_score = np.mean(np.power(np.abs(movement), 1))
+        # Check if crossings are present
+        crossing_score = self.crossing_and_unisson_score(dvals)
+        total_score = 10 * crossing_score + movement_score
         # space = np.diff(pitches, axis=0)
         # space_score =  np.mean(np.power(space, 2))
-        return movement_score
+        return total_score
 
     def get_movement(self, pitches):
         movement = np.diff(pitches, axis=1)
@@ -264,6 +274,7 @@ class VoiceLeading:
         solutions.append(dvals)
         scores = [self.eval_solution(sol) for sol in solutions]
         best = np.argmin(scores)
+
         return solutions[best]
 
     def voices_optim(self, dvals, max_iter=100, max_norm=3, temperature=8, min_temperature=1, **kwargs):
@@ -291,11 +302,14 @@ class VoiceLeading:
                 dvals = proposed_sol
             coeff = (it / max_iter)
             temperature = coeff * end_temp + (1 - coeff) * start_temp
+
+        self.eval_solution(dvals)
+
         return dvals
         # Move in direction of sgn
 
 
-    def optimize_rules(self, dvals, max_iter_rules=100, max_norm_rules=1, temperature=1, **kwargs):
+    def optimize_rules(self, dvals, max_iter_rules=100, max_norm_rules=3, temperature=1, **kwargs):
 
         def eval_solution(dvals):
             pitches = self.get_pitch_solution(dvals)
@@ -305,8 +319,8 @@ class VoiceLeading:
         pitches = self.get_pitch_solution(dvals)
         problems = self.get_problems(pitches)
         min_score = eval_solution(dvals)
+        crossing_and_unisson_score = self.crossing_and_unisson_score(dvals)
         tried = set()
-        print(temperature)
         for i in range(max_iter_rules):
             pitches = self.get_pitch_solution(dvals)
             problems = self.get_problems(pitches)
@@ -324,14 +338,14 @@ class VoiceLeading:
                 tried.add(proposed_set)
 
             score = eval_solution(proposed_sol)
-            if score < min_score:
+            crossing_and_unisson_score_new = self.crossing_and_unisson_score(proposed_sol)
+            if score < min_score and crossing_and_unisson_score_new <= crossing_and_unisson_score:
                 min_score = score
                 dvals = proposed_sol
+                crossing_and_unisson_score = crossing_and_unisson_score_new
             if min_score == 0:
                 break
         score = self.eval_solution(dvals)
-        print('Problem score :', min_score)
-        print('SCORE after tuning :', score)
         return dvals
 
     def get_val(self, pitches, v1, v2, idxc):
@@ -398,6 +412,7 @@ class VoiceLeading:
                             unissons[v2, idxc] += 5
 
         problems = parallel_fifths + parallel_octaves + parallel_dissonnances + unissons + crossings
+        has_crossing_or_unisson = crossings + unissons
         problems *= self.dvalsmask
         return problems
 

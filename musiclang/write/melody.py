@@ -5,6 +5,7 @@ All rights reserved.
 This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
+from math import lcm
 
 from .constants import *
 
@@ -197,6 +198,21 @@ class Melody:
     def to_absolute_note(self, chord):
         return Melody([n.to_absolute_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
 
+
+    def get_between(self, start, end):
+        """
+        Get the notes between start and end time
+        Parameters
+        ----------
+        start: int
+        end: int
+
+        Returns
+        -------
+        melody: Melody
+        """
+        from musiclang.write.time_utils import get_melody_between
+        return get_melody_between(self, start, end)
     def get_pitches(self, chord, track_idx, time, last_note_array=None):
         """
 
@@ -223,6 +239,41 @@ class Melody:
 
             pitches.append(result)
         return pitches
+
+    def apply_pattern(self, *voicing):
+        """
+        Replace pattern notes by voicing
+
+        Examples
+        ---------
+
+        >>> melody = x0.h + x1.h
+        >>> melody.apply_pattern(s1, s0)
+        s1.h + s0.h
+
+        Parameters
+        ----------
+        voicing: List[Note] : Voicing used to replace in the template
+
+        Returns
+        -------
+        melody: Patternized melody
+        """
+        new_melody =[]
+        for note in self.notes:
+            if note.type == "x":
+                try:
+                    new_melody.append(voicing[note.val].set_duration(note.duration).o(note.octave).set_amp(note.amp))
+                except:
+                    raise ValueError(f'Unexisting voicing index : {note.val}')
+            else:
+                new_melody.append(note)
+
+        return Melody(new_melody)
+
+
+    def to_scale_notes(self, chord):
+        return Melody([n.to_scale_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
 
     def decompose_duration(self):
         """ """
@@ -274,6 +325,11 @@ class Melody:
         new_melody = self.copy()
         new_melody.notes[0] = new_melody.notes[0].set_tempo(tempo)
         return new_melody
+
+
+    def project_on_rhythm(self, rhythm, chord=None, **kwargs):
+        from musiclang.transform.composing import project_on_rhythm
+        return project_on_rhythm(rhythm, self, chord=chord)
 
     def accelerando(self, start, end):
         """
@@ -391,6 +447,59 @@ class Melody:
 
     def to_chord_note(self, chord):
         return Melody([n.to_chord_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
+
+
+    def get_note_times(self):
+        t = 0
+        times = []
+        for n in self.notes:
+            if n.is_note or n.type in ["x", "d"]:
+                times.append(t)
+            t += n.duration
+        return times
+
+
+    def get_playing_style(self):
+        """
+        Get if legato, marcato or staccato by  only looking at the note durations
+        Returns
+        -------
+
+        """
+
+    def quantize_melody(self, max_frac=4):
+        def duration_to_ts(duration):
+            if float(duration) % 1 == 0:
+                return int(duration), 4
+            elif float(duration) % 0.5 == 0:
+                return int(duration * 2), 8
+            elif float(duration) % 0.25 == 0:
+                return int(duration * 4), 16
+            else:
+                return int(duration * 8), 32
+        times = self.get_note_times() # Fractions
+        # Find common denominator between times
+        common_denominator = 1
+        for t in times:
+            common_denominator = lcm(common_denominator, t.denominator)
+
+        common_denominator = min(max_frac, common_denominator)
+        step = frac(1, common_denominator)
+
+        nb_steps = self.duration / step
+
+        # Projects each note time (times) on the grid
+        new_times = [round(t / step) * step for t in times]
+
+        # Get index on the grid
+        new_times = [int(t / step) for t in new_times]
+
+        # As binary vector
+        rhythm = [1 if i in new_times else 0 for i in range(int(nb_steps))]
+
+        return {'rhythm': rhythm, 'tatum': (step.numerator, step.denominator),
+                'time_signature': duration_to_ts(self.duration)}
+
 
     def to_code(self):
         """ """

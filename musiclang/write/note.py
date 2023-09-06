@@ -461,6 +461,19 @@ class Note:
         note.val = val
         return note
 
+
+    def project_on_rhythm(self, rhythm, **kwargs):
+        return self.to_melody().project_on_rhythm(rhythm, **kwargs)
+
+    def to_scale_note(self, chord):
+        if not self.is_note:
+            return self.copy()
+        return chord.parse(chord.to_pitch(self)).set_duration(self.duration).set_amp(self.amp).add_tags(self.tags)
+
+    def to_scale_notes(self, chord):
+        from musiclang import Melody
+        return Melody(self.to_scale_note(chord))
+
     def set_duration(self, value):
         """
         Set the duration of a note
@@ -944,6 +957,10 @@ class Note:
             return to_return
         except:
             return self.copy()
+
+
+    def apply_pattern(self, *voicing):
+        return self.to_melody().apply_pattern(*voicing)
 
 
     def __hash__(self):

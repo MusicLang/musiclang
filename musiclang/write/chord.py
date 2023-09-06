@@ -346,6 +346,35 @@ class Chord:
         new_chord.tonality = new_chord.tonality.change_mode(mode)
         return new_chord
 
+    @cached_property
+    def top_note(self):
+        return self.extension_notes[-1]
+
+    @cached_property
+    def lowest_note(self):
+        return self.extension_notes[0]
+
+    def middle_note(self, index):
+        if len(self.extension_notes) == 1:
+            return self.extension_notes[0]
+        if len(self.extension_notes) == 2:
+            return self.extension_notes[0]
+        if len(self.extension_notes) == 3:
+            return self.extension_notes[1]
+        if len(self.extension_notes) == 4:
+            return self.extension_notes[index+1]
+        else:
+            return self.extension_notes[index + 1]
+
+    @cached_property
+    def middle_note1(self):
+        return self.middle_note(0)
+
+    @cached_property
+    def middle_note2(self):
+        return self.middle_note(1)
+
+
     @property
     def pedal(self):
         """
@@ -848,7 +877,7 @@ class Chord:
         """
         return self.score is not None
 
-    def to_chord(self):
+    def to_chord(self, duration=False):
         """
         Returns a copy of the chord without the chord score
 
@@ -860,6 +889,8 @@ class Chord:
         """
         result = self.copy()
         result.score = {}
+        if duration:
+            result = result.set_duration(self.duration)
         return result
 
     @property
@@ -1458,7 +1489,7 @@ class Chord:
 
         return self._chord_notes_calc(new_extension, replacements, additions, removals)
 
-    @property
+    @cached_property
     def extension_notes(self):
         # Try a composite with a match
         extension, replacements, additions, removals = self.get_extension_properties()
@@ -1545,3 +1576,94 @@ class Chord:
         """
         from .score import Score
         return Score([self]).to_midi(filepath, **kwargs)
+
+
+    def to_scale_notes(self):
+        """
+        Convert the notes of a chord in scale notes
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        """
+        return self(**{ins: n.to_scale_notes(self) for ins, n in self.score.items()})
+
+    def project_on_rhythm(self, rhythm, **kwargs):
+        return self(**{ins: n.project_on_rhythm(rhythm, chord=self, **kwargs) for ins, n in self.score.items()})
+
+    def set_degree(self, degree):
+        res = self.copy()
+        res.element = degree
+        return res
+
+    def set_octave(self, octave):
+        res = self.copy()
+        res.octave = octave
+        return res
+    def set_element(self, element):
+        return self.set_degree(element)
+
+    def to_custom_chords(self, nb_voices=4):
+
+        return self.to_score().to_custom_chords(nb_voices=nb_voices)
+
+    def get_orchestration(self):
+        from .melody import Melody
+        def voicing_to_quality(voicing, chord):
+            notes = chord.extension_notes
+            length = len(notes)
+            length = min(4, length)
+            qualities = []
+
+            data_dict = {
+                (0, 1): 'lowest_note',
+                (0, 2): 'lowest_note',
+                (0, 3): 'lowest_note',
+                (0, 4): 'lowest_note',
+
+                (1, 1): 'lowest_note',
+                (1, 2): 'top_note',
+                (1, 3): 'middle_note1',
+                (1, 4): 'middle_note1',
+
+                (2, 1): 'lowest_note',
+                (2, 2): 'lowest_note',
+                (2, 3): 'top_note',
+                (2, 4): 'middle_note2',
+
+                (3, 1): 'lowest_note',
+                (3, 2): 'top_note',
+                (3, 3): 'lowest_note',
+                (3, 4): 'top_note',
+
+            }
+            for note in voicing:
+                octave = note.octave
+                value = note.val
+                quality = data_dict[(value, length)]
+                qualities.append((quality, octave))
+
+            return qualities
+
+        orchestration = []
+        data, pattern = self.patternize()
+        instruments = data['instruments']
+        voicing = data['voicing']
+        qualities = voicing_to_quality(voicing, data['orchestra']['pattern'])
+
+        instruments_idx = {}
+        for idx, (ins, quality) in enumerate(zip(instruments, qualities)):
+            note, octave = quality
+            local_pattern = pattern.score[f'v__{idx}']
+            local_pattern = Melody([n if n.type != 'x' else n.set_val(0) for n in local_pattern.notes])
+            rhythm = local_pattern.quantize_melody()
+            instruments_idx[ins] = instruments_idx.get(ins, -1) + 1
+            orchestration.append({'instrument': ins, 'octave': octave,
+                                  'note': note, 'pattern': local_pattern,
+                                  'rhythm': rhythm
+                                  })
+
+        return orchestration

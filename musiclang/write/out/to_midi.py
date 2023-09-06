@@ -179,6 +179,7 @@ def to_midi(notes, output_file=None, **kwargs):
 
     """
     from .midi_utils import matrix_to_mid
+
     res = matrix_to_mid(notes, output_file=output_file, **kwargs)
     return res
 

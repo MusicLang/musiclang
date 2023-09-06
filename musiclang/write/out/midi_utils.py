@@ -8,6 +8,7 @@ LICENSE file in the root directory of this source tree.
 
 import numpy as np
 import mido
+from fractions import Fraction as frac
 
 def voice_to_channel(instrument_list, voice, instruments):
     """
@@ -47,7 +48,7 @@ def matrix_to_events(matrix,
 
 def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
                   anachrusis_time=0,
-                  instrument_names=None, one_track_per_instrument=False, **kwargs):
+                  instrument_names=None, one_track_per_instrument=True, **kwargs):
     """
 
     Parameters
@@ -78,24 +79,34 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
 
     matrix = np.asarray(matrix)
 
-
     #
 
+
     if one_track_per_instrument:
-        # instrument
+        instrument_names_new = []
+        instruments_base = dict(instruments)
         instrument_group = {}
         for track_nb, program in instruments.items():
-            instrument_group[program] = instrument_group.get(program, []) + [track_nb]
+            instrument_name = instrument_names[track_nb]
+            if instrument_name.startswith('drums_'):
+                instrument_group[-1] = instrument_group.get(-1, []) + [track_nb]
+            else:
+                instrument_group[program] = instrument_group.get(program, []) + [track_nb]
 
         # Change the tracks associated to each instrument
         instruments = {i: program for i, program in enumerate(instrument_group.keys())}
         invert_instruments = {program: i for i, program in instruments.items()}
-
+        instruments = {key: val if val != -1 else 0 for key, val in instruments.items() }
         # Associate each track to the right new track
         for program, tracks in instrument_group.items():
+            instrument_name = instrument_names[tracks[0]]
+            if program == -1:
+                instrument_name = 'drums_0'
+            instrument_names_new.append(instrument_name)
             for i, track in enumerate(tracks):
                 matrix[matrix[:, TRACK] == track, TRACK] = invert_instruments[program]
 
+        instrument_names = instrument_names_new
 
     def number_to_channel(n):
         """
@@ -120,7 +131,9 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
 
     bar_duration = time_signature[0] * 4 / time_signature[1]
     start_time = (-anachrusis_time) % bar_duration
-    matrix[:, OFFSET] = matrix[:, OFFSET] + start_time
+
+    from fractions import Fraction as frac
+    matrix[:, OFFSET] = matrix[:, OFFSET] + frac(start_time).limit_denominator(24)
     # Take care of continuation
     # matrix = matrix[(matrix['pitch'] > 0) | (matrix['continuation'] > 0)]
     # Remove all continuations that follows a silence
@@ -250,6 +263,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
             mid.save(output_file)
         else:
             mid.save(file=output_file)
+
     return mid
 
 

@@ -271,32 +271,42 @@ def reproject_on_multiple_chords(chords, new_chord, idx_stops, offsets, offset=T
 
     return new_score
 
-def parse_relative_to_absolute(melody):
+def parse_relative_to_absolute(melody, chord=None):
     """
 
     Parameters
     ----------
     melody :
-        
 
     Returns
     -------
 
     """
-    result = None
+    result = []
     prev = None
+    idx = 0
     for note in melody.copy().notes:
+        idx += 1
         if note.type in ['su', 'sd']:
             to_add = prev.add_interval(note)
             to_add.duration = note.duration
-            result += to_add
+            result.append(to_add)
             prev = to_add.copy()
-        elif note.type in ['s', 'a']:
-            result += note.copy()
+        elif chord is not None and note.type in ['bu', 'bd', 'cu', 'cd', 'b', 'c', 'hu', 'hd']:
+            last_pitch = chord.to_pitch(prev) if prev is not None else None
+            to_add = chord.parse(chord.to_pitch(note, last_pitch=last_pitch))
+            to_add.duration = note.duration
+            to_add.amp = note.amp
+            result.append(to_add)
+            prev = to_add.copy()
+        elif note.type in ['s', 'a', 'd']:
+            result.append(note.copy())
             prev = note.copy()
         elif note.type in ['r', 'l']:
-            result += note.copy()
+            result.append(note.copy())
         elif note.type in ['h']:
+            # FIXME : Should not convert chromatic to scale note, write a separate function for compatibility with
+            # counterpoint module
             DICT_NOTES = {0: 0,
                           1: 1,
                           2: 1,
@@ -313,11 +323,12 @@ def parse_relative_to_absolute(melody):
             new_note = note.copy()
             new_note.type = "s"
             new_note.val = DICT_NOTES[new_note.val]
-            result += new_note
+            result.append(new_note)
         else:
             raise Exception('Could not handle type in project rhythm : {}'.format(note.type))
 
-    return result
+    from musiclang import Melody
+    return Melody(result)
 
 
 def is_continuation(note, silence_as_continuation=True):
@@ -372,14 +383,15 @@ def is_in_time(start, end, time):
     return (start <= time) and (end > time)
 
 
-def project_on_rhythm(rhythm, melody):
+def project_on_rhythm(rhythm, melody, chord=None):
     """
+    Given a rhythm (A Melody object) project the given melody on this rhythm
 
     Parameters
     ----------
-    rhythm :
+    rhythm : Melody
         
-    melody :
+    melody : Melody
         
 
     Returns
@@ -388,7 +400,7 @@ def project_on_rhythm(rhythm, melody):
     """
     new_melody = None
 
-    melody_without_relative = parse_relative_to_absolute(melody.copy())
+    melody_without_relative = parse_relative_to_absolute(melody.copy(), chord)
     notes_ends = np.cumsum([note.duration for note in melody_without_relative.notes]).tolist()
     notes_starts = [0] + notes_ends[:-1]
     notes_times = [(note, start, end) for note, start, end in zip(melody_without_relative.notes, notes_starts, notes_ends)]

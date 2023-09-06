@@ -432,3 +432,7 @@ class Tonality:
             result += f".o({self.octave})"
 
         return result
+
+    def __call__(self, *notes, **kwargs):
+        from .custom_chord import CustomChord
+        return CustomChord(notes, tonality=self, **kwargs)

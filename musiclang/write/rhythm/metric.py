@@ -29,6 +29,8 @@ class Metric:
 
         self.signature = signature
         self.tatum = tatum
+        if isinstance(self.tatum, (tuple, list)):
+            self.tatum = frac(*self.tatum)
         self.nb_bars = nb_bars
         self.array = array
         if (self.duration / self.tatum) != len(array):
@@ -266,18 +268,19 @@ class Metric:
     @classmethod
     def _apply_durations_to_melody(cls, notes, beat_durations, first_has_note=True, expand=True):
         from musiclang import Silence, Continuation
-        melody = None
+        melody = []
         for idx, (has_note, beat) in enumerate(beat_durations):
             if idx == 0 and not first_has_note:
-                melody += Continuation(1).set_duration(beat)
+                melody.append(Silence(1).set_duration(beat))
             elif not expand and idx > len(notes):
                 break
             elif has_note:
-                melody += notes[idx % len(notes)].set_duration(beat)
+                melody.append(notes[idx % len(notes)].set_duration(beat))
             else:
-                melody += Silence(1).set_duration(beat)
+                melody.append(Silence(1).set_duration(beat))
 
-        return melody
+        from musiclang import Melody
+        return Melody(melody)
 
     def complementary(self):
         """

@@ -5,7 +5,6 @@ All rights reserved.
 This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
-from math import lcm
 
 from .constants import *
 
@@ -468,6 +467,11 @@ class Melody:
         """
 
     def quantize_melody(self, max_frac=4):
+        import math
+
+        def lcm(a, b):
+            return (a * b) // math.gcd(a, b)
+
         def duration_to_ts(duration):
             if float(duration) % 1 == 0:
                 return int(duration), 4

@@ -5,6 +5,7 @@ All rights reserved.
 This source code is licensed under the BSD-style license found in the
 LICENSE file in the root directory of this source tree.
 """
+from math import lcm
 
 from .constants import *
 
@@ -452,10 +453,53 @@ class Melody:
         t = 0
         times = []
         for n in self.notes:
-            if n.is_note:
+            if n.is_note or n.type in ["x", "d"]:
                 times.append(t)
             t += n.duration
         return times
+
+
+    def get_playing_style(self):
+        """
+        Get if legato, marcato or staccato by  only looking at the note durations
+        Returns
+        -------
+
+        """
+
+    def quantize_melody(self, max_frac=4):
+        def duration_to_ts(duration):
+            if float(duration) % 1 == 0:
+                return int(duration), 4
+            elif float(duration) % 0.5 == 0:
+                return int(duration * 2), 8
+            elif float(duration) % 0.25 == 0:
+                return int(duration * 4), 16
+            else:
+                return int(duration * 8), 32
+        times = self.get_note_times() # Fractions
+        # Find common denominator between times
+        common_denominator = 1
+        for t in times:
+            common_denominator = lcm(common_denominator, t.denominator)
+
+        common_denominator = min(max_frac, common_denominator)
+        step = frac(1, common_denominator)
+
+        nb_steps = self.duration / step
+
+        # Projects each note time (times) on the grid
+        new_times = [round(t / step) * step for t in times]
+
+        # Get index on the grid
+        new_times = [int(t / step) for t in new_times]
+
+        # As binary vector
+        rhythm = [1 if i in new_times else 0 for i in range(int(nb_steps))]
+
+        return {'rhythm': rhythm, 'tatum': (step.numerator, step.denominator),
+                'time_signature': duration_to_ts(self.duration)}
+
 
     def to_code(self):
         """ """

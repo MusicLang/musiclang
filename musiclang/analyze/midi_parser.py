@@ -43,7 +43,7 @@ def parse_midi(filename, **kwargs):
     notes, config, bars = _load_midi(filename, **kwargs)
     instruments = config['instruments']
     tempo = config['tempo']
-    time_signature = config['bar_duration']
+    time_signature = config['time_signatures'][0] if len(config['time_signatures']) > 0 else None
     return notes, instruments, tempo, time_signature, bars
 
 
@@ -103,6 +103,7 @@ def _parse(filename, **kwargs):
     instruments = _infer_instruments(mf)
     notes = []
     bar_durations = []
+    time_signatures = []
     tempos = []
     for track_idx, track in enumerate(mf.tracks):
         t = 0
@@ -113,13 +114,14 @@ def _parse(filename, **kwargs):
                 notes.append([0, t + note.time, note.note, note.velocity, note.channel, track_idx])
             elif note.type == 'time_signature':
                 bar_durations.append(note.numerator * frac(4, note.denominator))
+                time_signatures.append((note.numerator, note.denominator))
             elif note.type == 'set_tempo':
                 tempos.append((time, note.tempo))
             t = t + note.time
     first_tempo = int(60/(tempos[0][1]/1e6))
     config = {'ticks_per_beats': mf.ticks_per_beat,
              'instruments': instruments,
-             'tempo': first_tempo, 'tempos': tempos, 'bar_durations': bar_durations}
+             'tempo': first_tempo, 'tempos': tempos, 'bar_durations': bar_durations, 'time_signatures': time_signatures}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         notes_score, bars = load_score(filename, ticks_per_beat=mf.ticks_per_beat)

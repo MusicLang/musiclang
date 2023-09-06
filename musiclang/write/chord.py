@@ -1648,7 +1648,7 @@ class Chord:
 
             return qualities
 
-        orchestration = {}
+        orchestration = []
         data, pattern = self.patternize()
         instruments = data['instruments']
         voicing = data['voicing']
@@ -1659,9 +1659,11 @@ class Chord:
             note, octave = quality
             local_pattern = pattern.score[f'v__{idx}']
             local_pattern = Melody([n if n.type != 'x' else n.set_val(0) for n in local_pattern.notes])
+            rhythm = local_pattern.quantize_melody()
             instruments_idx[ins] = instruments_idx.get(ins, -1) + 1
-            if ins not in orchestration:
-                orchestration[ins] = []
-            orchestration[ins].append({'octave': octave, 'note': note, 'pattern': local_pattern})
+            orchestration.append({'instrument': ins, 'octave': octave,
+                                  'note': note, 'pattern': local_pattern,
+                                  'rhythm': rhythm
+                                  })
 
         return orchestration

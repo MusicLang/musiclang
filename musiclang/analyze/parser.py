@@ -59,15 +59,16 @@ def tokenize_midi_file(input_file, output_file, chord_range=None):
     from miditoolkit.midi import MidiFile
 
     config = TokenizerConfig(
-        beat_res={(0, 8): 16},
+        beat_res={(0, 8): 128, (8, 16): 64},
         use_tempos=True,
         use_time_signatures=True,
+        one_token_stream_for_programs=False,
         use_programs=True)
 
     tokenizer = REMI(
         tokenizer_config=config,
     )
-    tokenizer.one_token_stream = True
+    #tokenizer.one_token_stream = True
 
     #[tokenizer.add_to_vocab(f'Position_{idx}') for idx in range(64, 256)]
 
@@ -80,7 +81,7 @@ def tokenize_midi_file(input_file, output_file, chord_range=None):
     # Reload for test
     midi.dump(output_file)
 
-def parse_midi_to_musiclang(input_file: str, chord_range=None, **kwargs):
+def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=True, **kwargs):
     """Parse a midi input file into a musiclang Score
     - Get chords with dynamic programming
     - Get voice separation and parsing
@@ -106,7 +107,12 @@ def parse_midi_to_musiclang(input_file: str, chord_range=None, **kwargs):
     # First tokenize the midi file
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
-        tokenize_midi_file(input_file, midi_file, chord_range=chord_range)
+        if tokenize_before:
+            tokenize_midi_file(input_file, midi_file, chord_range=chord_range)
+        elif chord_range is None:
+            shutil.copy(input_file, midi_file)
+        else:
+            raise Exception('Chord range must be None if tokenize_before is False')
         result = parse_directory_to_musiclang(di, **kwargs)
     return result
 

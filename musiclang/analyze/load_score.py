@@ -9,6 +9,10 @@ def _get_bars_from_parts(note_info):
     """
     bars = None
     max_time = -1
+
+    # First get longest part
+    longest_part = max(note_info.parts, key=lambda x: len(x.measures))
+
     for part in note_info.parts:
 
         starts = []
@@ -23,8 +27,7 @@ def _get_bars_from_parts(note_info):
 
         if max(beats_end) > max_time:
             bars = [(s, e) for s, e in zip(beats_start, beats_end)]
-
-        return bars
+    return bars
 
 import numpy as np
 def load_score(midi_file, merge_tracks=True, ticks_per_beat=480):

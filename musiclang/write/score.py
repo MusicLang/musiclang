@@ -1106,7 +1106,7 @@ class Score:
 
 
     @classmethod
-    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None, tokenize_before=True):
+    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None, tokenize_before=True, quantization=16):
         """
         Load a midi score into musiclang
 
@@ -1125,7 +1125,7 @@ class Score:
         """
         from musiclang.analyze import parse_to_musiclang
         score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
-                                           chord_range=chord_range, tokenize_before=tokenize_before)
+                                           chord_range=chord_range, tokenize_before=tokenize_before, quantization=quantization)
         real_config = {**score.config, **config}
         score.config = real_config
         return score

@@ -39,9 +39,8 @@ def parse_to_musiclang(input_file: str, **kwargs):
 
 
 
-def tokenize_midi_file(input_file, output_file, chord_range=None):
+def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=16):
     import itertools
-
     def get_chord_range(tokens, tokenizer, start, end):
         bar_none = tokenizer['Bar_None']
         # Split tokens per bar_none token (like a str.split) (list to list of list)
@@ -59,11 +58,12 @@ def tokenize_midi_file(input_file, output_file, chord_range=None):
     from miditoolkit.midi import MidiFile
 
     config = TokenizerConfig(
-        beat_res={(0, 8): 128, (8, 16): 64},
+        beat_res={(0, 8): quantization, (8, 16): quantization},
         use_tempos=True,
         use_time_signatures=True,
-        one_token_stream_for_programs=False,
+        one_token_stream_for_programs=True,
         use_programs=True)
+
 
     tokenizer = REMI(
         tokenizer_config=config,
@@ -73,7 +73,6 @@ def tokenize_midi_file(input_file, output_file, chord_range=None):
     #[tokenizer.add_to_vocab(f'Position_{idx}') for idx in range(64, 256)]
 
     tokens = tokenizer.midi_to_tokens(MidiFile(input_file))
-
     if chord_range is not None:
         tokens = get_chord_range(tokens, tokenizer, *chord_range)
     midi = tokenizer.tokens_to_midi(tokens)
@@ -81,7 +80,7 @@ def tokenize_midi_file(input_file, output_file, chord_range=None):
     # Reload for test
     midi.dump(output_file)
 
-def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=True, **kwargs):
+def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=True, quantization=16, **kwargs):
     """Parse a midi input file into a musiclang Score
     - Get chords with dynamic programming
     - Get voice separation and parsing
@@ -108,7 +107,7 @@ def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=T
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         if tokenize_before:
-            tokenize_midi_file(input_file, midi_file, chord_range=chord_range)
+            tokenize_midi_file(input_file, midi_file, chord_range=chord_range, quantization=quantization)
         elif chord_range is None:
             shutil.copy(input_file, midi_file)
         else:
@@ -171,7 +170,7 @@ def parse_directory_to_musiclang(directory: str, fast_chord_inference=True, **kw
     mxl_file = os.path.join(directory, 'data.mxl')
     if not fast_chord_inference:
         from .augmented_net import infer_chords
-        print('1/4 : Analyze the score (This may takes a while)')
+        pprint('1/4 : Analyze the score (This may takes a while)')
         annotation_file = os.path.join(directory, 'data_annotated.rntxt')
         infer_chords(mxl_file)
         score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
@@ -392,7 +391,7 @@ def get_duration(roman):
 
 
 
-def print(text):
+def pprint(text):
     import os
     verbose = os.getenv('VERBOSE', False)
     if verbose:
@@ -412,18 +411,18 @@ def parse_musiclang_sequence_and_chords(midi_file):
     from .to_musiclang import infer_score_with_chords_durations
     from .chord_inference import fast_chord_inference
 
-    print('1/4 : Performing voice separation (This may takes a while)')
+    pprint('1/4 : Performing voice separation (This may takes a while)')
     notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
-    print('2/4 : Now infering chords with fast inference')
+    pprint('2/4 : Now infering chords with fast inference')
     chords = fast_chord_inference(notes, bars)
     sequence = convert_to_items(notes)
-    print('3/4 : Create the score')
+    pprint('3/4 : Create the score')
     import time
     start = time.time()
     score = infer_score_with_chords_durations(sequence, chords, instruments)
-    print('Finished creating score in {} seconds'.format(time.time() - start))
-    print('Finished creating score')
-    print('4/4 Normalize the score...')
+    pprint('Finished creating score in {} seconds'.format(time.time() - start))
+    pprint('Finished creating score')
+    pprint('4/4 Normalize the score...')
     score = score.normalize()
     score.config['time_signature'] = time_signature
 
@@ -450,13 +449,13 @@ def parse_musiclang_sequence(midi_file, chords):
     from .to_musiclang import infer_score_with_chords_durations
 
 
-    print('2/4 : Performing voice separation (This may takes a while)')
+    pprint('2/4 : Performing voice separation (This may takes a while)')
     notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
     sequence = convert_to_items(notes)
-    print('3/4 : Create the score')
+    pprint('3/4 : Create the score')
     score = infer_score_with_chords_durations(sequence, chords, instruments)
-    print('Finished creating score')
-    print('4/4 Normalize the score...')
+    pprint('Finished creating score')
+    pprint('4/4 Normalize the score...')
     score = score.normalize()
 
     return score, tempo

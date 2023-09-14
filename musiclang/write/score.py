@@ -8,6 +8,8 @@ LICENSE file in the root directory of this source tree.
 from musiclang.library import *
 import re
 
+
+
 class Score:
     """Represents a score in musiclang
 
@@ -1448,17 +1450,22 @@ class Score:
         def parse_one_data(ins, data, score, chord, rhythm=None, idx=None):
             notes = parse_notes(chord, data['note'], data['octave'])
             instrument_name = ins if idx is None else f'{ins}__{idx}'
-            score[instrument_name] =  parse_pattern(data['pattern']).apply_pattern(*notes)
+            score[instrument_name] =  parse_pattern(data['pattern'])
             if chord.duration != 0:
                 score[instrument_name] = score[instrument_name].get_between(0, chord.duration)
             if rhythm is not None:
                 score[instrument_name] = apply_rhythm(score[instrument_name], rhythm)
+
+            score[instrument_name] = score[instrument_name].apply_pattern(*notes)
             return score
 
         def parse_pattern(pattern):
 
             if isinstance(pattern, str):
-                return Score.from_str(pattern)
+                result = Score.from_str(pattern)
+                if isinstance(result, Note):
+                    from musiclang import Melody
+                    return Melody([result])
             else:
                 return pattern
         def parse_notes(chord, note, octave):
@@ -1480,9 +1487,21 @@ class Score:
 
         def apply_rhythm(melody, rhythm):
             # Create rhythm
-            from musiclang import Metric
-            metric = Metric(rhythm['rhythm'], signature=rhythm['time_signature'], tatum=rhythm['tatum'])
-            return metric.apply_to_melody(melody)
+            if not isinstance(rhythm['rhythm'], (list, tuple)):
+                from musiclang import Metric
+                metric = Metric(rhythm['rhythm'], signature=rhythm['time_signature'], tatum=rhythm['tatum'])
+                return metric.apply_to_melody(melody)
+            else:
+                from musiclang.write.rhythm.grid import grid_to_melody
+
+                grid = rhythm['rhythm']
+                tatum = rhythm['tatum']
+                notes = rhythm['notes']
+                mode = rhythm['mode']
+                amp = rhythm['amp']
+                new_melody = grid_to_melody(grid, tatum, notes, mode=mode)
+                new_melody = new_melody.set_amp(amp)
+                return new_melody
 
 
         def parse_list(orchestration, chord):

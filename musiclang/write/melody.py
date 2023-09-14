@@ -457,6 +457,22 @@ class Melody:
             t += n.duration
         return times
 
+    def get_onset_times(self):
+        t = 0
+        times = []
+        for n in self.notes:
+            times.append(t)
+            t += n.duration
+        return times
+
+    def get_offset_times(self):
+        t = 0
+        times = []
+        for n in self.notes:
+            t += n.duration
+            times.append(t)
+        return times
+
 
     def get_playing_style(self):
         """
@@ -466,7 +482,22 @@ class Melody:
 
         """
 
-    def quantize_melody(self, max_frac=4):
+    def get_rhythm_notes(self, rhythm, tatum, chord=None):
+
+        time = 0
+        notes = []
+        for r in rhythm:
+            sub_melody = self.get_between(time, time + tatum)
+            note = sub_melody.notes[0]
+            note = note.set_duration(1)
+            if chord is not None:
+                note = chord.to_pitch(note)
+            notes.append(note)
+            time += tatum
+
+        return notes
+
+    def quantize_melody(self, max_frac=4, chord=None, include_grid=False, notes=None):
         import math
 
         def lcm(a, b):
@@ -481,7 +512,8 @@ class Melody:
                 return int(duration * 4), 16
             else:
                 return int(duration * 8), 32
-        times = self.get_note_times() # Fractions
+
+        times = self.get_note_times()  # Fractions
         # Find common denominator between times
         common_denominator = 1
         for t in times:
@@ -499,10 +531,22 @@ class Melody:
         new_times = [int(t / step) for t in new_times]
 
         # As binary vector
-        rhythm = [1 if i in new_times else 0 for i in range(int(nb_steps))]
+        if notes is None:
+            rhythm = [1 if i in new_times else 0 for i in range(int(nb_steps))]
+        else:
+            rhythm = [[1 if i in new_times else 0 for i in range(int(nb_steps))]]
+        tatum = step
+        data = {'rhythm': rhythm,
+                'tatum': (step.numerator, step.denominator),
+                'time_signature': duration_to_ts(self.duration),
+                "notes": notes
+                }
+        if include_grid:
+            notes = self.get_rhythm_notes(rhythm, tatum, chord=chord)
+            data['grid'] = notes
+        return data
 
-        return {'rhythm': rhythm, 'tatum': (step.numerator, step.denominator),
-                'time_signature': duration_to_ts(self.duration)}
+
 
 
     def to_code(self):
@@ -629,3 +673,40 @@ class Melody:
 
     def __repr__(self):
         return self.to_code()
+
+
+    def to_grid(self):
+        pass
+    @classmethod
+    def from_grid(cls, data):
+        # rhythm, notes, tatum, time_signature, chord
+        import numpy as np
+        from musiclang import Silence, Continuation, Note
+        grid = np.asarray(data['rhythm']).T
+        tatum = frac(*data['tatum'])
+        notes = data['notes']
+        mode = data['mode']
+        amp = data['amp']
+        melody = []
+
+
+        for timestep in grid:
+            for idx, cell in enumerate(timestep):
+                if cell:
+                    note = notes[idx]
+                    note = Note("a", note % 12, note //12, tatum)
+                    note=  note.set_amp(amp)
+                    melody.append(note)
+                    break
+                else:
+                    notes.append(None)
+            else:
+                if mode == 'legato':
+                    notes.append(Continuation(tatum))
+                else:
+                    notes.append(Silence(tatum))
+
+        return Melody(melody)
+
+
+

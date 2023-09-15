@@ -1104,6 +1104,21 @@ class Score:
         from musiclang.analyze import ScoreFormatter
         return ScoreFormatter(text).parse()
 
+    def to_melody_grid(self, instrument, pitches=None, max_frac=4):
+        # in score.py
+        if pitches is None:
+            pitches = list(range(-24, 25))
+
+        from musiclang import Melody
+        score_instrument = self[instrument]
+
+        absolute_melody = []
+        for chord in score_instrument.chords:
+            absolute_melody.extend(chord.score[instrument].to_absolute_note(chord).notes)
+
+        melody = Melody(absolute_melody)
+        grid = melody.to_grid(pitches, max_frac=max_frac)
+        return grid
 
     @classmethod
     def from_midi(cls, filename, fast_chord_inference=True, chord_range=None, tokenize_before=True, quantization=16):

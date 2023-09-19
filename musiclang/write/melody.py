@@ -678,7 +678,7 @@ class Melody:
         import numpy as np
         # IN melody.py
         import math
-        from musiclang.library import NC
+        from musiclang.library import NC, r
 
         def lcm(a, b):
             return (a * b) // math.gcd(a, b)
@@ -715,8 +715,10 @@ class Melody:
         tatum = step
         notes = self.get_rhythm_notes(rhythm, tatum)
 
+        mean_amp = np.mean([n.amp for n in notes])
+        mean_amp_figure = r.set_amp(mean_amp).amp_figure
         notes_pitches = [NC.to_pitch(n) for n in notes]
-
+        mean_articulation = 'legato' if self.silence_fraction() < 0.5 else 'staccato'
         notes_pitches_index = [pitches.index(n) if n in pitches else None for n in notes_pitches]
         rhythm = np.zeros((len(pitches), int(nb_steps)), dtype=int)
         for idx, note_index in enumerate(notes_pitches_index):
@@ -728,9 +730,16 @@ class Melody:
         return {'rhythm': rhythm,
                 'tatum': (step.numerator, step.denominator),
                 'time_signature': duration_to_ts(self.duration),
-                'notes': pitches
+                'notes': pitches,
+                'amp': mean_amp_figure,
+                'mode': mean_articulation
                 }
 
+
+    def silence_fraction(self):
+
+        silence_duration = sum([n.duration for n in self.notes if n.is_silence])
+        return silence_duration / self.duration
 
     @classmethod
     def from_grid(cls, data, time_signature):

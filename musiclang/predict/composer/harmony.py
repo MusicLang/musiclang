@@ -104,7 +104,6 @@ def melody_to_harmony(melody, tonality, arranger, time_signature=(4, 4), tempera
         melody_bars = [c.score['piano__0'] for c in score_bars]
         melody_arranger = [[(n, 1 * (idx == 0)) for idx, n in enumerate(bar.notes)] for bar in melody_bars]
 
-
     chord_progression = arranger.arrange(melody_arranger, tonality, temperature=temperature)
     # Convert to harmony grid
     bar_duration = 4 * frac(time_signature[0], time_signature[1])

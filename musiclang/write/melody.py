@@ -674,37 +674,105 @@ class Melody:
     def __repr__(self):
         return self.to_code()
 
+    def to_grid(self, pitches, max_frac=4):
+        import numpy as np
+        # IN melody.py
+        import math
+        from musiclang.library import NC, r
 
-    def to_grid(self):
-        pass
+        def lcm(a, b):
+            return (a * b) // math.gcd(a, b)
+
+        def duration_to_ts(duration):
+            if float(duration) % 1 == 0:
+                return int(duration), 4
+            elif float(duration) % 0.5 == 0:
+                return int(duration * 2), 8
+            elif float(duration) % 0.25 == 0:
+                return int(duration * 4), 16
+            else:
+                return int(duration * 8), 32
+
+        times = self.get_note_times()  # Fractions
+        # Find common denominator between times
+        common_denominator = 1
+        for t in times:
+            common_denominator = lcm(common_denominator, t.denominator)
+
+        common_denominator = min(max_frac, common_denominator)
+        step = frac(1, common_denominator)
+
+        nb_steps = self.duration / step
+
+        # Projects each note time (times) on the grid
+        new_times = [round(t / step) * step for t in times]
+
+        # Get index on the grid
+        new_times = [int(t / step) for t in new_times]
+
+        # Get rhythm notes
+        rhythm = [1 if i in new_times else 0 for i in range(int(nb_steps))]
+        tatum = step
+        notes = self.get_rhythm_notes(rhythm, tatum)
+
+        mean_amp = np.mean([n.amp for n in notes])
+        mean_amp_figure = r.set_amp(mean_amp).amp_figure
+        notes_pitches = [NC.to_pitch(n) for n in notes]
+        mean_articulation = 'legato' if self.silence_fraction() < 0.5 else 'staccato'
+        notes_pitches_index = [pitches.index(n) if n in pitches else None for n in notes_pitches]
+        rhythm = np.zeros((len(pitches), int(nb_steps)), dtype=int)
+        for idx, note_index in enumerate(notes_pitches_index):
+            if note_index is not None:
+                rhythm[note_index][idx] = 1
+
+        rhythm = rhythm.tolist()
+
+        return {'rhythm': rhythm,
+                'tatum': (step.numerator, step.denominator),
+                'time_signature': duration_to_ts(self.duration),
+                'notes': pitches,
+                'amp': mean_amp_figure,
+                'mode': mean_articulation
+                }
+
+
+    def silence_fraction(self):
+
+        silence_duration = sum([n.duration for n in self.notes if n.is_silence])
+        return silence_duration / self.duration
+
     @classmethod
-    def from_grid(cls, data):
+    def from_grid(cls, data, time_signature):
         # rhythm, notes, tatum, time_signature, chord
         import numpy as np
         from musiclang import Silence, Continuation, Note
         grid = np.asarray(data['rhythm']).T
+
+        assert grid.shape[1] == len(data['notes']), "Grid and notes must have the same length"
         tatum = frac(*data['tatum'])
         notes = data['notes']
         mode = data['mode']
         amp = data['amp']
+        ts = time_signature
+        bar_duration = 4 * ts[0] / ts[1]
         melody = []
 
-
+        time = 0
         for timestep in grid:
             for idx, cell in enumerate(timestep):
                 if cell:
                     note = notes[idx]
                     note = Note("a", note % 12, note //12, tatum)
-                    note=  note.set_amp(amp)
+                    note = note.set_amp(amp)
                     melody.append(note)
                     break
-                else:
-                    notes.append(None)
             else:
-                if mode == 'legato':
-                    notes.append(Continuation(tatum))
+                if mode == 'legato' and not time % bar_duration == 0: # Not a beginning of a bar
+                    melody.append(Continuation(tatum))
                 else:
-                    notes.append(Silence(tatum))
+                    melody.append(Silence(tatum))
+
+            time += tatum
 
         return Melody(melody)
 

@@ -912,10 +912,10 @@ class Note:
         else:
             return self.add_tags(self.tags)
 
-    def to_absolute_note(self, chord):
+    def to_absolute_note(self, chord, last_pitch=None):
         if not self.is_note:
             return self.copy()
-        pitch = chord.to_pitch(self)
+        pitch = chord.to_pitch(self, last_pitch=last_pitch)
         new_note = self.copy()
         new_note.type = 'a'
         new_note.val = pitch % 12

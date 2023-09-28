@@ -194,8 +194,16 @@ class Melody:
             return self.__eq__(Melody([other]))
         return isinstance(other, Melody) and str(other) == str(self)
 
-    def to_absolute_note(self, chord):
-        return Melody([n.to_absolute_note(chord) for n in self.notes], nb_bars=self.nb_bars, tags=set(self.tags))
+    def to_absolute_note(self, chord, last_pitch=None):
+        notes = []
+        for note in self.notes:
+            note = note.to_absolute_note(chord, last_pitch=last_pitch)
+            last_pitch_temp = chord.to_pitch(note, last_pitch=last_pitch)
+            if last_pitch_temp is not None:
+                last_pitch = last_pitch_temp
+            notes.append(note)
+
+        return Melody(notes, nb_bars=self.nb_bars, tags=set(self.tags))
 
 
     def get_between(self, start, end):
@@ -674,7 +682,7 @@ class Melody:
     def __repr__(self):
         return self.to_code()
 
-    def to_grid(self, pitches, max_frac=4):
+    def to_grid(self, pitches, octave=0, max_frac=4):
         import numpy as np
         # IN melody.py
         import math
@@ -715,15 +723,16 @@ class Melody:
         tatum = step
         notes = self.get_rhythm_notes(rhythm, tatum)
 
-        mean_amp = np.mean([n.amp for n in notes])
+        mean_amp = np.mean([n.amp for n in notes if n.is_note])
         mean_amp_figure = r.set_amp(mean_amp).amp_figure
         notes_pitches = [NC.to_pitch(n) for n in notes]
         mean_articulation = 'legato' if self.silence_fraction() < 0.5 else 'staccato'
-        notes_pitches_index = [pitches.index(n) if n in pitches else None for n in notes_pitches]
+        notes_pitches_index = [pitches.index(n - 12 * octave) if (n is not None and (n - 12 * octave) in pitches) else None for n in notes_pitches]
         rhythm = np.zeros((len(pitches), int(nb_steps)), dtype=int)
         for idx, note_index in enumerate(notes_pitches_index):
             if note_index is not None:
-                rhythm[note_index][idx] = 1
+                rhythm[note_index ][idx] = 1
+
 
         rhythm = rhythm.tolist()
 
@@ -731,6 +740,7 @@ class Melody:
                 'tatum': (step.numerator, step.denominator),
                 'time_signature': duration_to_ts(self.duration),
                 'notes': pitches,
+                'octave': octave,
                 'amp': mean_amp_figure,
                 'mode': mean_articulation
                 }
@@ -753,6 +763,7 @@ class Melody:
         notes = data['notes']
         mode = data['mode']
         amp = data['amp']
+        octave = data['octave']
         ts = time_signature
         bar_duration = 4 * ts[0] / ts[1]
         melody = []
@@ -763,7 +774,7 @@ class Melody:
                 if cell:
                     note = notes[idx]
                     note = Note("a", note % 12, note //12, tatum)
-                    note = note.set_amp(amp)
+                    note = note.set_amp(amp).oabs(octave)
                     melody.append(note)
                     break
             else:
@@ -773,6 +784,7 @@ class Melody:
                     melody.append(Silence(tatum))
 
             time += tatum
+
 
         return Melody(melody)
 

@@ -1607,8 +1607,12 @@ class Chord:
         return self.set_degree(element)
 
     def to_custom_chords(self, nb_voices=4):
-
         return self.to_score().to_custom_chords(nb_voices=nb_voices)
+
+
+    def to_orchestra(self, drop_drums=True, nb=4):
+        from musiclang.transform.composing.chord_to_orchestra import chord_to_orchestra
+        return chord_to_orchestra(self, drop_drums=drop_drums, nb=nb)
 
     def get_orchestration(self):
         from .melody import Melody

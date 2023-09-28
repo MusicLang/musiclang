@@ -43,6 +43,14 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
     import itertools
     def get_chord_range(tokens, tokenizer, start, end):
         bar_none = tokenizer['Bar_None']
+
+        # Find first tempo token
+        types = [event.type for event in tokens.events]
+        # Find first Tempo event
+        try:
+            tempo = tokens[types.index('Tempo')]
+        except Exception as e:
+            tempo = None
         # Split tokens per bar_none token (like a str.split) (list to list of list)
         tokens = [list(g) for k, g in itertools.groupby(tokens, lambda x: x == bar_none) if not k]
         # Get the sublist between start and end
@@ -51,6 +59,9 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
         tokens = [[bar_none] + t for t in tokens]
         # Flatten the list adding bar_none between each sublist
         tokens = list(itertools.chain.from_iterable(tokens))
+        if tempo is not None and start > 0:
+            tokens.insert(3, tempo)
+
         return tokens
 
     from miditok import REMI
@@ -73,8 +84,11 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
     #[tokenizer.add_to_vocab(f'Position_{idx}') for idx in range(64, 256)]
 
     tokens = tokenizer.midi_to_tokens(MidiFile(input_file))
+
     if chord_range is not None:
         tokens = get_chord_range(tokens, tokenizer, *chord_range)
+
+
     midi = tokenizer.tokens_to_midi(tokens)
 
     # Reload for test

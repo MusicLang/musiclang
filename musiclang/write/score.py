@@ -1104,8 +1104,9 @@ class Score:
         from musiclang.analyze import ScoreFormatter
         return ScoreFormatter(text).parse()
 
-    def to_melody_grid(self, instrument, pitches=None, max_frac=4):
+    def to_melody_grid(self, instrument, pitches=None, max_frac=4, octave=None):
         # in score.py
+        import numpy as np
         if pitches is None:
             pitches = list(range(-24, 25))
 
@@ -1113,11 +1114,21 @@ class Score:
         score_instrument = self[instrument]
 
         absolute_melody = []
+        last_pitch = None
         for chord in score_instrument.chords:
-            absolute_melody.extend(chord.score[instrument].to_absolute_note(chord).notes)
+            notes = chord.score[instrument].to_absolute_note(chord, last_pitch=last_pitch).notes
+            last_pitch_temp = chord.to_pitch(notes[-1])
+            if last_pitch_temp is not None:
+                last_pitch = last_pitch_temp
+            absolute_melody.extend(notes)
+
+        if octave is None:
+            average_octave = round(np.mean([n.octave for n in absolute_melody if n.is_note]))
+        else:
+            average_octave = octave
 
         melody = Melody(absolute_melody)
-        grid = melody.to_grid(pitches, max_frac=max_frac)
+        grid = melody.to_grid(pitches, octave=average_octave, max_frac=max_frac)
         return grid
 
     @classmethod
@@ -1142,6 +1153,7 @@ class Score:
         score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
                                            chord_range=chord_range, tokenize_before=tokenize_before, quantization=quantization)
         real_config = {**score.config, **config}
+
         score.config = real_config
         return score
 
@@ -1464,9 +1476,13 @@ class Score:
     @classmethod
     def from_orchestration(cls, orchestration, chords):
         def parse_one_data(ins, data, score, chord, rhythm=None, idx=None):
-            notes = parse_notes(chord, data['note'], data['octave'])
+            notes = parse_notes(chord, data['note'], data['rhythm']['octave'])
             instrument_name = ins if idx is None else f'{ins}__{idx}'
-            score[instrument_name] =  parse_pattern(data['pattern'])
+            if 'pattern' not in data.keys() or data['pattern'] is None:
+                score[instrument_name] = x0.set_duration(chord.duration).to_melody()
+            else:
+                score[instrument_name] = parse_pattern(data['pattern'])
+
             if chord.duration != 0:
                 score[instrument_name] = score[instrument_name].get_between(0, chord.duration)
             if rhythm is not None:

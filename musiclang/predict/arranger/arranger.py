@@ -44,19 +44,23 @@ class Arranger:
                 return_score=False
                 ):
 
+        import random
         # melody= [[(s0, 1), (s1, 0)], [], []]
         tone, mode = ChordElement.get_key_mode(tonality)
         # Get pitches from melody
         base_chord = ChordElement.get_tonic_chord(tonality)
         pitches = []
-        curr_pitch = None
         arrange_with_next = False
         for chord_change in melody:
+            curr_pitch = None
             temp_pitches = []
             for note, is_in_chord in chord_change:
                 if is_in_chord and not note.is_silence:
                     curr_pitch = (base_chord.to_pitch(note, last_pitch=curr_pitch) - tone) % 12
                     temp_pitches.append((curr_pitch, 1.0))
+                elif not is_in_chord and note.is_continuation:
+                    curr_pitch = random.choice(range(12))
+                    temp_pitches.append((curr_pitch, weak_beat_importance))
                 elif not is_in_chord and not note.is_silence:
                     curr_pitch = (base_chord.to_pitch(note, last_pitch=curr_pitch) - tone) % 12
                     temp_pitches.append((curr_pitch, weak_beat_importance))

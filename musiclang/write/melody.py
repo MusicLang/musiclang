@@ -724,6 +724,8 @@ class Melody:
         notes = self.get_rhythm_notes(rhythm, tatum)
 
         mean_amp = np.mean([n.amp for n in notes if n.is_note])
+        if mean_amp is None or mean_amp != mean_amp:
+            mean_amp = 60
         mean_amp_figure = r.set_amp(mean_amp).amp_figure
         notes_pitches = [NC.to_pitch(n) for n in notes]
         mean_articulation = 'legato' if self.silence_fraction() < 0.5 else 'staccato'

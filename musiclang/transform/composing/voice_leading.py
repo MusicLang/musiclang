@@ -81,7 +81,7 @@ class VoiceLeading:
         if exclude_rules is not None:
             self.rules = [r for r in self.rules if r not in exclude_rules]
 
-    def optimize(self, score, **kwargs):
+    def optimize(self, score, skip=False, **kwargs):
         """
         Main entry point to optimize a score
 
@@ -160,9 +160,11 @@ class VoiceLeading:
             new_score += recursive_correct_octave(chord)
         return new_score
 
-    def __call__(self, score, **kwargs):
+    def __call__(self, score, skip=False, **kwargs):
         # First Find best chords octaves
         score = self.find_optimal_octaves(score)
+        if skip:
+            return score
         new_score = self.optimize(score, **kwargs)
         return new_score
 

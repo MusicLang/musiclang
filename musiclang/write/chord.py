@@ -1671,3 +1671,56 @@ class Chord:
                                   })
 
         return orchestration
+
+
+
+    def to_romantext(self, tonality):
+
+        def to_degree_type(degree, mode):
+            L = {
+                'm': ['i', 'ii%', 'III+', 'iv', 'V', 'VI', 'viio'],
+                'M': ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii%']
+            }
+            return L[mode][degree]
+
+        tone = tonality.degree
+        mode = tonality.mode
+
+        extension_tonality = ''
+        if mode != self.tonality.mode or tone != self.tonality.degree:
+            extension_tonality = f"/{self.tonality.to_romantext(tonality)}"
+
+        # Now find the degree
+        degree = to_degree_type(self.degree, self.tonality.mode)
+
+        # Find proper extension
+        extension = self.extension
+
+        # Regex to list everything between "{}" and everything between "[]"
+        import re
+        reg_omit = r"\{(.*?)\}"
+        reg_add = r"\[(.*?)\]"
+
+        matches_omit = re.findall(reg_omit, extension)
+        matches_add = re.findall(reg_add, extension)
+
+        to_remove = ["{" + f"{match}" + "}" for match in matches_omit]
+        to_remove += ["[" + f"{match}" + "]" for match in matches_add]
+
+        formatted_extension = extension
+        for r in to_remove:
+            formatted_extension = formatted_extension.replace(r, '')
+
+        # Write a script that matches the text which is not between {} or []
+        # For example "64{-5}[add6][add2]" should return ["64"]
+
+        for match in matches_omit:
+            formatted_extension += f"[{match.replace('-', 'no')}]"
+
+        for match in matches_add:
+            formatted_extension += f"[{match}]"
+
+        formatted_extension = formatted_extension.replace('(+)', '+')
+
+        return f"{degree}{formatted_extension}{extension_tonality}"
+

@@ -436,3 +436,22 @@ class Tonality:
     def __call__(self, *notes, **kwargs):
         from .custom_chord import CustomChord
         return CustomChord(notes, tonality=self, **kwargs)
+
+
+    def to_absolute_romantext(self):
+        L = ['c', 'db', 'd', 'eb', 'e', 'f', 'f#', 'g', 'ab', 'a', 'bb', 'b']
+        return L[self.degree].capitalize() if self.mode == 'M' else L[self.degree]
+
+    def to_romantext(self, base_tonality):
+        base_tone = base_tonality.degree
+        tone = (self.degree - base_tone) % 12
+        base_mode = base_tonality.mode
+        mode = self.mode
+
+        L = {
+            ('m', 'm'): ['i', 'bii', 'ii', 'iii', '#iii', 'iv', '#iv', 'v', 'bvi', 'vi', 'bvii', 'vii'],
+            ('M', 'm'): ['I', 'bII', 'II', 'III', '#III', 'IV', '#IV', 'V', 'VI', '#VI', 'VII', '#VII'],
+            ('m', 'M'): ['i', 'bii', 'ii', 'biii', 'iii', 'iv', '#iv', 'v', 'bvi', 'vi', 'bvii', 'vii'],
+            ('M', 'M'): ['I', 'bII', 'II', 'bIII', 'III', 'IV', '#IV', 'V', 'bVI', 'VI', 'bVII', 'vii'],
+        }
+        return L[(mode, base_mode)][tone]

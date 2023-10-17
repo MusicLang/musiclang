@@ -1157,6 +1157,26 @@ class Score:
         score.config = real_config
         return score
 
+
+    def get_tonality(self):
+        """
+        Extract the tonality of the score
+        Returns
+        -------
+        tonality:  Most probable tonality of the score
+        """
+        pass
+
+    def to_romantext_chord_list(self, tonality=None):
+        from musiclang.transform.features import ExtractMainTonality
+        tonality_extractor = ExtractMainTonality()
+        chords = self.to_chords()
+        if tonality is None:
+            tonality = tonality_extractor(self)
+
+        return tonality.to_absolute_romantext(), [chord.to_romantext(tonality) for chord in chords]
+
+
     def to_extension_note(self):
         return Score([chord.to_extension_note() for chord in self.chords], tags=set(self.tags))
 

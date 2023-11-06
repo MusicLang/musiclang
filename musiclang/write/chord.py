@@ -1163,22 +1163,28 @@ class Chord:
         c.octave += octave
         return c
 
-    def get_chord_between(self, start, end):
-        """
 
+    def delete_instruments(self, instruments):
+        return self(**{key: val for key, val in self.score.items() if key not in instruments})
+
+    def get_chord_between(self, start, end, complete_if_missing=False):
+        """
         Parameters
         ----------
         start :
             
         end :
-            
+
+        complete_if_missing:
+            (Default value = False)
+        Complete chord with silence if missing time in chord
 
         Returns
         -------
 
         """
         from .time_utils import get_chord_between
-        return get_chord_between(self, start, end)
+        return get_chord_between(self, start, end, complete_if_missing=complete_if_missing)
 
     def copy(self):
         """
@@ -1610,6 +1616,8 @@ class Chord:
         return self.to_score().to_custom_chords(nb_voices=nb_voices)
 
 
+
+
     def to_orchestra(self, drop_drums=True, nb=4):
         from musiclang.transform.composing.chord_to_orchestra import chord_to_orchestra
         return chord_to_orchestra(self, drop_drums=drop_drums, nb=nb)
@@ -1672,7 +1680,13 @@ class Chord:
 
         return orchestration
 
-
+    @classmethod
+    def from_romantext(self, text, time_signature, tonality):
+        from musiclang import ScoreFormatter
+        full_text = f'Time Signature: {"/".join([str(t) for t in time_signature])}'
+        full_text += f'\nTonality: {tonality}'
+        full_text += f'\nm0 {text}'
+        return ScoreFormatter(full_text).parse()[0]
 
     def to_romantext(self, tonality):
 

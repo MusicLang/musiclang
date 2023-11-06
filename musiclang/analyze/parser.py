@@ -188,6 +188,7 @@ def parse_directory_to_musiclang(directory: str, fast_chord_inference=True, **kw
         annotation_file = os.path.join(directory, 'data_annotated.rntxt')
         infer_chords(mxl_file)
         score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+
     else:
         score, config = parse_midi_to_musiclang_without_annotation(midi_file)
 
@@ -219,6 +220,7 @@ def parse_midi_to_musiclang_without_annotation(midi_file: str):
     """
     config = {}
     score, tempo = parse_musiclang_sequence_and_chords(midi_file)
+
     config.update({'tempo': tempo, 'time_signature': score.config['time_signature']})
     return score, config
 
@@ -427,6 +429,7 @@ def parse_musiclang_sequence_and_chords(midi_file):
 
     pprint('1/4 : Performing voice separation (This may takes a while)')
     notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
+
     pprint('2/4 : Now infering chords with fast inference')
     chords = fast_chord_inference(notes, bars)
     sequence = convert_to_items(notes)

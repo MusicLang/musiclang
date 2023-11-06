@@ -13,8 +13,8 @@ def _get_bars_from_parts(note_info):
     # First get longest part
     longest_part = max(note_info.parts, key=lambda x: len(x.measures))
 
+    barss = []
     for part in note_info.parts:
-
         starts = []
         ends = []
         for measure in part.measures:
@@ -24,9 +24,10 @@ def _get_bars_from_parts(note_info):
 
         beats_start = part.beat_map(starts)
         beats_end = part.beat_map(ends)
+        barss.append([(s, e) for s, e in zip(beats_start, beats_end)])
 
-        if max(beats_end) > max_time:
-            bars = [(s, e) for s, e in zip(beats_start, beats_end)]
+    # Concatenate all bars in barss
+    bars = list(sorted(list(set([item for sublist in barss for item in sublist])), key=lambda x: x[0]))
     return bars
 
 import numpy as np
@@ -43,7 +44,6 @@ def load_score(midi_file, merge_tracks=True, ticks_per_beat=480):
 
     bars = _get_bars_from_parts(note_info)
     note_info_2 = pt.load_performance_midi(midi_file)
-
     array = note_info.note_array()
     dtypes = array.dtype
     columns = list(dtypes.names)

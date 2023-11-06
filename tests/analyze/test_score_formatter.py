@@ -18,7 +18,7 @@ expected_text = """
 	piano__1=b1.hd, 
 	piano__2=b2.hd, 
 	piano__3=b3.hd)+ 
-(V['7'] % IV.s.mm)(
+(V['7'] % IV.s.m)(
 	piano__0=b0.w, 
 	piano__1=b1.w, 
 	piano__2=b2.w, 

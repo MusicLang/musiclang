@@ -1163,22 +1163,28 @@ class Chord:
         c.octave += octave
         return c
 
-    def get_chord_between(self, start, end):
-        """
 
+    def delete_instruments(self, instruments):
+        return self(**{key: val for key, val in self.score.items() if key not in instruments})
+
+    def get_chord_between(self, start, end, complete_if_missing=False):
+        """
         Parameters
         ----------
         start :
             
         end :
-            
+
+        complete_if_missing:
+            (Default value = False)
+        Complete chord with silence if missing time in chord
 
         Returns
         -------
 
         """
         from .time_utils import get_chord_between
-        return get_chord_between(self, start, end)
+        return get_chord_between(self, start, end, complete_if_missing=complete_if_missing)
 
     def copy(self):
         """
@@ -1610,6 +1616,8 @@ class Chord:
         return self.to_score().to_custom_chords(nb_voices=nb_voices)
 
 
+
+
     def to_orchestra(self, drop_drums=True, nb=4):
         from musiclang.transform.composing.chord_to_orchestra import chord_to_orchestra
         return chord_to_orchestra(self, drop_drums=drop_drums, nb=nb)
@@ -1671,3 +1679,62 @@ class Chord:
                                   })
 
         return orchestration
+
+    @classmethod
+    def from_romantext(self, text, time_signature, tonality):
+        from musiclang import ScoreFormatter
+        full_text = f'Time Signature: {"/".join([str(t) for t in time_signature])}'
+        full_text += f'\nTonality: {tonality}'
+        full_text += f'\nm0 {text}'
+        return ScoreFormatter(full_text).parse()[0]
+
+    def to_romantext(self, tonality):
+
+        def to_degree_type(degree, mode):
+            L = {
+                'm': ['i', 'ii%', 'III+', 'iv', 'V', 'VI', 'viio'],
+                'M': ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii%']
+            }
+            return L[mode][degree]
+
+        tone = tonality.degree
+        mode = tonality.mode
+
+        extension_tonality = ''
+        if mode != self.tonality.mode or tone != self.tonality.degree:
+            extension_tonality = f"/{self.tonality.to_romantext(tonality)}"
+
+        # Now find the degree
+        degree = to_degree_type(self.degree, self.tonality.mode)
+
+        # Find proper extension
+        extension = self.extension
+
+        # Regex to list everything between "{}" and everything between "[]"
+        import re
+        reg_omit = r"\{(.*?)\}"
+        reg_add = r"\[(.*?)\]"
+
+        matches_omit = re.findall(reg_omit, extension)
+        matches_add = re.findall(reg_add, extension)
+
+        to_remove = ["{" + f"{match}" + "}" for match in matches_omit]
+        to_remove += ["[" + f"{match}" + "]" for match in matches_add]
+
+        formatted_extension = extension
+        for r in to_remove:
+            formatted_extension = formatted_extension.replace(r, '')
+
+        # Write a script that matches the text which is not between {} or []
+        # For example "64{-5}[add6][add2]" should return ["64"]
+
+        for match in matches_omit:
+            formatted_extension += f"[{match.replace('-', 'no')}]"
+
+        for match in matches_add:
+            formatted_extension += f"[{match}]"
+
+        formatted_extension = formatted_extension.replace('(+)', '+')
+
+        return f"{degree}{formatted_extension}{extension_tonality}"
+

@@ -709,6 +709,7 @@ class Score:
 
         """
         from musiclang.predict.predictors import predict_score_from_huggingface
+
         base_chords = 0
         result = prompt
         for i in range(n_chords):
@@ -740,7 +741,7 @@ class Score:
         return score.chords[0].normalize_chord_duration()
 
 
-    def predict_score(self, n_chords=1, temperature=0.5, top_k=10):
+    def predict_score(self, n_chords=1, temperature=0.5, top_k=10, normalize_midi=True):
         """
         Predict the continuation of the score given the current score
 
@@ -758,7 +759,8 @@ class Score:
             The number of tokens to consider for the prediction.
             The higher the more random
             To avoid syntax errors set lower than 20
-
+        normalize_midi: bool
+            If True, normalize the midi before predicting
         Returns
         -------
         predicted_score: Score
@@ -766,8 +768,14 @@ class Score:
 
         """
         from musiclang.predict.predictors import predict_score_from_huggingface
+        import tempfile
+        if normalize_midi:
+            with tempfile.NamedTemporaryFile(suffix='.mid', delete=True) as file:
+                self.to_midi(file.name)
+                result = Score.from_midi(file.name)
+        else:
+            result = self
         base_chords = len(self.chords)
-        result = self
         for i in range(n_chords):
             score_str = predict_score_from_huggingface(str(result.normalize()), n_chords=1, temperature=temperature, top_k=top_k)
             result = Score.from_str(score_str)
@@ -1002,6 +1010,9 @@ class Score:
         return Score([chord.to_absolute_note() for chord in self.chords], tags=self.tags)
 
 
+    def arrange_chords_duration(self, duration):
+        return Score([chord.get_chord_between(0, duration, complete_if_missing=True) for chord in self.chords])
+
     def get_chord_between(self, chord, start, end):
         """
 
@@ -1092,6 +1103,9 @@ class Score:
         return reduce(self, n_voices=n_voices, start_low=start_low, instruments=instruments)
 
 
+    def delete_instruments(self, instruments):
+
+        return Score([chord.delete_instruments(instruments) for chord in self.chords])
 
     @classmethod
     def from_annotation_file(cls, file):
@@ -1156,6 +1170,38 @@ class Score:
 
         score.config = real_config
         return score
+
+    @classmethod
+    def from_chord_list(cls, chord_list, time_signature, tonality):
+        from musiclang import ScoreFormatter
+        full_text = f'Time Signature: {"/".join([str(t) for t in time_signature])}'
+        full_text += f'\nTonality: {tonality}'
+        for idx, chord in enumerate(chord_list):
+            full_text += f"\nm{idx} {chord}"
+        result = ScoreFormatter(full_text).parse()
+        # Correct octaves
+        result = result.correct_chord_octave()
+
+        return result
+
+    def get_tonality(self):
+        """
+        Extract the tonality of the score
+        Returns
+        -------
+        tonality:  Most probable tonality of the score
+        """
+        pass
+
+    def to_romantext_chord_list(self, tonality=None):
+        from musiclang.transform.features import ExtractMainTonality
+        tonality_extractor = ExtractMainTonality()
+        chords = self.to_chords()
+        if tonality is None:
+            tonality = tonality_extractor(self)
+
+        return tonality.to_absolute_romantext(), [chord.to_romantext(tonality) for chord in chords]
+
 
     def to_extension_note(self):
         return Score([chord.to_extension_note() for chord in self.chords], tags=set(self.tags))

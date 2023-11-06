@@ -135,7 +135,7 @@ def get_melody_between(voice, start, end):
     new_voice = Melody(new_voice)
     return new_voice
 
-def get_chord_between(chord, start, end):
+def get_chord_between(chord, start, end, complete_if_missing=False):
     """Get the chord with melodies that are between start and end
 
     Parameters
@@ -146,7 +146,8 @@ def get_chord_between(chord, start, end):
         Start time (relative to chord)
     end :
         End time (relative to chord)
-
+    complete_if_missing :
+        If True, complete the chord with silence if the chord is not complete (Default value = False)
     Returns
     -------
     type
@@ -156,6 +157,9 @@ def get_chord_between(chord, start, end):
     new_parts = {ins: None for ins in chord.instruments}
     for part in chord.score.keys():
         new_voice = get_melody_between(chord.score[part], start, end)
+        if complete_if_missing and new_voice.duration < chord.duration:
+            from ..note import Silence
+            new_voice += Silence(chord.duration - new_voice.duration)
         new_parts[part] = new_voice
 
     if len(new_parts.keys()) == 0:

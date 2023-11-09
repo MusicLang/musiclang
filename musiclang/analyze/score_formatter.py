@@ -260,10 +260,8 @@ class ScoreFormatter:
                     self.bar_elements[bar.idx] = elements
                     self.chord_number += len([e for e in elements if isinstance(e, BarChord)])
 
-
     def __repr__(self):
         return f"ScoreFormatter({self.elements})"
-
 
 class ScoreInterpreter:
 

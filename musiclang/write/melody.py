@@ -88,6 +88,21 @@ class Melody:
         cp.tags = cp.tags.union(set(tags))
         return cp
 
+    def repeated_notes_to_legato(self):
+        from musiclang import Continuation
+        new_melody = []
+        last_note = None
+        for note in self.notes:
+            if last_note is None:
+                new_melody.append(note)
+
+            if 'u' in note.type and note.val == 0 and note.octave == 0:
+                new_melody.append(Continuation(note.duration))
+            elif note.val == last_note.val and note.type == last_note.type and note.octave == last_note.octave:
+                new_melody.append(Continuation(note.duration))
+            last_note = note
+        return Melody(new_melody)
+
     def remove_tags(self, tags):
         """
         Remove several tags from the object.

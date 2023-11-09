@@ -38,7 +38,6 @@ def parse_to_musiclang(input_file: str, **kwargs):
         raise Exception('Unknown extension {}'.format(extension))
 
 
-
 def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=16):
     import itertools
     def get_chord_range(tokens, tokenizer, start, end):
@@ -94,7 +93,7 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
     # Reload for test
     midi.dump(output_file)
 
-def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=True, quantization=16, **kwargs):
+def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=True, quantization=16, fast_chord_inference=True, **kwargs):
     """Parse a midi input file into a musiclang Score
     - Get chords with dynamic programming
     - Get voice separation and parsing
@@ -126,7 +125,13 @@ def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=T
             shutil.copy(input_file, midi_file)
         else:
             raise Exception('Chord range must be None if tokenize_before is False')
-        result = parse_directory_to_musiclang(di, **kwargs)
+
+        if not fast_chord_inference:
+            mxl_file = os.path.join(di, 'data.mxl')
+            obj = _m21Parse(midi_file)
+            obj.write('mxl', fp=os.path.join(mxl_file))
+
+        result = parse_directory_to_musiclang(di, fast_chord_inference=fast_chord_inference, **kwargs)
     return result
 
 
@@ -157,7 +162,7 @@ def parse_mxl_to_musiclang(input_file: str, **kwargs):
         midi_file = os.path.join(di, 'data.mid')
         mxl_file = os.path.join(di, 'data.mxl')
         obj = _m21Parse(input_file)
-        obj.write('midi', fp=os.path.join(di, midi_file))
+        obj.write('midi', fp=os.path.join(midi_file))
         shutil.copy(input_file, mxl_file)
         result = parse_directory_to_musiclang(di, **kwargs)
     return result

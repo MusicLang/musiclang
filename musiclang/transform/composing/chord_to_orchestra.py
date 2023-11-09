@@ -43,7 +43,7 @@ def map_matrix(A, B, Mb):
     return Ma.tolist()
 
 
-def chord_to_orchestra(chord, drop_drums=True, nb=4):
+def chord_to_orchestra(chord, drop_drums=True, nb=4, pattern=False):
     """
     Convert a chord to an orchestra
     Parameters
@@ -93,7 +93,8 @@ def chord_to_orchestra(chord, drop_drums=True, nb=4):
             instrument['rhythm'] = grid
             instrument['rhythm']['notes'] = notes_grid
             instrument['rhythm']['octave'] = instrument['octave']
-            del instrument['pattern']
+            if not pattern:
+                del instrument['pattern']
             orchestra.append(instrument)
 
     return orchestra

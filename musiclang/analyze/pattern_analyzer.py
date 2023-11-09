@@ -8,15 +8,16 @@ from musiclang import Score
 from musiclang.write.out import get_pitches, get_pitches_instruments
 
 
-def get_candidate(candidates, scale, new_pitch, last_pitch):
+def get_candidate(candidates, scale, new_pitch, last_pitch, remove_wrong_writings=True):
     for candidate in candidates:
         candidate_pitch = get_relative_scale_value(candidate, last_pitch, scale)
         candidate_pitch_class = candidate_pitch % 12
         if candidate_pitch_class == new_pitch % 12:
             delta_octave = (new_pitch - candidate_pitch) // 12
-            if ("u" in candidate.type and delta_octave < 0) or ("d" in candidate.type and delta_octave > 0):
+            if remove_wrong_writings and (("u" in candidate.type and delta_octave < 0) or ("d" in candidate.type and delta_octave > 0)):
                 continue
             return candidate.oabs(delta_octave if "u" in candidate.type else - delta_octave)
+
 
     return None
 
@@ -26,6 +27,9 @@ def transform_type_to_relative_note(new_type, scale, new_pitch, last_pitch):
     candidates_down = [Note(new_type + 'd', i, 0, 1) for i in range(len(scale))]
     candidates = candidates_up + candidates_down
     candidate = get_candidate(candidates, scale, new_pitch, last_pitch)
+    if candidate is None:
+        candidate = get_candidate(candidates, scale, new_pitch, last_pitch, remove_wrong_writings=False)
+
     return candidate
 
 

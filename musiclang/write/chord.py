@@ -1087,7 +1087,7 @@ class Chord:
                  instruments=None,
                  voicing=None,
                  add_metadata=True,
-                   max_duration=32,
+                   max_duration=64,
                    **kwargs):
         """
         Extract the pattern from the chord
@@ -1108,6 +1108,8 @@ class Chord:
             Voicing to use for the pattern, otherwise extract the good one
         add_metadata: bool (Default value = True)
             If True, add metadata and features to the pattern
+        max_duration: int (Default value = 64)
+            Maximum duration of the chord to apply patternize
         Returns
         -------
         score_pattern: Chord
@@ -1166,6 +1168,9 @@ class Chord:
 
     def delete_instruments(self, instruments):
         return self(**{key: val for key, val in self.score.items() if key not in instruments})
+
+    def delete_instrument_names(self, instrument_names):
+        return self(**{key: val for key, val in self.score.items() if key.split('__')[0] not in instrument_names})
 
     def get_chord_between(self, start, end, complete_if_missing=False):
         """
@@ -1616,11 +1621,12 @@ class Chord:
         return self.to_score().to_custom_chords(nb_voices=nb_voices)
 
 
-
-
-    def to_orchestra(self, drop_drums=True, nb=4):
+    def to_orchestra(self, drop_drums=True, nb=4, pattern=False):
         from musiclang.transform.composing.chord_to_orchestra import chord_to_orchestra
-        return chord_to_orchestra(self, drop_drums=drop_drums, nb=nb)
+        return chord_to_orchestra(self, drop_drums=drop_drums, nb=nb, pattern=pattern)
+
+    def repeated_notes_to_legato(self):
+        return self(**{ins: n.repeated_notes_to_legato() for ins, n in self.score.items()})
 
     def get_orchestration(self):
         from .melody import Melody

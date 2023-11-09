@@ -62,6 +62,7 @@ def _first_clean(text):
     return text
 
 def analyze_one_chord(figure, key, mode):
+    figure = figure.replace('/o', 'ø').replace('4/3', '43')
     figure = figure.replace('/4', '4').replace('/3', '').replace('/2', '').replace('/5', '5')
     if mode == 'major':
         figure = figure.replace('III+', 'III(+)')

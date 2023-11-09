@@ -117,9 +117,6 @@ class Note:
     3
 
     In minor s2 is eb (=3)
-
-
-
     """
     DEFAULT_AMP = 66
 
@@ -444,6 +441,9 @@ class Note:
                     tempo=self.tempo,
                     pedal=self.pedal
                     )
+
+    def repeated_notes_to_legato(self):
+        return self.to_melody().repeated_notes_to_legato()
 
     def set_amp(self, amp):
         new_note = self.copy()

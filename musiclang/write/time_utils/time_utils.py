@@ -36,6 +36,25 @@ def put_on_same_chord(score):
     return first_chord(**parts)
 
 
+def repeat_until_duration(score, duration):
+    """
+    Repeat the score until score last at least duration
+    returns a score exactly of length duration
+    Parameters
+    ----------
+    score
+    duration
+
+    Returns
+    -------
+    """
+    if score.duration < duration:
+        # How much time we need to repeat at least
+        nb_times = int(duration / score.duration) + 1
+        score = score * nb_times
+    score = score.get_score_between(0, duration)
+    return score
+
 def project_on_score(score, score2, keep_score=False):
     """Project harmonically the score onto the score2
     Algorithm : For each chord of score2 : get chords that belongs to score1 and reproject on chord of score2
@@ -155,12 +174,15 @@ def get_chord_between(chord, start, end, complete_if_missing=False):
 
     """
     new_parts = {ins: None for ins in chord.instruments}
+    total_duration = end - start
     for part in chord.score.keys():
         new_voice = get_melody_between(chord.score[part], start, end)
-        if complete_if_missing and new_voice.duration < chord.duration:
+        if complete_if_missing and new_voice.duration < total_duration:
             from ..note import Silence
-            new_voice += Silence(chord.duration - new_voice.duration)
+            new_voice += Silence(total_duration - new_voice.duration)
         new_parts[part] = new_voice
+        if complete_if_missing:
+            assert new_voice.duration == total_duration, f"Wrong duration {new_voice.duration} for {part}"
 
     if len(new_parts.keys()) == 0:
         from ..note import Silence

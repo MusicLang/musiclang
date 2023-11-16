@@ -1547,6 +1547,9 @@ class Score:
             ins_dict[ins] = f'{name}__{new_idx}'
         return self.replace_instruments(**ins_dict)
 
+
+    def __len__(self):
+        return len(self.chords)
     def __mul__(self, other):
         """
         If other is Integer, repeat the note other times

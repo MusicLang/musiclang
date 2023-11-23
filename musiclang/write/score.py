@@ -1114,6 +1114,7 @@ class Score:
                 rhythms.append(Silence(chord.duration))
         return rhythms
 
+
     def extract_densities(self):
         instruments = self.instruments
         densities = {}
@@ -1129,6 +1130,42 @@ class Score:
                             densities[instrument] += 1
 
         return {k: v / total_duration for k, v in densities.items()}
+
+    def extract_mean_octaves(self):
+        instruments = self.instruments
+        octaves = {}
+        nb = {}
+        for instrument in instruments:
+            octaves[instrument] = 0
+            nb[instrument] = 0
+            for chord in self.chords:
+                if instrument in chord.score:
+                    ins_score = chord.score[instrument]
+                    notes = ins_score.notes
+                    for note in notes:
+                        if note.is_note:
+                            octaves[instrument] += note.octave
+                            nb[instrument] += 1
+        return {k: round(v / nb[k] if nb[k] > 0 else 0) for k, v in octaves.items()}
+
+    def extract_mean_amplitudes(self):
+        from musiclang import Note
+        instruments = self.instruments
+        amp = {}
+        nb = {}
+        for instrument in instruments:
+            amp[instrument] = 0
+            nb[instrument] = 0
+            for chord in self.chords:
+                if instrument in chord.score:
+                    ins_score = chord.score[instrument]
+                    notes = ins_score.notes
+                    for note in notes:
+                        if note.is_note:
+                            amp[instrument] += note.amp
+                            nb[instrument] += 1
+
+        return {k: Note(0, 0, 0, 1, amp=int(v / nb[k]) if nb[k]> 0 else 0).amp_figure for k, v in amp.items()}
 
     def get_maximum_density_instrument(self, exclude_instruments=None):
         densities = self.extract_densities()
@@ -1324,7 +1361,7 @@ class Score:
         return grid
 
     @classmethod
-    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None, tokenize_before=True, quantization=16):
+    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None, tokenize_before=True, quantization=8):
         """
         Load a midi score into musiclang
 

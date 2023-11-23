@@ -30,7 +30,8 @@ dependencies = [
     "transformers==4.26.1",
     "tokenizers==0.13.2",
     "partitura==1.2.1",
-    "torch"
+    "torch",
+    "miditok @ git+https://github.com/MusicLang/MidiTok.git"
 ]
 requires-python = ">=3.9"
 

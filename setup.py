@@ -35,10 +35,12 @@ setuptools.setup(
         "toml==0.10.2",
         "tomli==2.0.1",
         "xmlschema==2.1.1",
-        "transformers==4.26.1",
-        "tokenizers==0.13.2",
+        "transformers==4.35.0",
+        "tokenizers==0.14.1",
+        "accelerate==0.24.1",
         "partitura==1.2.1",
-        "torch"
+        "torch",
+        "git+https://github.com/MusicLang/MidiTok.git"
                       ],
     packages=setuptools.find_packages(include='*'),
     package_data={'musiclang': ['augmented_net/*.hdf5']},

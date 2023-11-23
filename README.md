@@ -85,33 +85,20 @@ score.to_musicxml('happy_birthday.musicxml', signature=(3, 4), title='Happy birt
 
 3. Predict a score using a deep learning model trained on musiclang language :
 
-```python
-from musiclang.library import *
-from musiclang import Score
-
-# Some random bar of chopin op18 Waltz
-score = ((V % III.b.M)(
-	piano__0=s0 + s2.e.mp + s3.e.mp, 
-	piano__4=s0.e.o(-2).p + r.e + s0.ed.o(-1).mp + r.s, 
-	piano__5=r + s4.ed.o(-1).mp + r.s, 
-	piano__6=r + s6.ed.o(-1).mp + r.s)+ 
-(V['7'] % III.b.M)(
-	piano__0=s2.ed.mp + r.s, 
-	piano__2=s4.ed.mp + r.s, 
-	piano__4=s6.ed.o(-1).mp + r.s, 
-	piano__5=s0.ed.o(-1).mp + r.s, 
-	piano__6=s4.ed.o(-1).mp + r.s))
-
-# Predict the next two chords of the score using huggingface musiclang model
-predicted_score = score.predict_score(n_chords=4, temperature=0.5)
-# Save it to midi
-predicted_score.to_midi('test.mid')
-```
-
-Please note that this feature is still experimental, it will only work with
-piano music for now and the model is not yet trained on a large corpus of music.
-If you want to help us train a better model, please contact [us](mailto:fgardin.pro@gmail.com)
+See [MusicLang Predict](https://github.com/MusicLang/musiclang_predict) for more information.
 
 
-4. Mix everything together to create a new pieces of music !
+
+Contact us
+----------
+
+If you want to help shape the future of open source music generation,
+please contact [us](mailto:fgardin.pro@gmail.com)
+
+License
+-------
+
+The MusicLang base language (this package) is licensed under the BSD 3-Clause License.
+The MusicLang predict package and its associated models is licensed under the GPL-3.0 License.
+
 

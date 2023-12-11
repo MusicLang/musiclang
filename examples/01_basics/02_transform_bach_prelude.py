@@ -24,8 +24,8 @@ melody_4 = melody_1
 
 melodies = [melody_1, melody_2, melody_3, melody_4]
 
-# By default chords degrees will resolve in C-major so we don't have to specify it
-chords = [I, II, V, I]
+# We specify a simple chord progression in C-major (I-M)
+chords = [I % I.M, II % I.M, V % I.M, I % I.M]
 
 # Here we use a little trick to create the score from the list of chords and melodies
 base_score = sum([chord(piano__0=melody) for chord, melody in zip(chords, melodies)], None)
@@ -53,8 +53,7 @@ score_5 = base_score
 
 score = score_1 + score_2 + score_3 + score_4 + score_5
 
-score.show('midi', tempo=90)
-
+score.to_midi('test.mid', tempo=90)
 """
 That's it, in this tutorial we have introduced a method to develop a theme harmonically
 You will find more advanced usage of transforms in other tutorials

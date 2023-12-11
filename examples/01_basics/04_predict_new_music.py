@@ -2,28 +2,22 @@
 4. Predict New Music
 ====================
 
-In this example we are gonna see how we can use the predict module to extends an already existing score
-- We will create a small chord progression
-- We will use an already HuggingFace musiclang model to predict the next five chords of our song
+/!\ You need to install musiclang-predict library to run this example !
+```
+pip install musiclang-predict
+```
+
+In this example we will see how we can use MusicLang foundation LM model to predict four bars of music
 
 """
-from musiclang.library import *
-from musiclang import Score
+# Predict a song
 
-# Some random bar of chopin op18 Waltz
-score = ((V % III.b.M)(
-	piano__0=s0 + s2.e.mp + s3.e.mp,
-	piano__4=s0.e.o(-2).p + r.e + s0.ed.o(-1).mp + r.s,
-	piano__5=r + s4.ed.o(-1).mp + r.s,
-	piano__6=r + s6.ed.o(-1).mp + r.s)+
-(V['7'] % III.b.M)(
-	piano__0=s2.ed.mp + r.s,
-	piano__2=s4.ed.mp + r.s,
-	piano__4=s6.ed.o(-1).mp + r.s,
-	piano__5=s0.ed.o(-1).mp + r.s,
-	piano__6=s4.ed.o(-1).mp + r.s))
+from musiclang_predict import predict, MusicLangTokenizer
+from transformers import GPT2LMHeadModel
 
-# Predict the next two chords of the score using huggingface musiclang model
-predicted_score = score.predict_score(n_chords=5, temperature=0.5, top_k=10)
-# Save it to midi
-predicted_score.to_midi('test.mid')
+model = GPT2LMHeadModel.from_pretrained('musiclang/musiclang-4k')
+tokenizer = MusicLangTokenizer('musiclang/musiclang-4k')
+
+# Predict a 8 bar song in 4/4 time signature with this model
+soundtrack = predict(model, tokenizer, chord_duration=4, nb_chords=4)
+soundtrack.to_midi('song.mid', tempo=120, time_signature=(4, 4))

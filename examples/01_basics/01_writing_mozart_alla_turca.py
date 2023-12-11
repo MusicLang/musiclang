@@ -117,4 +117,4 @@ Now you can enjoy the first four bars of mozart in midi format, let's save it !
 I encourage you to try playing a little with the score created. Why not changing the tonality,
 the melody, the chords or even the instruments ? You will see that the whole point of this library is its modularity.
 """
-score.show('midi')
+score.to_midi('test.mid')

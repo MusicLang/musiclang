@@ -65,7 +65,7 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
 
     from miditok import REMI
     from miditok.classes import TokenizerConfig
-    from miditoolkit.midi import MidiFile
+    from miditoolkit import MidiFile
 
     config = TokenizerConfig(
         beat_res={(0, 8): quantization, (8, 16): quantization},

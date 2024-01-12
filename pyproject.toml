@@ -31,6 +31,7 @@ dependencies = [
     "tokenizers==0.13.2",
     "partitura==1.2.1",
     "torch",
+    "music21",
     "miditok-for-musiclang==0.0.1"
 ]
 requires-python = ">=3.9"

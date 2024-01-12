@@ -209,7 +209,7 @@ class Melody:
             return self.__eq__(Melody([other]))
         return isinstance(other, Melody) and str(other) == str(self)
 
-    def to_absolute_note(self, chord, last_pitch=None):
+    def to_absolute_note(self, chord, last_pitch=None, return_last_pitch=False):
         notes = []
         for note in self.notes:
             note = note.to_absolute_note(chord, last_pitch=last_pitch)
@@ -218,23 +218,35 @@ class Melody:
                 last_pitch = last_pitch_temp
             notes.append(note)
 
-        return Melody(notes, nb_bars=self.nb_bars, tags=set(self.tags))
+        result = Melody(notes, nb_bars=self.nb_bars, tags=set(self.tags))
+        if return_last_pitch:
+            return result, last_pitch
+        else:
+            return result
+
+    def get_random_permutation(self):
+        import numpy as np
+        permut = np.random.permutation(len(self.notes))
+        return Melody([self.notes[i] for i in permut], nb_bars=self.nb_bars, tags=set(self.tags))
 
 
-    def get_between(self, start, end):
+    def get_between(self, start, end, modulo=False):
         """
         Get the notes between start and end time
         Parameters
         ----------
         start: int
+            Start time
         end: int
-
+            End time
+        modulo: bool
+            If True, the melody selected is repeated until end
         Returns
         -------
         melody: Melody
         """
         from musiclang.write.time_utils import get_melody_between
-        return get_melody_between(self, start, end)
+        return get_melody_between(self, start, end, modulo=modulo)
     def get_pitches(self, chord, track_idx, time, last_note_array=None):
         """
 

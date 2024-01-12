@@ -404,8 +404,21 @@ class Chord:
             return None
         return note_to_pitch_result(note, self, last_pitch=last_pitch)
 
-    def to_absolute_note(self):
-        return self(**{part: melody.to_absolute_note(self) for part, melody in self.score.items()})
+    def to_absolute_note(self, last_pitch=None, return_last_pitch=False):
+        if last_pitch is None:
+            last_pitch = {}
+
+        if return_last_pitch:
+            new_chord = {}
+            for part, melody in self.score.items():
+                new_melody, last_pitch[part] = melody.to_absolute_note(
+                    self, last_pitch=last_pitch.get(part, None), return_last_pitch=return_last_pitch)
+                new_chord[part] = new_melody
+            return self(**new_chord), last_pitch
+        else:
+            return self(**{part: melody.to_absolute_note(self, last_pitch=last_pitch.get(part, None),
+                                                     return_last_pitch=False) for part, melody in self.score.items()})
+
 
     @cached_property
     def bass_pitch(self):
@@ -1621,14 +1634,32 @@ class Chord:
         return self.to_score().to_custom_chords(nb_voices=nb_voices)
 
 
-    def to_orchestra(self, drop_drums=True, nb=4, pattern=False):
-        from musiclang.transform.composing.chord_to_orchestra import chord_to_orchestra
-        return chord_to_orchestra(self, drop_drums=drop_drums, nb=nb, pattern=pattern)
+    def to_pattern(self, drop_drums=True, nb=4, pattern=True):
+        """
+        Convert the chord to a pattern (like a musical template)
+
+        Parameters
+        ----------
+        drop_drums: bool (Default value = True)
+            If True, drop the drums instruments
+        nb: int (Default value = 4)
+            nb arpeggio notes to consider on each side, it will give the acceptable range of the instrument melody.
+            You usually don't need it because it is used only for the musical grid
+        pattern: bool (Default value = True)
+            If True, return the pattern inside the response
+
+        Returns
+        -------
+        pattern: Pattern
+
+        """
+        from musiclang.transform.composing.chord_to_orchestra import chord_to_pattern
+        return chord_to_pattern(self, drop_drums=drop_drums, nb=nb, keep_pattern=pattern)
 
     def repeated_notes_to_legato(self):
         return self(**{ins: n.repeated_notes_to_legato() for ins, n in self.score.items()})
 
-    def get_orchestration(self):
+    def get_raw_pattern(self):
         from .melody import Melody
         def voicing_to_quality(voicing, chord):
             notes = chord.extension_notes

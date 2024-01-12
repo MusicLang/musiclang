@@ -105,7 +105,7 @@ def project_on_score(score, score2, keep_score=False):
 
 
 
-def get_melody_between(voice, start, end):
+def get_melody_between(voice, start, end, modulo=False):
     """
     Get the melody between start and end
     Parameters
@@ -121,6 +121,11 @@ def get_melody_between(voice, start, end):
     time = 0
     new_voice = []
     to_break = False
+    if end > voice.duration and modulo:
+        # Repeat the voice until end <= voice.duration
+        nb_times = int(end / voice.duration) + 1
+        voice = voice * nb_times
+
     for note in voice:
         add_continuation = False
         note_duration = note.duration

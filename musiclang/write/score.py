@@ -12,10 +12,8 @@ import re
 
 class Score:
     """Represents a score in musiclang
-
-
     """
-    def __init__(self, chords=None, config=None, tags=None):
+    def __init__(self, chords=None, config=None, tags=None, time_signature = None, tempo=None):
         self.chords = chords
         self.config = config
         if self.chords is None:
@@ -26,6 +24,11 @@ class Score:
                            "pickup": 0,
                            "time_signature": (4, 4)
                            }
+
+        if time_signature is not None:
+            self.config['time_signature'] = time_signature
+        if tempo is not None:
+            self.config['tempo'] = tempo
 
         self.tags = set(tags) if tags is not None else set()
 
@@ -242,7 +245,11 @@ class Score:
         """
         from musiclang import Silence
         score = []
-        instruments = set(self.instruments)
+        # like set(self.instruments) but keep the order
+        instruments = self.instruments
+
+
+
         for chord_raw in self.chords:
             chord = chord_raw.copy()
             missing_instruments = set(instruments) - set(chord.instruments)
@@ -726,103 +733,6 @@ class Score:
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
 
-    @classmethod
-    def generate_score(cls, n_chords=1, prompt='(', temperature=0.5, top_k=10):
-        """
-        Generate a musical idea from a prompt
-        Parameters
-        ----------
-        n_chords: int
-            The number of new chords to predict
-        prompt: str
-            The prompt to start the generation
-        temperature: float
-            The temperature of the prediction. The higher the more random
-        top_k: int
-            The number of tokens to consider for the prediction.
-
-        Returns
-        -------
-        score: Score
-            The generated score
-
-        """
-        from musiclang.predict.predictors import predict_score_from_huggingface
-
-        base_chords = 0
-        result = prompt
-        for i in range(n_chords):
-            score_str = predict_score_from_huggingface(str(result), n_chords=1, temperature=temperature,
-                                                       top_k=top_k)
-            result = Score.from_str(score_str)
-            result = Score(result.chords[:base_chords + i + 1])
-            result = result.normalize_chord_duration()
-
-        return result
-
-    @classmethod
-    def generate_chord(cls, prompt='(', temperature=0.5, top_k=10):
-        """
-        Generate one chord from AI model
-        Parameters
-        ----------
-        prompt
-        temperature
-        top_k
-
-        Returns
-        -------
-
-        """
-        from musiclang.predict.predictors import predict_score_from_huggingface
-        score_str = predict_score_from_huggingface(prompt, n_chords=1, temperature=temperature, top_k=top_k)
-        score = Score.from_str(score_str)
-        return score.chords[0].normalize_chord_duration()
-
-
-    def predict_score(self, n_chords=1, temperature=0.5, top_k=10, normalize_midi=True):
-        """
-        Predict the continuation of the score given the current score
-
-        Please note that this method is still very experimental as we are
-        currently improving our musiclang language model.
-
-        Parameters
-        ----------
-        n_chords: int
-            The number of new chords to predict
-        temperature: float
-            The temperature of the prediction. The higher the more random
-            To avoid syntax errors set lower than 0.75
-        top_k: int
-            The number of tokens to consider for the prediction.
-            The higher the more random
-            To avoid syntax errors set lower than 20
-        normalize_midi: bool
-            If True, normalize the midi before predicting
-        Returns
-        -------
-        predicted_score: Score
-            The predicted score
-
-        """
-        from musiclang.predict.predictors import predict_score_from_huggingface
-        import tempfile
-        if normalize_midi:
-            with tempfile.NamedTemporaryFile(suffix='.mid', delete=True) as file:
-                self.to_midi(file.name)
-                result = Score.from_midi(file.name)
-        else:
-            result = self
-        base_chords = len(self.chords)
-        for i in range(n_chords):
-            score_str = predict_score_from_huggingface(str(result.normalize()), n_chords=1, temperature=temperature, top_k=top_k)
-            result = Score.from_str(score_str)
-            result = Score(result.chords[:base_chords + i + 1])
-            result = result.normalize_chord_duration()
-
-        return result
-
 
     def normalize_chord_duration(self):
         """
@@ -855,6 +765,72 @@ class Score:
             else:
                 new_score.append(chord)
         return Score(new_score)
+
+
+    def to_chromagram(self, quantization=None):
+        """
+        Transform the score into a chromagram
+        Parameters
+        ----------
+        quantization: int | tuple | frac (Default value = None)
+            Quantization of the chromagram in fraction of quarters
+
+        Returns
+        -------
+        Cs: numpy.array
+            shape (12, T) Chroma matrix
+        t: numpy array
+            shape (T,) Time vector
+        time_signature: tuple
+            Time signature of the score
+
+        """
+        from musiclang.analyze.chroma import musiclang_to_chromagram
+        from fractions import Fraction as frac
+        if isinstance(quantization, tuple):
+            quantization = frac(quantization[0], quantization[1])
+
+        return musiclang_to_chromagram(self, quantization=quantization)
+
+    @classmethod
+    def from_chromagram(cls, Cs, t, base_voicing, time_signature, repeat_notes=False, reparse=True):
+        """
+        Transform the score into a chromagram
+        Parameters
+        ----------
+        Cs: numpy.array
+            shape (12, T) Chroma matrix
+        t: numpy array
+            shape (T,) Time vector
+        base_voicing : list of pitches to use as a starting point
+        time_signature: tuple
+            Time signature of the score
+        repeat_notes: bool (Default value = False)
+            If True, repeat the notes in the chromagram
+
+        Returns
+        -------
+
+        """
+        from musiclang.analyze.chroma import chromagram_to_musiclang
+        return chromagram_to_musiclang(Cs, t, base_voicing, time_signature, repeat_notes=repeat_notes, reparse=reparse)
+
+
+    def reparse(self):
+        """
+        Save score to a temporary midi and reimport it
+
+        Returns
+        -------
+        score : Score
+        """
+
+        import tempfile
+        import os
+        with tempfile.TemporaryDirectory() as di:
+            self.to_midi(os.path.join(di, 'tmp.mid'), tempo=self.config['tempo'], time_signature=self.config['time_signature'])
+            return Score.from_midi(os.path.join(di, 'tmp.mid'))
+
 
     def to_text_file(self, filepath, create_dir=False):
         """
@@ -889,7 +865,6 @@ class Score:
         from musiclang import PartComposer
         score = PartComposer.compose(data)
         return score
-
 
 
     def patternize(self,
@@ -994,25 +969,27 @@ class Score:
 
     def project_with_voice_leading_on_chord_score(self, score_chords, **kwargs):
         """
-        Project
+        Project the score on a chord progression with voice leading
+
         Parameters
         ----------
-        score_chords
+        score_chords: Score
+            Score containing the chords on which to project the score
 
         Returns
         -------
 
         """
-        orchestrations = [chord.to_orchestra(pattern=True, drop_drums=False) for chord in self.chords]
+        orchestrations = [chord.to_pattern(pattern=True, drop_drums=False) for chord in self.chords]
         chords = score_chords.to_custom_chords(**kwargs).to_chords(duration=True)
 
         orchestrated_chords = []
         for idx, chord in enumerate(chords):
             current_orchestra = orchestrations[idx % len(orchestrations)]
-            orchestrated_chord = Score.from_orchestration(current_orchestra,
-                                                          [chord],
-                                                          chord_rhythm=True,
-                                                          use_pattern=True).chords[0]
+            orchestrated_chord = Score.from_pattern(current_orchestra,
+                                                    [chord],
+                                                    chord_rhythm=True,
+                                                    use_pattern=True).chords[0]
             orchestrated_chords.append(orchestrated_chord)
         score = Score(orchestrated_chords)
         return score
@@ -1033,8 +1010,6 @@ class Score:
                 Score to project on the chords of score2
         score2 : Score
             Score that contains the harmony
-        voice_leading: boolean (default=True)
-            If true, we try to move the notes as little as possible
         voice_leading : boolean (default=True)
             If True try to move the notes as little as possible (Default value = True)
         repeat_to_duration: boolean (default=False)
@@ -1100,6 +1075,30 @@ class Score:
         """
         from .time_utils import repeat_until_duration
         return repeat_until_duration(self, duration)
+
+    def get_counterpoint(self, fixed_parts, **kwargs):
+        """
+        Optimize the counterpoint of the score. Change all parts that does not belong to fixed_parts.
+        First remove the drums, then optimize the counterpoint and finally add the drums back
+
+        Parameters
+        ----------
+        fixed_parts: list[str]
+            List of parts that should not be changed (eg : piano__0)
+
+        Returns
+        -------
+        score: Score
+            The score with optimized counterpoint
+
+        """
+        from musiclang.transform import create_counterpoint_on_score
+        # Extract drums
+        drums = self.get_instrument_names(['drums_0'])
+        score_without_drums = self.remove_drums()
+        score = create_counterpoint_on_score(score_without_drums, fixed_parts=fixed_parts)
+        return score
+
 
     def project_on_rhythm_chord_per_chord(self, rhythms, **kwargs):
         return Score([chord.project_on_rhythm(rhythm, **kwargs) for chord, rhythm in zip(self.chords, rhythms)], tags=self.tags)
@@ -1222,7 +1221,14 @@ class Score:
         return Score([chord.repeated_notes_to_legato() for chord in self.chords], tags=self.tags)
 
     def to_absolute_note(self):
-        return Score([chord.to_absolute_note() for chord in self.chords], tags=self.tags)
+        last_pitch = {}
+        score = []
+        for chord in self.chords:
+            absolute_chord, last_pitches = chord.to_absolute_note(last_pitch=last_pitch, return_last_pitch=True)
+            score.append(absolute_chord)
+            last_pitch = last_pitches
+        return Score(score, tags=self.tags)
+
 
 
     def arrange_chords_duration(self, duration):
@@ -1572,7 +1578,11 @@ class Score:
         return Score([chord.remove_accidents() for chord in self.chords], tags=set(self.tags))
 
     def remove_drums(self):
-        return Score([chord.remove_drums() for chord in self.chords])
+        score = self.normalize_instruments()
+        return Score([chord.remove_drums() for chord in score.chords])
+
+    def get_drums(self):
+        return self.get_instrument_names(['drums_0'])
 
     def create_instruments_suffix(self, offset=100):
         instruments = self.instruments
@@ -1730,7 +1740,6 @@ class Score:
         filepath :
             
         **kwargs :
-            
 
         Returns
         -------
@@ -1744,7 +1753,12 @@ class Score:
 
     def to_scale_notes(self):
 
-        return Score([chord.to_scale_notes() for chord in self.chords])
+        return self.to_scale_note()
+
+    def to_scale_note(self):
+
+        score = self.to_absolute_note()
+        return Score([chord.to_scale_notes() for chord in score.chords])
 
 
     def to_custom_chords(self, nb_voices=4, fixed_bass=True, **kwargs):
@@ -1761,7 +1775,28 @@ class Score:
                       for chord in score.chords])
 
     @classmethod
-    def from_orchestration(cls, orchestration, chords, chord_rhythm=False, use_pattern=False):
+    def from_pattern(cls, pattern, chords, chord_rhythm=True, use_pattern=True):
+        """
+        Create a score from a pattern  (see the chord.to_pattern() method for the inverse method :func:`~Chord.to_pattern()`
+        Parameters
+        ----------
+        pattern: dict or list
+            If dict : keys are the instruments and values are the notes to play
+            If list : each element is a dict with keys 'instrument' and 'notes'
+        chords: list
+            List of chords to orchestrate, each chord should have an explicit duration
+        chord_rhythm : boolean (default=True)
+            If False we start again the pattern at each new chord (Default value = False)
+            If True we continue the current pattern at each new chord, it the chord lasts more than pattern duration
+            then we repeat the pattern (Default value = False)
+        use_pattern : boolean (default=True)
+            If True we use the pattern of the instrument if it exists (Default value = True)
+
+        Returns
+        -------
+        score: Score
+            The chord progression on which we applied the pattern
+        """
         def parse_one_data(ins, data, score, chord, rhythm=None, idx=None, time=0):
             notes = parse_notes(chord, data['note'], data['rhythm']['octave'])
             instrument_name = ins if idx is None else f'{ins}__{idx}'
@@ -1781,7 +1816,9 @@ class Score:
                 else:
                     # Get % orchestration duration
                     time_mod_orchestration = time % pattern_duration
-                    score[instrument_name] = score[instrument_name].get_between(time_mod_orchestration, time_mod_orchestration + chord.duration)
+
+                    score[instrument_name] = score[instrument_name].get_between(time_mod_orchestration,
+                                                                                time_mod_orchestration + chord.duration, modulo=True)
 
 
             score[instrument_name] = score[instrument_name].apply_pattern(*notes)
@@ -1802,10 +1839,10 @@ class Score:
             else:
                 return [chord.__getattribute__(n).o(octave) for n in note]
 
-        def parse_dict(orchestration, chord, time=0):
+        def parse_dict(pattern, chord, time=0):
             score = {}
 
-            for ins, data in orchestration.items():
+            for ins, data in pattern.items():
                 if isinstance(data, dict):
                     score = parse_one_data(ins, data, score, chord, idx=None, time=time)
                 else:
@@ -1853,11 +1890,11 @@ class Score:
         all_chords = []
         time = 0
         for chord in chords:
-            if isinstance(orchestration, dict):
-                score = parse_dict(orchestration, chord, time=time)
+            if isinstance(pattern, dict):
+                score = parse_dict(pattern, chord, time=time)
             else:
-                score = parse_list(orchestration, chord, time=time)
+                score = parse_list(pattern, chord, time=time)
             all_chords.append(chord(**score))
             time += chord.duration
         final_score = Score(all_chords)
-        return final_score
+        return final_score.to_scale_note()

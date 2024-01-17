@@ -71,9 +71,14 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
         beat_res={(0, 8): quantization, (8, 16): quantization},
         use_tempos=True,
         use_time_signatures=True,
+        time_signature_range={8: [3, 12, 6, 9, 10, 11],
+                              4: [5, 6, 7, 3, 2, 1, 4],
+                              16: [3, 6, 7, 9, 12, 14, 15, 17],
+                              2: [1, 2, 3, 4],
+                              1: [1, 2, 3, 4]
+                              },
         one_token_stream_for_programs=True,
         use_programs=True)
-
 
     tokenizer = REMI(
         tokenizer_config=config,
@@ -83,7 +88,6 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
     #[tokenizer.add_to_vocab(f'Position_{idx}') for idx in range(64, 256)]
 
     tokens = tokenizer.midi_to_tokens(MidiFile(input_file))
-
     if chord_range is not None:
         tokens = get_chord_range(tokens, tokenizer, *chord_range)
 

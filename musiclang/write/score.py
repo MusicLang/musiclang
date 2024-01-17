@@ -995,6 +995,22 @@ class Score:
         return score
 
 
+    def project_with_parsimonious_voice_leading(self, score2):
+        """
+        Project the score on another chord progression with parsimonious voice leading.
+        It means we will move the voices as little as possible but keeping chord tones of score1 as chord tones in score2
+
+        Parameters
+        ----------
+        score2
+
+        Returns
+        -------
+
+        """
+        pass
+
+
     def project_on_score(self, score2, keep_pitch=False, voice_leading=True, keep_score=False,
                          repeat_to_duration=False, allow_override=False):
         """Project harmonically the current score onto the score2.
@@ -1054,6 +1070,10 @@ class Score:
             if not allow_override and len(set(result_score.parts).intersection(score2.parts)) != 0:
                 raise Exception('If keep_score flag is True, parts should be differents between the scores')
             result_score = sum([c1(**{**c2.score, **c1.score}) for c1, c2 in zip(result_score.chords, score2.chords)], None)
+
+        if keep_pitch:
+            result_score = result_score.to_scale_notes()
+
         return result_score
 
     def project_on_rhythm(self, rhythm, **kwargs):
@@ -1414,6 +1434,47 @@ class Score:
 
         return result
 
+
+    def get_parsimonious_voice_leading(self, from_first=False, directions=None):
+        """
+        Get the parsimonious voice leading of the score
+        You can force the direction of the voice leading by specifying the directions parameter.
+        Be careful : if you set the directions parameter it will potentially generate a suboptimal voice leading
+
+        Parameters
+        ----------
+        from_first: bool (Default value = False)
+            If True, the voice leading will be computed from the first chord during all chord progression. It forces
+            the progression to keep approximately the same central pitch during the whole progression.
+
+        directions: list[str] or str or None (Default value = None). If str in ['up', 'down']
+            List of directions for the voice leading. If None, the voice leading will be optimized.
+            Can't be used with from_first=True
+
+        Returns
+        -------
+        score: Score
+            The score with the parsimonious voice leading
+        """
+        base_chord = self.chords[0]
+        final_score = []
+        previous_chord = base_chord
+
+        if directions is None:
+            directions = [None] * (len(self.chords) - 1)
+        elif isinstance(directions, str):
+            directions = [directions] * (len(self.chords) - 1)
+
+        assert len(directions) == len(self.chords) - 1, "Directions should be of length len(self.chords) - 1"
+
+        for direction, chord in zip(directions, self.chords[1:]):
+            new_previous_chord = previous_chord.get_parsimonious_voice_leading(chord, direction=direction)
+            if not from_first:
+                previous_chord = new_previous_chord
+            final_score.append(new_previous_chord)
+
+        return Score([base_chord] + final_score)
+
     def get_tonality(self):
         """
         Extract the tonality of the score
@@ -1551,6 +1612,8 @@ class Score:
             data = pickle.load(f)
         return data
 
+    def __call__(self, *args, **kwargs):
+        return Score([chord(*args, **kwargs) for chord in self.chords], tags=set(self.tags))
     def __eq__(self, other):
         from .chord import Chord
         if isinstance(other, Chord):

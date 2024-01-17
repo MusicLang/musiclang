@@ -15,4 +15,4 @@ accelerate==0.24.1
 partitura==1.2.1
 torch
 music21
-miditok-for-musiclang==0.0.1
+miditok==2.1.8

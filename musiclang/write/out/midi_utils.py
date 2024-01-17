@@ -9,6 +9,8 @@ LICENSE file in the root directory of this source tree.
 import numpy as np
 import mido
 from fractions import Fraction as frac
+
+import pandas as pd
 from mido import MidiFile, MidiTrack, Message, MetaMessage
 from ..constants import SILENCE, CONTINUATION, PITCH, TRACK, OFFSET, VELOCITY, DURATION, TEMPO, PEDAL
 from .constants import OCTAVES
@@ -155,15 +157,67 @@ def matrix_to_events(matrix):
     events: np.ndarray
         List of events (pitch, time, velocity, duration, track)
     """
+    pass
 
 
+def merge_continuation_to_previous_note(df):
+    """
+    Modify the music dataframe by merging the duration of continuation notes into the previous note.
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame representing the music data with columns like PITCH, OFFSET, DURATION, etc.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Updated DataFrame with merged durations for continuation notes.
+    """
+    from fractions import Fraction
+    import pandas as pd
+
+    # Initialize a dictionary to keep track of the last note index for each track
+    last_note_index = {}
+
+    for index, row in df.iterrows():
+        track = row['TRACK']
+        is_continuation = row['CONTINUATION']
+
+        if is_continuation:
+            # Check if there is a previous note in the same track to merge with
+            if track in last_note_index:
+                # Merge the duration with the previous note
+                previous_note_index = last_note_index[track]
+                df.at[previous_note_index, 'DURATION'] += row['DURATION']
+            else:
+                # If no previous note, this is an error case
+                print(f"Error: Continuation note at index {index} has no preceding note in track {track}.")
+        else:
+            # Update the last note index for this track
+            last_note_index[track] = index
+
+    # Remove the continuation rows from the DataFrame
+    df = df[df['CONTINUATION'] == False]
+
+    return df
+
+
+
+
+
+
+def matrix_to_pandas(matrix):
+
+
+    pd.DataFrame(matrix)
+    pass
 
 
 
 
 def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
                   anachrusis_time=0,
-                  instrument_names=None, one_track_per_instrument=False, **kwargs):
+                  instrument_names=None, one_track_per_instrument=True, **kwargs):
     """
     Convert a matrix of notes, silences or continuations to a midi file
 
@@ -174,7 +228,7 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
         Time in seconds of the anachrusis
     instrument_names: list of str
         List of instrument names
-    one_track_per_instrument: bool
+    one_track_per_instrument: bool (default = True)
         If True, each instrument will be on a different track
     matrix :
         
@@ -195,8 +249,13 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     if instrument_names is None:
         instrument_names = []
 
+    df = pd.DataFrame(matrix, columns=['PITCH', 'OFFSET', 'DURATION',
+                                       'VELOCITY', 'TRACK', 'SILENCE', 'CONTINUATION',
+                                       'TEMPO', 'PEDAL'
+                                       ])
+    df = merge_continuation_to_previous_note(df.copy())
 
-    matrix = np.asarray(matrix)
+    matrix = df.values
 
     if one_track_per_instrument:
         instrument_names = setup_instruments(matrix, instrument_names, instruments)

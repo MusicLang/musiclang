@@ -22,12 +22,13 @@ def _get_bars_from_parts(note_info):
             starts.append(start)
             ends.append(end)
 
-        beats_start = part.beat_map(starts)
-        beats_end = part.beat_map(ends)
+        beats_start = part.quarter_map(starts)
+        beats_end = part.quarter_map(ends)
         barss.append([(s, e) for s, e in zip(beats_start, beats_end)])
 
     # Concatenate all bars in barss
     bars = list(sorted(list(set([item for sublist in barss for item in sublist])), key=lambda x: x[0]))
+
     return bars
 
 import numpy as np

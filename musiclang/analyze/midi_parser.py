@@ -122,11 +122,19 @@ def _parse(filename, **kwargs):
     config = {'ticks_per_beats': mf.ticks_per_beat,
              'instruments': instruments,
              'tempo': first_tempo, 'tempos': tempos, 'bar_durations': bar_durations, 'time_signatures': time_signatures}
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         notes_score, bars = load_score(filename, ticks_per_beat=mf.ticks_per_beat)
 
     notes_score_df = pd.DataFrame(notes_score, columns=[START_TIME, END_TIME, VEL, NOTE, TRACK, CHANNEL, VOICE])
+
+    # If time signature not 4 we must divide START TIME and END TIME accordingly
+    if len(time_signatures) > 0 and time_signatures[0][1] != 4:
+        ratio = frac(4, time_signatures[0][1])
+        notes_score_df[START_TIME] *= ratio
+        notes_score_df[END_TIME] *= ratio
+
     notes_score_df[TRACK] = (notes_score_df[TRACK] + 1).astype(int)
     notes_score_df[DURATION] = notes_score_df[END_TIME] - notes_score_df[START_TIME]
     notes_score_df[VOICE] = (notes_score_df[VOICE] - 1).astype(int)

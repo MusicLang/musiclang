@@ -32,7 +32,7 @@ dependencies = [
     "partitura==1.2.1",
     "torch",
     "music21",
-    "miditok-for-musiclang==0.0.1"
+    "miditok==2.1.8"
 ]
 requires-python = ">=3.9"
 

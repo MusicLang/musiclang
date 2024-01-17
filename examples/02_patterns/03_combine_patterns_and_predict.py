@@ -1,6 +1,11 @@
 """
-2.2. Insert counterpoint into a simple idea
-===========================================
+2.3. Combine patterns and predict
+==================================
+
+In this example we are going to combine the previous examples to :
+- generate a new idea with MusicLang language model using a template to tell the model what we want to generate (prompt)
+- extract a pattern from this idea
+- Project the pattern on a chord progression
 
 
 """

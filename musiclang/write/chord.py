@@ -1107,7 +1107,7 @@ class Chord:
                  melody=False,
                  instruments=None,
                  voicing=None,
-                 add_metadata=True,
+                 add_metadata=False,
                    max_duration=64,
                    **kwargs):
         """
@@ -1700,6 +1700,31 @@ class Chord:
         return self._chord_notes_calc(extension, replacements, additions, removals)
 
 
+    def optimal_projection(self, chord2):
+        """
+        Get the optimal projection of the chord on the other chord, it will minimize the movement of voices while
+        preserving chord notes to chord notes
+
+        Parameters
+        ----------
+        chord2: Other chord
+
+        Returns
+        -------
+        chord: Chord
+
+        """
+        chord3 = self.get_parsimonious_voice_leading(chord2)
+        octave, trans_chord = chord2.chord_distance(chord3)
+        pattern = self.to_pattern()
+        for pat in pattern:
+            octave = octave // 12
+            pat['voice'] = pat['voice'].add_value_chord(trans_chord, octave, len(chord2.chord_notes))
+            # pat['voice'] = pat['voice'].o(octave)
+        from musiclang import Score
+        return Score.from_pattern(pattern, [chord2], use_voice=True).chords[0]
+
+
     def to_voicing(self, nb_voices=4, instruments=None):
         """Convert score to a four voice voicing using the extensions provided in the chord.
 
@@ -1814,7 +1839,7 @@ class Chord:
         return self.to_score().to_custom_chords(nb_voices=nb_voices)
 
 
-    def to_pattern(self, drop_drums=True, nb=4, pattern=True):
+    def to_pattern(self, drop_drums=False, nb=4, pattern=True):
         """
         Convert the chord to a pattern (like a musical template)
 
@@ -1880,11 +1905,14 @@ class Chord:
         orchestration = []
         data, pattern = self.patternize()
         instruments = data['instruments']
+        instrument_idxs = data['instrument_idxs']
         voicing = data['voicing']
+        chord = data['chord']
         qualities = voicing_to_quality(voicing, data['orchestra']['pattern'])
 
+
         instruments_idx = {}
-        for idx, (ins, quality) in enumerate(zip(instruments, qualities)):
+        for idx, (ins, quality, voice, part) in enumerate(zip(instruments, qualities, voicing, instrument_idxs)):
             note, octave = quality
             local_pattern = pattern.score[f'v__{idx}']
             local_pattern = Melody([n if n.type != 'x' else n.set_val(0) for n in local_pattern.notes])
@@ -1892,7 +1920,9 @@ class Chord:
             instruments_idx[ins] = instruments_idx.get(ins, -1) + 1
             orchestration.append({'instrument': ins, 'octave': octave,
                                   'note': note, 'pattern': local_pattern,
-                                  'rhythm': rhythm
+                                  'rhythm': rhythm, 'voice': voice,
+                                  'part': part,
+                                  'chord': chord
                                   })
 
         return orchestration

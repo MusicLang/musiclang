@@ -71,6 +71,8 @@ class ScoreFormatter:
         if score is None and self.current_beat > 0:
             self.pickup = self.current_beat
         score += chord
+
+        self.prev_time_signature = self.time_signature
         return score
 
     def set_voice_leading(self, voice_leading):
@@ -96,11 +98,11 @@ class ScoreFormatter:
                 raise Exception('Cannot handle multi signature scores with "allow_multi_signature" flag to false')
             self.prev_time_signature = tuple(self.time_signature)
         else:
-            self.prev_time_signature = time_signature
+            self.prev_time_signature = tuple(time_signature)
 
         if self.first_change_time_signature:
             self.first_change_time_signature = False
-            self.prev_time_signature = time_signature
+            self.prev_time_signature = tuple(time_signature)
 
         self.time_signature = time_signature
 
@@ -227,8 +229,38 @@ class ScoreFormatter:
     def get_score(cls, elements):
         return cls.init_object(elements).parse()
 
+
+    def fix_time_signature_before(self):
+        pass
+
     def init(self):
         lines = self.text.split('\n')
+
+        # Check if time signature before first bar
+        first_time_signature = False
+        for line in lines:
+            if self.is_time_signature(line):
+                first_time_signature = True
+                break
+            if self.is_bar(line) or self.is_multibar(line):
+                first_time_signature = False
+                break
+        # If no time signature before first bar, add one
+        if not first_time_signature:
+            lines = ['Time Signature: 4/4'] + lines
+
+        self.text = '\n'.join(lines)
+
+        # If first bar idx != 1 transform it to m1
+        lines = self.text.split('\n')
+        for idx, line in enumerate(lines):
+            if self.is_bar(line):
+                if line.split(' ')[0] != 'm1':
+                    lines[idx] = 'm1' + line[2:]
+                break
+
+        self.text = '\n'.join(lines)
+
         for line in lines:
             line = line.lstrip('\t').lstrip(' ')
             if self.is_time_signature(line):

@@ -74,6 +74,7 @@ def set_tracks(mid, nb_tracks, instruments, instrument_names, channels, tempo, t
     mid.tracks[0].append(MetaMessage("set_tempo", tempo=mido.bpm2tempo(tempo), time=int(0)))
     mid.tracks[0].append(MetaMessage("time_signature", numerator=time_signature[0], denominator=time_signature[1], time=int(0)))
 
+    return mid, channels
 
 
 def setup_instruments(matrix, instrument_names, instruments):
@@ -100,7 +101,7 @@ def setup_instruments(matrix, instrument_names, instruments):
             matrix[matrix[:, TRACK] == track, TRACK] = invert_instruments[program]
 
     instrument_names = instrument_names_new
-    return instrument_names
+    return instrument_names, matrix, instruments
 
 def number_to_channel(n):
     """
@@ -134,7 +135,7 @@ def init_midi_file(matrix, instruments, ticks_per_beat=480, time_signature=(4, 4
     nb_tracks = matrix[:, TRACK].max()
     channels = [number_to_channel(voice_to_channel(instrument_list, i, instruments)) for i in range(nb_tracks + 1)]
 
-    return mid, nb_tracks, channels
+    return mid, nb_tracks, channels, matrix
 
 
 def matrix_to_events(matrix):
@@ -197,22 +198,66 @@ def merge_continuation_to_previous_note(df):
             last_note_index[track] = index
 
     # Remove the continuation rows from the DataFrame
-    df = df[df['CONTINUATION'] == False]
+    df = df[(df['CONTINUATION'] == False) & (df['SILENCE'] == False)]
 
     return df
 
 
+import numpy as np
+import pandas as pd
 
 
+def prepare_df_for_events(df):
+    df = df.copy()
+    df = df.sort_values(['TRACK', 'OFFSET'])
 
+    def add_delta(df):
+        df['DELTA'] = df['OFFSET'].diff().fillna(df['OFFSET'].iloc[0])
+        return df
+
+    df['EVENT_TYPE'] = 'NOTE_ON'
+    df['INDEX'] = np.arange(len(df))
+    df_copy = df.copy()
+    df_copy['EVENT_TYPE'] = 'NOTE_OFF'
+    df_copy['OFFSET'] = df_copy['OFFSET'] + df_copy['DURATION']
+
+    df_events = pd.concat([df, df_copy], axis=0)
+    df_events = df_events.sort_values(['TRACK', 'OFFSET'])
+    df_events = df_events.groupby('TRACK', group_keys=False).apply(add_delta)
+    df_events['PITCH'] = df_events['PITCH'] + 60
+
+    return df_events[['EVENT_TYPE', 'OFFSET', 'PITCH', 'VELOCITY', 'DURATION', 'DELTA', 'TRACK', 'TEMPO', 'PEDAL']]
+
+
+def apply_events(df_events, mid, channels, current_tempo):
+    ticks_per_beat = mid.ticks_per_beat
+
+
+    for idx, row in df_events.iterrows():
+        vel = int(row['VELOCITY'])
+        track_nb = int(row['TRACK'])
+        event_type = row['EVENT_TYPE']
+        delta = int(row['DELTA'] * ticks_per_beat)
+        track = mid.tracks[track_nb]
+        pitch = int(row['PITCH'])
+        if event_type == 'NOTE_ON':
+            track.append(Message('note_on', note=pitch, channel=channels[track_nb],
+                                 velocity=vel, time=delta))
+        elif event_type == 'NOTE_OFF':
+            track.append(Message('note_off', note=pitch, channel=channels[track_nb],
+                                 velocity=vel, time=delta))
+        if row['TEMPO'] is not None and row['TEMPO'] == row['TEMPO'] and row['TEMPO'] != current_tempo:
+            real_tempo = (480000 * 120) // int(row['TEMPO'])
+            track.append(MetaMessage("set_tempo", tempo=real_tempo, time=int(0)))
+            current_tempo = row['TEMPO']
+        if row['PEDAL'] is not None and row['PEDAL']:
+            track.append(Message('control_change', value=127, channel=channels[track_nb], control=4, time=int(0)))
+
+    return mid
 
 def matrix_to_pandas(matrix):
-
-
     pd.DataFrame(matrix)
     pass
-
-
 
 
 def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instruments={}, time_signature=(4, 4),
@@ -253,101 +298,110 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
                                        'VELOCITY', 'TRACK', 'SILENCE', 'CONTINUATION',
                                        'TEMPO', 'PEDAL'
                                        ])
-    df = merge_continuation_to_previous_note(df.copy())
+    df_old = df.copy()
 
+    df = merge_continuation_to_previous_note(df.copy())
     matrix = df.values
 
+
+    #matrix = np.asarray(matrix)
+
     if one_track_per_instrument:
-        instrument_names = setup_instruments(matrix, instrument_names, instruments)
+        instrument_names, matrix, instruments = setup_instruments(matrix, instrument_names, instruments)
 
-    mid, nb_tracks, channels = init_midi_file(matrix, instruments, ticks_per_beat=480,
-                                              time_signature=(4, 4), anachrusis_time=0)
-    set_tracks(mid, nb_tracks, instruments, instrument_names, channels, tempo, time_signature, output_file=None)
+    df = pd.DataFrame(matrix, columns=['PITCH', 'OFFSET', 'DURATION', 'VELOCITY', 'TRACK', 'SILENCE', 'CONTINUATION',
+                                       'TEMPO', 'PEDAL'
+                                       ])
+    df_events = prepare_df_for_events(df)
 
-    sort_events = []
-    last_silence = True
+    mid, nb_tracks, channels, matrix = init_midi_file(matrix, instruments, ticks_per_beat=480,time_signature=(4, 4), anachrusis_time=0)
+    mid, channels = set_tracks(mid, nb_tracks, instruments, instrument_names, channels, tempo, time_signature, output_file=None)
 
-    for row in matrix:
-        pitch = row[PITCH] + 60 + 12 * OCTAVES.get(instruments.get(row[TRACK], 0), 0)
-        row = row.tolist()
-        if row[SILENCE]:
-            last_silence = True
-            sort_events.append([0, 2, row[OFFSET], row[TEMPO], row[PEDAL], row[TRACK]])
-            continue
-
-        if row[CONTINUATION]:
-            sort_events.append([0, 2, row[OFFSET], row[TEMPO], row[PEDAL], row[TRACK]])
-
-        if row[CONTINUATION] == 0:
-            sort_events.append([pitch,
-                                1, row[OFFSET], row[VELOCITY], row[TRACK], row[TEMPO], row[PEDAL]])
-
-        if not (row[CONTINUATION] and last_silence):
-            sort_events.append([pitch, 0, (row[OFFSET] + row[DURATION]), row[TRACK], row[CONTINUATION],
-                                row[TEMPO], row[PEDAL]
-                                ])
-            last_silence = False
-
-    sort_events.sort(key=lambda tup: tup[2])
-    current_tempo = tempo
-    lapso = {idx: 0 for idx in range(nb_tracks + 1)}
-    prev_pitch = {idx: 0 for idx in range(nb_tracks + 1)}
-    for evt in sort_events:
-        if evt[1] == 1:
-            vel = int(evt[3])
-            track_nb = int(evt[4])
-            track = mid.tracks[track_nb]
-            if evt[0] > 100 or evt[0] < 10:
-                evt[0] = 0
-                vel = 0
-
-            real_time = int((evt[2] - lapso[track_nb]) * ticks_per_beat)
-
-            track.append(Message('note_on', note=int(evt[0]), channel=channels[track_nb],
-                                 velocity=vel, time=real_time))
-
-            if evt[5] is not None and evt[5] != current_tempo:
-                real_tempo =(480000 * 120) // evt[5]
-                track.append(MetaMessage("set_tempo", tempo=real_tempo, time=int(0)))
-                current_tempo = evt[5]
-
-            if evt[6] is not None and evt[6]:
-                track.append(Message('control_change', value=127, channel=channels[track_nb], control=4, time=int(0)))
-
-            if evt[6] is not None and not evt[6]:
-                track.append(Message('control_change', value=0, channel=channels[track_nb], control=4, time=int(0)))
-
-            lapso[track_nb] = evt[2]
-            prev_pitch[track_nb] = int(evt[0])
-        elif evt[1] == 0:
-            track_nb = int(evt[3])
-            track = mid.tracks[track_nb]
-            if evt[0] > 100 or evt[0] < 10:
-                evt[0] = 0
-            if evt[4] == 1 and prev_pitch[track_nb] > 0:
-                track[-1] = Message('note_off', note=prev_pitch[track_nb], channel=channels[track_nb],
-                                    velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat + track[-1].time))
-            else:
-                track.append(Message('note_off', note=int(evt[0]), channel=channels[track_nb],
-                                     velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat)))
-            lapso[track_nb] = evt[2]
-
-        elif evt[1] == 2:
-            track_nb = int(evt[5])
-            track = mid.tracks[track_nb]
-            tempo_change = evt[3]
-            pedal_change = evt[4]
-
-            if tempo_change is not None and tempo_change != current_tempo:
-                real_tempo = (480000 * 120) // tempo_change
-                track.append(MetaMessage("set_tempo", tempo=real_tempo, time=int(0)))
-                current_tempo = tempo_change
-
-            if pedal_change is not None and pedal_change:
-                track.append(Message('control_change', value=127, channel=channels[track_nb], control=4, time=int(0)))
-
-            if pedal_change is not None and not pedal_change:
-                track.append(Message('control_change', value=0, channel=channels[track_nb], control=4, time=int(0)))
+    mid = apply_events(df_events, mid, channels, tempo)
+    # sort_events = []
+    # last_silence = True
+    #
+    # for row in matrix:
+    #     pitch = row[PITCH] + 60 + 12 * OCTAVES.get(instruments.get(row[TRACK], 0), 0)
+    #     row = row.tolist()
+    #     if row[SILENCE]:
+    #         last_silence = True
+    #         sort_events.append([0, 2, row[OFFSET], row[TEMPO], row[PEDAL], row[TRACK]])
+    #         continue
+    #
+    #     if row[CONTINUATION]:
+    #         sort_events.append([0, 2, row[OFFSET], row[TEMPO], row[PEDAL], row[TRACK]])
+    #
+    #     if row[CONTINUATION] == 0:
+    #         sort_events.append([pitch,
+    #                             1, row[OFFSET], row[VELOCITY], row[TRACK], row[TEMPO], row[PEDAL]])
+    #
+    #     if not (row[CONTINUATION] and last_silence):
+    #         sort_events.append([pitch, 0, (row[OFFSET] + row[DURATION]), row[TRACK], row[CONTINUATION],
+    #                             row[TEMPO], row[PEDAL]
+    #                             ])
+    #         last_silence = False
+    #
+    # sort_events.sort(key=lambda tup: tup[2])
+    # current_tempo = tempo
+    # lapso = {idx: 0 for idx in range(nb_tracks + 1)}
+    # prev_pitch = {idx: 0 for idx in range(nb_tracks + 1)}
+    # for evt in sort_events:
+    #     if evt[1] == 1:
+    #         vel = int(evt[3])
+    #         track_nb = int(evt[4])
+    #         track = mid.tracks[track_nb]
+    #         if evt[0] > 100 or evt[0] < 10:
+    #             evt[0] = 0
+    #             vel = 0
+    #
+    #         real_time = int((evt[2] - lapso[track_nb]) * ticks_per_beat)
+    #
+    #         track.append(Message('note_on', note=int(evt[0]), channel=channels[track_nb],
+    #                              velocity=vel, time=real_time))
+    #
+    #         if evt[5] is not None and evt[5] != current_tempo:
+    #             real_tempo =(480000 * 120) // evt[5]
+    #             track.append(MetaMessage("set_tempo", tempo=real_tempo, time=int(0)))
+    #             current_tempo = evt[5]
+    #
+    #         if evt[6] is not None and evt[6]:
+    #             track.append(Message('control_change', value=127, channel=channels[track_nb], control=4, time=int(0)))
+    #
+    #         if evt[6] is not None and not evt[6]:
+    #             track.append(Message('control_change', value=0, channel=channels[track_nb], control=4, time=int(0)))
+    #
+    #         lapso[track_nb] = evt[2]
+    #         prev_pitch[track_nb] = int(evt[0])
+    #     elif evt[1] == 0:
+    #         track_nb = int(evt[3])
+    #         track = mid.tracks[track_nb]
+    #         if evt[0] > 100 or evt[0] < 10:
+    #             evt[0] = 0
+    #         if evt[4] == 1 and prev_pitch[track_nb] > 0:
+    #             track[-1] = Message('note_off', note=prev_pitch[track_nb], channel=channels[track_nb],
+    #                                 velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat + track[-1].time))
+    #         else:
+    #             track.append(Message('note_off', note=int(evt[0]), channel=channels[track_nb],
+    #                                  velocity=0, time=int((evt[2] - lapso[track_nb]) * ticks_per_beat)))
+    #         lapso[track_nb] = evt[2]
+    #
+    #     elif evt[1] == 2:
+    #         track_nb = int(evt[5])
+    #         track = mid.tracks[track_nb]
+    #         tempo_change = evt[3]
+    #         pedal_change = evt[4]
+    #
+    #         if tempo_change is not None and tempo_change != current_tempo:
+    #             real_tempo = (480000 * 120) // tempo_change
+    #             track.append(MetaMessage("set_tempo", tempo=real_tempo, time=int(0)))
+    #             current_tempo = tempo_change
+    #
+    #         if pedal_change is not None and pedal_change:
+    #             track.append(Message('control_change', value=127, channel=channels[track_nb], control=4, time=int(0)))
+    #
+    #         if pedal_change is not None and not pedal_change:
+    #             track.append(Message('control_change', value=0, channel=channels[track_nb], control=4, time=int(0)))
 
 
     if output_file is not None:
@@ -358,6 +412,6 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
         else:
             mid.save(file=output_file)
 
-    return mid
+    return df_events
 
 

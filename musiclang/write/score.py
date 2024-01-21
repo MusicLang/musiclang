@@ -995,7 +995,7 @@ class Score:
         return score
 
 
-    def project_with_parsimonious_voice_leading(self, score2):
+    def project_with_parsimonious_voice_leading(self, score2, keep_score=True):
         """
         Project the score on another chord progression with parsimonious voice leading.
         It means we will move the voices as little as possible but keeping chord tones of score1 as chord tones in score2
@@ -1008,7 +1008,29 @@ class Score:
         -------
 
         """
-        pass
+        import numpy as np
+
+        if score2.duration > self.duration:
+            score2 = score2.get_score_between(0, self.duration)
+
+        chord_times = [0] + np.cumsum([c.duration for c in score2.chords]).tolist()
+        # Get score between for current score
+        scores = [self.get_score_between(prev, curr) for prev, curr in zip(chord_times, chord_times[1:])]
+        chords_projection = score2.chords
+        temp_score = []
+        for score, chord in zip(scores, chords_projection):
+            for chord_to_project in score.chords:
+                # Find optimal chordal inversion and octave shift
+                optimal_projected_chord = chord_to_project.optimal_projection(chord)
+                temp_score.append(optimal_projected_chord)
+
+        result_score = Score(temp_score)
+
+        if keep_score:
+            result_score = result_score.project_on_score(score2, keep_pitch=True, voice_leading=False, keep_score=True)
+
+        return result_score
+
 
 
     def project_on_score(self, score2, keep_pitch=False, voice_leading=True, keep_score=False,
@@ -1838,7 +1860,7 @@ class Score:
                       for chord in score.chords])
 
     @classmethod
-    def from_pattern(cls, pattern, chords, chord_rhythm=True, use_pattern=True):
+    def from_pattern(cls, pattern, chords, chord_rhythm=True, use_pattern=True, use_voice=False, use_part=True):
         """
         Create a score from a pattern  (see the chord.to_pattern() method for the inverse method :func:`~Chord.to_pattern()`
         Parameters
@@ -1860,9 +1882,16 @@ class Score:
         score: Score
             The chord progression on which we applied the pattern
         """
-        def parse_one_data(ins, data, score, chord, rhythm=None, idx=None, time=0):
-            notes = parse_notes(chord, data['note'], data['rhythm']['octave'])
-            instrument_name = ins if idx is None else f'{ins}__{idx}'
+        def parse_one_data(ins, data, score, chord, part, rhythm=None, idx=None, time=0):
+            if use_voice:
+                notes = data['voice']
+            else:
+                notes = parse_notes(chord, data['note'], data['rhythm']['octave'])
+
+            if not use_part:
+                instrument_name = ins if idx is None else f'{ins}__{idx}'
+            else:
+                instrument_name = f'{ins}__{part}'
             if 'pattern' not in data.keys() or data['pattern'] is None:
                 score[instrument_name] = x0.set_duration(chord.duration).to_melody()
             else:
@@ -1939,15 +1968,17 @@ class Score:
             for data in orchestration:
                 if isinstance(data, dict):
                     ins = data['instrument']
+                    part = data['part']
                     instrument_counter[ins] = instrument_counter.get(ins, -1) + 1
                     idx = instrument_counter[ins]
-                    score = parse_one_data(ins, data, score, chord, rhythm=data.get('rhythm', None), idx=idx, time=time)
+                    score = parse_one_data(ins, data, score, chord, part, rhythm=data.get('rhythm', None), idx=idx, time=time)
                 else:
                     for i, d in enumerate(data):
                         ins = d['instrument']
+                        part = data['part']
                         instrument_counter[ins] = instrument_counter.get(ins, -1) + 1
                         idx = instrument_counter[ins]
-                        score = parse_one_data(ins, d, score, chord, rhythm=data.get('rhythm', None), idx=idx, time=time)
+                        score = parse_one_data(ins, d, score, chord, part,rhythm=data.get('rhythm', None), idx=idx, time=time)
             return score
 
         all_chords = []

@@ -596,6 +596,24 @@ class Note:
 
         return new_note
 
+    def add_value_chord(self, val, octave, nb_notes_chord):
+        """
+        Parameters
+        ----------
+        val :
+
+        octave :
+        """
+        if self.type in ['b', 'c']:
+            new_note = self.copy()
+            new_note.val += val
+            new_note.octave += octave
+            new_note.octave += new_note.val // nb_notes_chord
+            new_note.val = new_note.val % nb_notes_chord
+            return new_note
+        else:
+            return self.copy()
+
     def oabs(self, octave):
         """
 

@@ -43,7 +43,7 @@ def map_matrix(A, B, Mb):
     return Ma.tolist()
 
 
-def chord_to_pattern(chord, drop_drums=True, nb=4, keep_pattern=False):
+def chord_to_pattern(chord, drop_drums=False, nb=4, keep_pattern=False):
     """
     Convert a chord to a pattern
     Parameters

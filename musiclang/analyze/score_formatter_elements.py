@@ -360,6 +360,7 @@ class TimeSignature:
         self.num = 4
         self.den = 4
 
+        self.num, self.den = self.text.split(':')[1].replace(' ', '').split('/')
 
     def parse(self, score, parent):
         num, den = self.text.split(':')[1].replace(' ', '').split('/')

@@ -24,15 +24,24 @@ def _get_bars_from_parts(note_info):
 
         beats_start = part.quarter_map(starts)
         beats_end = part.quarter_map(ends)
+
+        # Convert to fractions
+        beats_start = [frac.from_float(b).limit_denominator(20) for b in beats_start]
+        beats_end = [frac.from_float(b).limit_denominator(20) for b in beats_end]
+
         barss.append([(s, e) for s, e in zip(beats_start, beats_end)])
 
     # Concatenate all bars in barss
     bars = list(sorted(list(set([item for sublist in barss for item in sublist])), key=lambda x: x[0]))
 
+    # Group by first key, keep only largest second key
+    bars = pd.DataFrame(bars, columns=['start', 'end'])
+    bars = bars.groupby('start').max().reset_index().values.tolist()
+
     return bars
 
 import numpy as np
-def load_score(midi_file, merge_tracks=True, ticks_per_beat=480):
+def load_score(midi_file, merge_tracks=True, ticks_per_beat=480, quantization=16):
     import partitura.musicanalysis as analysis
     note_info = pt.load_score_midi(midi_file,
                                    part_voice_assign_mode=5,
@@ -51,8 +60,6 @@ def load_score(midi_file, merge_tracks=True, ticks_per_beat=480):
     array_2 = note_info_2.note_array()
     dtypes2 = array_2.dtype
     columns_2 = list(dtypes2.names)
-
-
 
     # Sort by
     assert len(array) == len(array_2), "Partitura does not output the same arrays when load_score_midi and load_performance_midi"
@@ -90,6 +97,6 @@ def load_score(midi_file, merge_tracks=True, ticks_per_beat=480):
     # Quantize onset beats and offset beats
     #df['onset_beat'] = df['onset_beat'].apply(lambda x: float(frac(x).limit_denominator(8)))
     #df['offset_beat'] = df['offset_beat'].apply(lambda x: float(frac(x).limit_denominator(8)))
-
     notes = df[['onset_beat', 'offset_beat', 'velocity', 'pitch', 'track', 'channel', 'voice']].values.tolist()
+
     return notes, bars

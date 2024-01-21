@@ -14,7 +14,6 @@ def max_correlation_index(input_matrix, template_matrix):
     chord_root = max_corr_indices // len(TEMPLATES)
     return chord_root, chord_type
 
-
 def filter_notes(notes, start, end):
     pass
 

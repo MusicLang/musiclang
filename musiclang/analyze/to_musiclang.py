@@ -273,11 +273,16 @@ def _parse_voice(voice_notes, chord, bar_time_start, bar_time_end, tick_value, c
             melody.pop()
 
     from musiclang import Note, Melody
+    # Remove empty duration notes
+    melody = [m for m in melody if m.duration > 0]
+
     melody = Melody(melody)
     assert all([isinstance(m, Note) for m in melody.notes])
     delta_t = abs(melody.duration -  ((bar_time_end - bar_time_start) * tick_value))
     assert delta_t < 0.25, f"Issue with melody duration {delta_t}"
     assert melody.notes[0].duration >0, "Issue with note duration"
+
+
     return melody, return_cont
 
 

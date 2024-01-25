@@ -49,7 +49,7 @@ def test_very_complicated_chord():
 
 def test_very_complicated_chord2():
     chord = (I % I.M)['2[add4][M6](M3)(+)']
-    assert chord.extension_notes == [s6.o(-1), s0, h4, s3, h8, h9]
+    assert chord.extension_notes == [s3, h9, s6, s0.o(1), h4.o(1), h8.o(1)]
 
 def test_replacement_become_addition():
     chord = (I % I.M)['(M7)']
@@ -75,7 +75,7 @@ def test_addition_and_inversion():
 
 def test_addition_and_inversion_with_octaves():
     chord = (I % I.M)['2(sus2)']
-    assert chord.extension_notes == [s6.o(-1), s0, s1, s4]
+    assert chord.extension_notes == [ s6, s0.o(1), s1.o(1), s4.o(1)]
 
 
 def test_to_voicing():

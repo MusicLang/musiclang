@@ -121,6 +121,9 @@ def fast_chord_inference(notes, bars):
     -------
 
     """
+
+    notes = np.asarray(notes.copy().values)
+
     chords = []
     bar_chroma_vectors = get_chroma_vectors(notes, bars)
     # Get the lowest note of each bar

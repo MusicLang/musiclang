@@ -455,6 +455,32 @@ class Score:
             result = f7(result)
         return result
 
+    @property
+    def instrument_names(self):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        type
+            :return:
+
+        """
+
+        def f7(seq):
+            seen = set()
+            seen_add = seen.add
+            return [x for x in seq if not (x in seen or seen_add(x))]
+
+        result = []
+        for chord in self:
+            insts = [inst.split('__')[0] for inst in chord.score.keys()]
+            result += insts
+            result = f7(result)
+        return result
+
 
     def normalize(self):
         """
@@ -1424,20 +1450,31 @@ class Score:
                The loaded score
         """
         from musiclang.analyze import parse_to_musiclang
+
+        import time
+
+        start = time.time()
+
         score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
                                            chord_range=chord_range, tokenize_before=tokenize_before, quantization=quantization)
 
-        # Reload with offset to remove blank bars in case not enough chords
-        if chord_range is not None:
-            nb_chords = len(score.chords)
-            delta = chord_range[1] - chord_range[0]
-            if  nb_chords < delta:
-                difference = delta - nb_chords
-                chord_range = (chord_range[0] , chord_range[1] + difference)
-                score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
-                                                   chord_range=chord_range, tokenize_before=tokenize_before,
-                                                   quantization=quantization)
+        end = time.time()
+        print("Time to first parse: ", end - start)
 
+        # Reload with offset to remove blank bars in case not enough chords
+        # if chord_range is not None:
+        #     nb_chords = len(score.chords)
+        #     delta = chord_range[1] - chord_range[0]
+        #     if  nb_chords < delta:
+        #         difference = delta - nb_chords
+        #         print(difference)
+        #         chord_range = (chord_range[0] , chord_range[1] + difference)
+        #         score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
+        #                                            chord_range=chord_range, tokenize_before=tokenize_before,
+        #                                            quantization=quantization)
+
+        end2 = time.time()
+        print("Time to parse: ", end2 - end)
         real_config = {**score.config, **config}
 
         score.config = real_config

@@ -78,6 +78,13 @@ def set_tracks(mid, nb_tracks, instruments, instrument_names, channels, tempo, t
 
 
 def setup_instruments(matrix, instrument_names, instruments):
+
+    # Change instrument names == 'drums' to -1  in instrument names
+    idxs_drums = [idx for idx, name in enumerate(instrument_names) if name.startswith('drums')]
+    for idx in idxs_drums:
+        instruments[idx] = -1
+
+
     instrument_names_new = []
     instrument_group = {}
     for track_nb, program in instruments.items():
@@ -294,6 +301,8 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     if instrument_names is None:
         instrument_names = []
 
+
+
     df = pd.DataFrame(matrix, columns=['PITCH', 'OFFSET', 'DURATION',
                                        'VELOCITY', 'TRACK', 'SILENCE', 'CONTINUATION',
                                        'TEMPO', 'PEDAL'
@@ -314,7 +323,9 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
                                        ])
     df_events = prepare_df_for_events(df)
 
-    mid, nb_tracks, channels, matrix = init_midi_file(matrix, instruments, ticks_per_beat=480,time_signature=(4, 4), anachrusis_time=0)
+
+
+    mid, nb_tracks, channels, matrix = init_midi_file(matrix, instruments, ticks_per_beat=480, time_signature=(4, 4), anachrusis_time=0)
     mid, channels = set_tracks(mid, nb_tracks, instruments, instrument_names, channels, tempo, time_signature, output_file=None)
 
     mid = apply_events(df_events, mid, channels, tempo)

@@ -7,7 +7,7 @@ LICENSE file in the root directory of this source tree.
 """
 
 from .constants import *
-LIMIT_DENOM = int(1e4)
+LIMIT_DENOM = int(1e3)
 
 class Note:
     """

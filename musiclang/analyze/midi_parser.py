@@ -12,14 +12,15 @@ from mido import MidiFile
 import time
 import warnings
 
+
 TYPE = "type"
-TIME = "time"
-NOTE = "note"
-VEL = "vel"
+TIME = "onset_quarter"
+NOTE = "pitch"
+VEL = "velocity"
 CHANNEL = "channel"
-DURATION = "duration"
-END_TIME = "end_time"
-START_TIME = "start_time"
+DURATION = "duration_quarter"
+END_TIME = "offset_quarter"
+START_TIME = "onset_quarter"
 TRACK = "track"
 VOICE = "voice"
 ON = 1
@@ -40,11 +41,11 @@ def parse_midi(filename, **kwargs):
     -------
 
     """
-    notes, config, bars = _load_midi(filename, **kwargs)
+    notes_df, config, bars = _load_midi(filename, **kwargs)
     instruments = config['instruments']
     tempo = config['tempo']
     time_signature = config['time_signatures'][0] if len(config['time_signatures']) > 0 else None
-    return notes, instruments, tempo, time_signature, bars
+    return notes_df, instruments, tempo, time_signature, bars
 
 
 """
@@ -72,14 +73,14 @@ def _load_midi(filename, ignore_file_with_bar_change=False, **kwargs):
     -------
 
     """
-    notes, config, bars = _parse(filename)
+    notes_df, config, bars = _parse(filename)
     if len(config['bar_durations']) > 1 and ignore_file_with_bar_change:
         raise MusicLangIgnoreException('Bar duration change events in midifile, MusicLang cannot parse that')
     elif len(config['bar_durations']) == 1:
         config['bar_duration'] = config['bar_durations'][0]
     else:
         config['bar_duration'] = None
-    return notes, config, bars
+    return notes_df, config, bars
 
 
 
@@ -99,57 +100,15 @@ def _parse(filename, **kwargs):
     """
     from fractions import Fraction as frac
     from .load_score import load_score
-    mf = MidiFile(filename)
-    instruments = _infer_instruments(mf)
-    notes = []
-    bar_durations = []
-    time_signatures = []
-    tempos = []
-    for track_idx, track in enumerate(mf.tracks):
-        t = 0
-        for note in track:
-            if note.type == 'note_on':
-                notes.append([1, t + note.time, note.note, note.velocity, note.channel, track_idx])
-            elif note.type == 'note_off':
-                notes.append([0, t + note.time, note.note, note.velocity, note.channel, track_idx])
-            elif note.type == 'time_signature':
-                bar_durations.append(note.numerator * frac(4, note.denominator))
-                time_signatures.append((note.numerator, note.denominator))
-            elif note.type == 'set_tempo':
-                tempos.append((time, note.tempo))
-            t = t + note.time
-    first_tempo = int(60/(tempos[0][1]/1e6))
-    config = {'ticks_per_beats': mf.ticks_per_beat,
-             'instruments': instruments,
-             'tempo': first_tempo, 'tempos': tempos, 'bar_durations': bar_durations, 'time_signatures': time_signatures}
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        notes_score, bars = load_score(filename, ticks_per_beat=mf.ticks_per_beat)
+        notes_score_df, bars, instruments, config = load_score(filename)
 
-    notes_score_df = pd.DataFrame(notes_score, columns=[START_TIME, END_TIME, VEL, NOTE, TRACK, CHANNEL, VOICE])
+    # Start time, pitch, duration, velocity, track, channel, voice
+    notes = notes_score_df[['onset_quarter', 'pitch', 'duration_quarter', 'velocity', 'track', 'channel', 'voice']]
 
-    # If time signature not 4 we must divide START TIME and END TIME accordingly
-    if len(time_signatures) > 0 and time_signatures[0][1] != 4:
-        ratio = frac(4, time_signatures[0][1])
-        notes_score_df[START_TIME] *= ratio
-        notes_score_df[END_TIME] *= ratio
 
-    notes_score_df[TRACK] = (notes_score_df[TRACK] + 1).astype(int)
-    notes_score_df[DURATION] = notes_score_df[END_TIME] - notes_score_df[START_TIME]
-    notes_score_df[VOICE] = (notes_score_df[VOICE] - 1).astype(int)
-
-    if notes_score_df[START_TIME].min() < 0:
-        # Add bar duration in notes_score[START_TIME]
-        bar_duration = config['bar_durations'][0]
-        notes_score_df[START_TIME] += bar_duration
-        for idx in range(len(bars)):
-            bars[idx] = bars[idx][0] + bar_duration, bars[idx][1] + bar_duration
-
-    if len(bars) > 1 and (bars[-1][1] - bars[-1][0] != bars[-2][1] - bars[-2][0]):
-        bars[-1] = bars[-1][0], bars[-1][0] + bars[-2][1] - bars[-2][0]
-    #notes_score_df[START_TIME] = notes_score_df[START_TIME] - notes_score_df[START_TIME].min() # Start at 0
-    notes = np.asarray(notes_score_df[[START_TIME, NOTE, DURATION, VEL, TRACK, CHANNEL, VOICE]])
     return notes, config, bars
 
 

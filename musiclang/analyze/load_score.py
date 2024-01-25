@@ -1,87 +1,133 @@
-import partitura as pt
 import pandas as pd
-import warnings
-from fractions import Fraction as frac
-
-def _get_bars_from_parts(note_info):
-    """
-    Get bars start and end beat for each bar of the song
-    """
-    bars = None
-    max_time = -1
-
-    # First get longest part
-    longest_part = max(note_info.parts, key=lambda x: len(x.measures))
-
-    barss = []
-    for part in note_info.parts:
-        starts = []
-        ends = []
-        for measure in part.measures:
-            start, end = measure.start.t, measure.end.t
-            starts.append(start)
-            ends.append(end)
-
-        beats_start = part.quarter_map(starts)
-        beats_end = part.quarter_map(ends)
-
-        # Convert to fractions
-        beats_start = [frac.from_float(b).limit_denominator(20) for b in beats_start]
-        beats_end = [frac.from_float(b).limit_denominator(20) for b in beats_end]
-
-        barss.append([(s, e) for s, e in zip(beats_start, beats_end)])
-
-    # Concatenate all bars in barss
-    bars = list(sorted(list(set([item for sublist in barss for item in sublist])), key=lambda x: x[0]))
-
-    # Group by first key, keep only largest second key
-    bars = pd.DataFrame(bars, columns=['start', 'end'])
-    bars = bars.groupby('start').max().reset_index().values.tolist()
-
-    return bars
-
 import numpy as np
-def load_score(midi_file, merge_tracks=True, ticks_per_beat=480, quantization=16):
-    import partitura.musicanalysis as analysis
-    note_info = pt.load_score_midi(midi_file,
-                                   part_voice_assign_mode=5,
-                                   quantization_unit=None,
-                                   estimate_voice_info=False,
-                                   estimate_key=False,
-                                   assign_note_ids=True,
-                                   )
+from miditoolkit import MidiFile
+import partitura.musicanalysis as analysis
+from musiclang.write.out.constants import REVERSE_INSTRUMENT_DICT
 
 
-    bars = _get_bars_from_parts(note_info)
-    note_info_2 = pt.load_performance_midi(midi_file)
-    array = note_info.note_array()
-    dtypes = array.dtype
-    columns = list(dtypes.names)
-    array_2 = note_info_2.note_array()
-    dtypes2 = array_2.dtype
-    columns_2 = list(dtypes2.names)
 
-    # Sort by
-    assert len(array) == len(array_2), "Partitura does not output the same arrays when load_score_midi and load_performance_midi"
+def load_score(filename, merge_tracks=True):
+    """
+    Load a score from a midi file and assign voices to each note
 
-    try:
-        assert all(array['pitch'] == array_2['pitch']), "Partitura does not output the same pitches when load_score_midi and load_performance_midi"
-    except:
-        array = np.sort(array, order=['pitch', 'onset_beat', 'duration_beat'])
-        array_2 = np.sort(array_2, order=['pitch', 'onset_sec', 'duration_sec'])
-        assert all(array['pitch'] == array_2['pitch']), "After sorting, Partitura does not output the same pitches when load_score_midi and load_performance_midi"
+    Parameters
+    ----------
+    filename
+    merge_tracks
 
-    df = pd.DataFrame(array[columns], columns=columns)
-    df2 = pd.DataFrame(array_2, columns=columns_2)
-    df['offset_beat'] = df['onset_beat'] + df['duration_beat']
-    df['velocity'] = df2['velocity']
-    df['track'] = df2['track']
-    df['channel'] = df2['channel']
-    df = df.sort_values(by=['onset_beat', 'pitch', 'duration_beat'])
+    Returns
+    -------
+    notes: list
+        List of notes with onset_beat, offset_beat, velocity, pitch, track, channel, voice
+    bars: list
+        List of bars with onset_beat, offset_beat
+    instruments: dict
+        Dictionary of instruments with channel as key and instrument name as value
+    config: dict
+        Dictionary of config with ticks_per_beats, bar_durations, tempo, tempos, time_signatures
+
+    """
+
+    import time as time_measure
+    def get_end_of_bar(bar_start, time_signatures, ticks_per_beat):
+        # Find time signature
+        _, num, den, duration = [ts for ts in time_signatures if bar_start >= ts[0]][-1]
+        return int(bar_start + duration * ticks_per_beat)
+
+    def get_channel(idx, is_drum):
+        if is_drum:
+            return 9
+        elif idx < 9:
+            return idx
+        else:
+            return idx + 1
+
     def estimate_voices_with_index(x):
-        result = pd.Series(analysis.estimate_voices(x.to_records()))
+        y = x.copy()[['onset_quarter', 'duration_quarter', 'pitch']]
+        y['duration_quarter'] -= 1e-1
+        result = pd.Series(analysis.estimate_voices(y.to_records(), monophonic_voices=True))
         result.index = x.index  # Set the index to match the input
         return result
+
+    m = MidiFile(filename)
+    ticks_per_beat = m.ticks_per_beat
+
+    score = []
+
+    if len(m.time_signature_changes) > 0:
+        time_signatures = [(ts.time, ts.numerator, ts.denominator, 4 * ts.numerator / ts.denominator) for ts in
+                           m.time_signature_changes]
+        time_signatures = list(sorted(time_signatures, key=lambda x: x[0]))
+    else:
+        time_signatures = [(0, 4, 4, 4)]
+
+    # Calculate bars
+    time = 0
+    bars = []
+    while time < m.max_tick:
+        start_time = time
+        end_time = get_end_of_bar(time, time_signatures, ticks_per_beat)
+        bars.append((start_time / ticks_per_beat, end_time / ticks_per_beat))
+        time = end_time
+
+    programs = [(inst.program, inst.is_drum, get_channel(idx, inst.is_drum)) for idx, inst in enumerate(m.instruments)]
+    instruments = {channel: REVERSE_INSTRUMENT_DICT[program] if not is_drum
+    else f"drums_{program}" for program, is_drum, channel in programs}
+
+    ## Step 1 : Get notes
+    for idx, instrument in enumerate(m.instruments):
+        id_instrument = f'0{idx}'[-2:]
+        for idx_note, note in enumerate(instrument.notes):
+            score.append({
+                'onset_beat': note.start / ticks_per_beat,
+                'duration_beat': (note.end - note.start) / ticks_per_beat,
+                'onset_quarter': note.start / ticks_per_beat,
+                'duration_quarter': (note.end - note.start) / ticks_per_beat,
+                'onset_div': note.start,
+                'duration_div': (note.end - note.start),
+                'pitch': note.pitch,
+                'voice': 0,
+                'id': f"P{id_instrument}_n{idx_note}",
+                'divs_pq': ticks_per_beat,
+                'velocity': note.velocity,
+                'track': idx,
+                'channel': get_channel(idx, instrument.is_drum)
+            })
+
+
+    df = pd.DataFrame(score)
+    start_quantize = time_measure.time()
+
+    def quantize_channel(df):
+        ## Step 2 : Quantize
+        from music21 import stream, note
+        s = stream.Stream()
+
+        for idx, row in df.iterrows():
+            n = note.Note()
+            n.quarterLength = row['duration_quarter']
+            s.repeatInsert(n, [row['onset_quarter']])
+
+        s.quantize((4,3), processOffsets=True, processDurations=True, inPlace=True)
+        onsets = [e.offset for e in s]
+        durations = [e.quarterLength for e in s]
+
+        df['onset_quarter'] = onsets
+        df['duration_quarter'] = durations
+        df['onset_beat'] = df['onset_quarter']
+        df['duration_beat'] = df['duration_quarter']
+        df['onset_div'] = df['onset_quarter'] * ticks_per_beat
+        df['duration_div'] = df['duration_quarter'] * ticks_per_beat
+        return df
+
+    df = df.sort_values(by=['onset_beat', 'pitch', 'duration_beat'])
+    df = df.groupby('channel').apply(quantize_channel).reset_index(level=0, drop=True)
+    df['offset_beat'] = df['onset_beat'] + df['duration_beat']
+    df = df.sort_values(by=['onset_beat', 'pitch', 'duration_beat'])
+    print(f"Quantize time: {time_measure.time() - start_quantize}")
+
+    set_voice_time = time_measure.time()
+
     if merge_tracks:
         df['old_track'] = df['track']
         df['track'] = 0
@@ -94,9 +140,17 @@ def load_score(midi_file, merge_tracks=True, ticks_per_beat=480, quantization=16
     else:
         df['voice'] = estimate_voices_with_index(df)
 
-    # Quantize onset beats and offset beats
-    #df['onset_beat'] = df['onset_beat'].apply(lambda x: float(frac(x).limit_denominator(8)))
-    #df['offset_beat'] = df['offset_beat'].apply(lambda x: float(frac(x).limit_denominator(8)))
-    notes = df[['onset_beat', 'offset_beat', 'velocity', 'pitch', 'track', 'channel', 'voice']].values.tolist()
+    df['track'] = df['track'] + 1
+    df['voice'] = df['voice'] - 1
 
-    return notes, bars
+
+    print(f"Set voice time: {time_measure.time() - set_voice_time}")
+
+    tempos = [temp.tempo for temp in m.tempo_changes]
+
+    config = {'ticks_per_beats': ticks_per_beat,
+              'bar_durations': [bar[1] - bar[0] for bar in bars],
+              'instruments': instruments,
+              'tempo': tempos[0], 'tempos': tempos, 'time_signatures': time_signatures}
+
+    return df, bars, instruments, config

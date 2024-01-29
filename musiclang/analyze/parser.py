@@ -71,9 +71,9 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
         beat_res={(0, 8): quantization, (8, 16): quantization},
         use_tempos=True,
         use_time_signatures=True,
-        time_signature_range={8: [3, 12, 6, 9, 10, 11],
+        time_signature_range={8: [3, 12, 5, 6, 7, 9, 10, 11],
                               4: [5, 6, 7, 3, 2, 1, 4],
-                              16: [3, 6, 7, 9, 12, 14, 15, 17],
+                              16: [3, 6, 5, 7, 9, 12, 14, 15, 17],
                               2: [1, 2, 3, 4],
                               1: [1, 2, 3, 4]
                               },

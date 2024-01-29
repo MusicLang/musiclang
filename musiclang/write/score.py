@@ -1458,25 +1458,7 @@ class Score:
         score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
                                            chord_range=chord_range, tokenize_before=tokenize_before, quantization=quantization)
 
-        end = time.time()
-        print("Time to first parse: ", end - start)
-
-        # Reload with offset to remove blank bars in case not enough chords
-        # if chord_range is not None:
-        #     nb_chords = len(score.chords)
-        #     delta = chord_range[1] - chord_range[0]
-        #     if  nb_chords < delta:
-        #         difference = delta - nb_chords
-        #         print(difference)
-        #         chord_range = (chord_range[0] , chord_range[1] + difference)
-        #         score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
-        #                                            chord_range=chord_range, tokenize_before=tokenize_before,
-        #                                            quantization=quantization)
-
-        end2 = time.time()
-        print("Time to parse: ", end2 - end)
         real_config = {**score.config, **config}
-
         score.config = real_config
         return score
 

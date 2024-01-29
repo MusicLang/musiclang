@@ -51,7 +51,6 @@ def load_score(filename, merge_tracks=True):
 
     m = MidiFile(filename)
     ticks_per_beat = m.ticks_per_beat
-
     score = []
 
     if len(m.time_signature_changes) > 0:
@@ -96,7 +95,6 @@ def load_score(filename, merge_tracks=True):
 
 
     df = pd.DataFrame(score)
-    start_quantize = time_measure.time()
 
     def quantize_channel(df):
         ## Step 2 : Quantize
@@ -124,9 +122,6 @@ def load_score(filename, merge_tracks=True):
     df = df.groupby('channel').apply(quantize_channel).reset_index(level=0, drop=True)
     df['offset_beat'] = df['onset_beat'] + df['duration_beat']
     df = df.sort_values(by=['onset_beat', 'pitch', 'duration_beat'])
-    print(f"Quantize time: {time_measure.time() - start_quantize}")
-
-    set_voice_time = time_measure.time()
 
     if merge_tracks:
         df['old_track'] = df['track']
@@ -142,9 +137,6 @@ def load_score(filename, merge_tracks=True):
 
     df['track'] = df['track'] + 1
     df['voice'] = df['voice'] - 1
-
-
-    print(f"Set voice time: {time_measure.time() - set_voice_time}")
 
     tempos = [temp.tempo for temp in m.tempo_changes]
 

@@ -229,7 +229,7 @@ def prepare_df_for_events(df):
     df_copy['OFFSET'] = df_copy['OFFSET'] + df_copy['DURATION']
 
     df_events = pd.concat([df, df_copy], axis=0)
-    df_events = df_events.sort_values(['TRACK', 'OFFSET'])
+    df_events = df_events.sort_values(['TRACK', 'OFFSET', 'EVENT_TYPE'])
     df_events = df_events.groupby('TRACK', group_keys=False).apply(add_delta)
     df_events['PITCH'] = df_events['PITCH'] + 60
 

@@ -16,11 +16,15 @@ MusicLang which simply stands for "music language" is a Python framework
 implementing a new language for tonal music.
 This language allows composers to load, write, transform and predict symbolic music in a simple,
 condensed and high level manner.
-MusicLang internally uses  a [LLM (Large Language Model)](https://huggingface.co/floriangardin/musiclang)  to predict what could happen next in a musical score.
+
+MusicLang internally uses a [LLM (Large Language Model)](https://huggingface.co/floriangardin/musiclang)  to predict what could happen next in a musical score.
+/!\ Please note that : we decoupled AI from the language itself in a new package called musiclang_predict. If you want to use AI capabilities of musiclang please install [musiclang_predict](https://github.com/MusicLang/musiclang_predict) package.
+
 This framework is well suited to :
 - Generate musical ideas quickly.
-- Predict what could happen next in an existing midi file
-- Create an interpretable and information rich text representation of a midi file
+- Do symbolic music prediction or inpainting.
+- Create an interpretable and rich text representation of a midi file
+
 
 [Read our documentation](https://musiclang.readthedocs.io/en/latest).
 
@@ -72,8 +76,7 @@ score += (score % I.m).f
 score = (I % I.M)(violin__0=r.h) + score
 
 # Transform a bit the accompaniment by applying counterpoint rules automatically
-from musiclang.transform.library import create_counterpoint_on_score
-score = create_counterpoint_on_score(score, fixed_parts=['violin__0'])
+score = score.get_counterpoint(fixed_parts=['violin__0'])
 
 # Save it to musicxml
 score.to_musicxml('happy_birthday.musicxml', signature=(3, 4), title='Happy birthday !')

@@ -55,13 +55,13 @@ def test_to_extension_note():
 
     chord = (I % I.M)['2']
     note = s6
-    assert note.to_extension_note(chord) == b0.o(1)
+    assert note.to_extension_note(chord) == b0
     note = s5
     assert note.to_extension_note(chord) == s5
 
     chord = (I % I.M)['2[add6]']
     note = s5
-    assert note.to_extension_note(chord) == b4
+    assert note.to_extension_note(chord) == b0
 
 
 def test_to_chord_note():

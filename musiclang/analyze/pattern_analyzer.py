@@ -190,6 +190,7 @@ def transform_chord_to_relative(chord, nb_instruments_excluded=0, ascending=True
     prev_voicing = b0.o(-2)
     score_dict = {}
     instruments = [instr.split('__')[0] for instr in parts]
+    instrument_idxs = [int(instr.split('__')[1]) for instr in parts]
     nb_instruments = len(chord.score.items())
     for idx, part in enumerate(parts):
         melody = chord.score[part]
@@ -201,7 +202,7 @@ def transform_chord_to_relative(chord, nb_instruments_excluded=0, ascending=True
     result_score = NC(**score_dict)
     bar_duration = result_score.duration
 
-    return result_score, voicings, instruments, bar_duration
+    return result_score, voicings, instruments, bar_duration, instrument_idxs
 
 
 class PatternExtractor:
@@ -241,12 +242,12 @@ class PatternExtractor:
     def extract(self, chord):
 
         if self.melody:
-            result_score, voicing, instruments, bar_duration = transform_chord_to_relative(chord,
+            result_score, voicing, instruments, bar_duration, instrument_idxs = transform_chord_to_relative(chord,
                                                                                             len(chord.score.items()) - 1,
                                                                                                 ascending=False)
         else:
             start = time.time()
-            result_score, voicing, instruments, bar_duration = transform_chord_to_relative(chord,
+            result_score, voicing, instruments, bar_duration, instrument_idxs = transform_chord_to_relative(chord,
                                                                                             self.nb_excluded_instruments,
                                                                                             ascending=True)
 
@@ -254,6 +255,7 @@ class PatternExtractor:
             instruments = self.instruments[:len(instruments)] + instruments[len(self.instruments):]
         if self.voicing is not None:
             voicing = self.voicing[:len(voicing)] + voicing[len(self.voicing):]
+
 
         dict_pattern = {
             "orchestra": {
@@ -264,7 +266,9 @@ class PatternExtractor:
             "voicing": [note for note in voicing],
             "fixed_bass": self.fixed_bass and not self.melody,
             "voice_leading": self.voice_leading,
-            "instruments": instruments
+            "instruments": instruments,
+            "instrument_idxs": instrument_idxs,
+            "chord": chord.to_chord()
         }
 
         return dict_pattern

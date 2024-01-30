@@ -404,11 +404,32 @@ class Chord:
             return None
         return note_to_pitch_result(note, self, last_pitch=last_pitch)
 
-    def to_absolute_note(self):
-        return self(**{part: melody.to_absolute_note(self) for part, melody in self.score.items()})
+    def to_absolute_note(self, last_pitch=None, return_last_pitch=False):
+        if last_pitch is None:
+            last_pitch = {}
+
+        if return_last_pitch:
+            new_chord = {}
+            for part, melody in self.score.items():
+                new_melody, last_pitch[part] = melody.to_absolute_note(
+                    self, last_pitch=last_pitch.get(part, None), return_last_pitch=return_last_pitch)
+                new_chord[part] = new_melody
+            return self(**new_chord), last_pitch
+        else:
+            return self(**{part: melody.to_absolute_note(self, last_pitch=last_pitch.get(part, None),
+                                                     return_last_pitch=False) for part, melody in self.score.items()})
+
 
     @cached_property
     def bass_pitch(self):
+        """
+        Get the bass pitch of the chord
+
+        Returns
+        -------
+        res: int
+
+        """
         return self.chord_extension_pitches[0]
 
     def to_sequence(self):
@@ -1086,7 +1107,7 @@ class Chord:
                  melody=False,
                  instruments=None,
                  voicing=None,
-                 add_metadata=True,
+                 add_metadata=False,
                    max_duration=64,
                    **kwargs):
         """
@@ -1375,6 +1396,122 @@ class Chord:
     def full_octave(self):
         return self.octave + self.tonality.octave
 
+    def get_inversion_index(self):
+        """
+        Get positive inversion index of the chord (chordal transposition, counted positive)
+
+        Returns
+        -------
+        res: int
+
+        """
+        from musiclang.library import BASE_CHORDAL_TRANSLATION_DICT
+        extension, replacements, additions, removals = self.get_extension_properties()
+        base_transposition = BASE_CHORDAL_TRANSLATION_DICT[extension]
+        return base_transposition
+
+    def chord_distance(self, c2):
+        """
+        Get the chord distance between two chords
+
+        Parameters
+        ----------
+        c2
+
+        Returns
+        -------
+        res: tuple[int, int]
+                transposition number, chordal_inversion number
+                transposition number is the number of semitones between the two chords
+                chordal_inversion number is the number of chordal inversion between the two chords
+        """
+
+        bass_pitch1 = self.root_pitch
+        bass_pitch2 = c2.root_pitch
+
+        inv1 = self.get_inversion_index()
+        inv2 = c2.get_inversion_index()
+
+        transposition = (bass_pitch2 - bass_pitch1)
+        chordal_inversion = (inv2 - inv1)
+
+        return transposition, chordal_inversion
+
+    def get_parsimonious_voice_leading(self, candidate, direction=None):
+        """
+        Get the parsimonious voice leading between two chords
+
+        Parameters
+        ----------
+        candidate: Chord
+        direction: str or None (Default value = None), in ['up', 'down', None]
+            Direction of the voice leading
+
+        Returns
+        -------
+        best_chordal_inversion, best_octave:
+            best_chordal_inversion: int
+                The best chordal inversion
+            best_octave: int
+                The best octave
+
+
+        """
+        nb_notes = len(self.chord_notes)
+        nb_notes_candidate = len(candidate.chord_notes)  # FIXME : handle different number of notes
+        root = self.bass_pitch
+
+        final_chord = candidate.copy()
+        final_chord.octave = 0
+        final_chord.tonality.octave = 0
+        final_chord = final_chord.to_root_extension()
+
+        other_root = final_chord.bass_pitch
+
+        transposition = other_root - root
+        offset_octave = round(transposition/12)
+        normalized_transposition = transposition - offset_octave * 12
+        final_chord = final_chord.o(-offset_octave)
+
+        # FIXME : nb_notes_candidate here ? Or more complex formula depending on nb_notes also ?
+        theta = (nb_notes_candidate * normalized_transposition) / 12  # Angular motion (divided by 2pi)
+        optimal_chordal_transposition = -round(theta)
+
+        final_chord = final_chord.invert(optimal_chordal_transposition)
+        if optimal_chordal_transposition < 0:
+            final_chord = final_chord.o(-1)
+
+        if final_chord.bass_pitch > root and direction == 'down':
+            # Invert the chord
+            inversion_idx = final_chord.get_inversion_index()
+            final_inversion_idx = inversion_idx - 1
+            final_chord = final_chord.invert(final_inversion_idx - inversion_idx)
+            if final_inversion_idx < 0:
+                final_chord = final_chord.o(-1)
+        elif final_chord.bass_pitch < root and direction == 'up':
+            # Invert the chord
+            inversion_idx = final_chord.get_inversion_index()
+            final_inversion_idx = inversion_idx + 1
+            final_chord = final_chord.invert(final_inversion_idx - inversion_idx)
+            if final_inversion_idx > nb_notes_candidate - 1:
+                final_chord = final_chord.o(1)
+
+        return final_chord
+
+
+    @property
+    def root_pitch(self):
+        """
+        Get the root pitch of the chord
+
+        Returns
+        -------
+        res: int
+
+        """
+        return self.scale_pitches[0]
+
+
 
     def replace_instruments_names(self, **instruments_dict):
         """
@@ -1430,6 +1567,26 @@ class Chord:
 
     def normalize_extension(self):
         extension, replacements, additions, removals = self.get_extension_properties()
+        return self.properties_to_extension(extension, replacements, additions, removals)
+
+    def invert(self, inversion):
+        extension, replacements, additions, removals = self.get_extension_properties()
+        four_notes_extensions = ['7', '65', '43', '2']
+        three_notes_extensions = ['', '6', '64']
+
+        if extension in four_notes_extensions:
+            index_extension = four_notes_extensions.index(extension)
+            new_extension = four_notes_extensions[(index_extension + inversion) % len(four_notes_extensions)]
+        elif extension in three_notes_extensions:
+            index_extension = three_notes_extensions.index(extension)
+            new_extension = three_notes_extensions[(index_extension + inversion) % len(three_notes_extensions)]
+        else:
+            raise Exception('Unknown extension : ' + extension, '. Only three and four notes chords are supported')
+
+        return self[self.properties_to_extension(new_extension, replacements, additions, removals)]
+
+
+    def properties_to_extension(self, extension, replacements, additions, removals):
         replacements = ''.join([f'({r})' for r in replacements])
         additions = ''.join([f'[{a}]' for a in additions])
         removals = ''.join(['{' + r + '}' for r in removals])
@@ -1447,6 +1604,42 @@ class Chord:
         extension = ext
         return extension, replacements, additions, removals
 
+
+    def to_root_extension(self):
+        """
+        Get the root extension of the chord (No bass inversion but still all replacements, additions and removals
+
+        Returns
+        -------
+        chord: Chord
+            The chord in root extension
+
+        """
+        extension, replacements, additions, removals = self.get_extension_properties()
+        if extension in ['', '6', '64']:
+            return self[self.properties_to_extension('', replacements, additions, removals)]
+        elif extension in ['7', '65', '43', '2']:
+            return self[self.properties_to_extension('7', replacements, additions, removals)]
+        else:  # Other are necessarily in root position
+            return self[self.properties_to_extension(extension, replacements, additions, removals)]
+
+    def set_extension_text(self, new_extension):
+        """
+        Set the inversion text of the chord
+
+        Parameters
+        ----------
+        inversion: str
+            The inversion text
+
+        Returns
+        -------
+        chord: Chord
+            The chord with the inversion text
+
+        """
+        extension, replacements, additions, removals = self.get_extension_properties()
+        return self.properties_to_extension(new_extension, replacements, additions, removals)
 
     def _chord_notes_calc(self, extension, replacements, additions, removals):
         from .library import BASE_EXTENSION_DICT, \
@@ -1505,6 +1698,31 @@ class Chord:
         # Try a composite with a match
         extension, replacements, additions, removals = self.get_extension_properties()
         return self._chord_notes_calc(extension, replacements, additions, removals)
+
+
+    def optimal_projection(self, chord2):
+        """
+        Get the optimal projection of the chord on the other chord, it will minimize the movement of voices while
+        preserving chord notes to chord notes
+
+        Parameters
+        ----------
+        chord2: Other chord
+
+        Returns
+        -------
+        chord: Chord
+
+        """
+        chord3 = self.get_parsimonious_voice_leading(chord2)
+        octave, trans_chord = chord2.chord_distance(chord3)
+        pattern = self.to_pattern()
+        for pat in pattern:
+            octave = octave // 12
+            pat['voice'] = pat['voice'].add_value_chord(trans_chord, octave, len(chord2.chord_notes))
+            # pat['voice'] = pat['voice'].o(octave)
+        from musiclang import Score
+        return Score.from_pattern(pattern, [chord2], use_voice=True).chords[0]
 
 
     def to_voicing(self, nb_voices=4, instruments=None):
@@ -1621,14 +1839,32 @@ class Chord:
         return self.to_score().to_custom_chords(nb_voices=nb_voices)
 
 
-    def to_orchestra(self, drop_drums=True, nb=4, pattern=False):
-        from musiclang.transform.composing.chord_to_orchestra import chord_to_orchestra
-        return chord_to_orchestra(self, drop_drums=drop_drums, nb=nb, pattern=pattern)
+    def to_pattern(self, drop_drums=False, nb=4, pattern=True):
+        """
+        Convert the chord to a pattern (like a musical template)
+
+        Parameters
+        ----------
+        drop_drums: bool (Default value = True)
+            If True, drop the drums instruments
+        nb: int (Default value = 4)
+            nb arpeggio notes to consider on each side, it will give the acceptable range of the instrument melody.
+            You usually don't need it because it is used only for the musical grid
+        pattern: bool (Default value = True)
+            If True, return the pattern inside the response
+
+        Returns
+        -------
+        pattern: Pattern
+
+        """
+        from musiclang.transform.composing.chord_to_orchestra import chord_to_pattern
+        return chord_to_pattern(self, drop_drums=drop_drums, nb=nb, keep_pattern=pattern)
 
     def repeated_notes_to_legato(self):
         return self(**{ins: n.repeated_notes_to_legato() for ins, n in self.score.items()})
 
-    def get_orchestration(self):
+    def get_raw_pattern(self):
         from .melody import Melody
         def voicing_to_quality(voicing, chord):
             notes = chord.extension_notes
@@ -1669,11 +1905,14 @@ class Chord:
         orchestration = []
         data, pattern = self.patternize()
         instruments = data['instruments']
+        instrument_idxs = data['instrument_idxs']
         voicing = data['voicing']
+        chord = data['chord']
         qualities = voicing_to_quality(voicing, data['orchestra']['pattern'])
 
+
         instruments_idx = {}
-        for idx, (ins, quality) in enumerate(zip(instruments, qualities)):
+        for idx, (ins, quality, voice, part) in enumerate(zip(instruments, qualities, voicing, instrument_idxs)):
             note, octave = quality
             local_pattern = pattern.score[f'v__{idx}']
             local_pattern = Melody([n if n.type != 'x' else n.set_val(0) for n in local_pattern.notes])
@@ -1681,7 +1920,9 @@ class Chord:
             instruments_idx[ins] = instruments_idx.get(ins, -1) + 1
             orchestration.append({'instrument': ins, 'octave': octave,
                                   'note': note, 'pattern': local_pattern,
-                                  'rhythm': rhythm
+                                  'rhythm': rhythm, 'voice': voice,
+                                  'part': part,
+                                  'chord': chord
                                   })
 
         return orchestration

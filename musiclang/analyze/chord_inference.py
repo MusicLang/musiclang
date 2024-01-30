@@ -14,7 +14,6 @@ def max_correlation_index(input_matrix, template_matrix):
     chord_root = max_corr_indices // len(TEMPLATES)
     return chord_root, chord_type
 
-
 def filter_notes(notes, start, end):
     pass
 
@@ -122,6 +121,9 @@ def fast_chord_inference(notes, bars):
     -------
 
     """
+
+    notes = np.asarray(notes.copy().values)
+
     chords = []
     bar_chroma_vectors = get_chroma_vectors(notes, bars)
     # Get the lowest note of each bar

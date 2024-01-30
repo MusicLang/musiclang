@@ -7,7 +7,7 @@ LICENSE file in the root directory of this source tree.
 """
 
 from .constants import *
-LIMIT_DENOM = int(1e4)
+LIMIT_DENOM = int(1e3)
 
 class Note:
     """
@@ -595,6 +595,24 @@ class Note:
             return self.copy()
 
         return new_note
+
+    def add_value_chord(self, val, octave, nb_notes_chord):
+        """
+        Parameters
+        ----------
+        val :
+
+        octave :
+        """
+        if self.type in ['b', 'c']:
+            new_note = self.copy()
+            new_note.val += val
+            new_note.octave += octave
+            new_note.octave += new_note.val // nb_notes_chord
+            new_note.val = new_note.val % nb_notes_chord
+            return new_note
+        else:
+            return self.copy()
 
     def oabs(self, octave):
         """

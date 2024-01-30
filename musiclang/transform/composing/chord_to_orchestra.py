@@ -43,18 +43,19 @@ def map_matrix(A, B, Mb):
     return Ma.tolist()
 
 
-def chord_to_orchestra(chord, drop_drums=True, nb=4, pattern=False):
+def chord_to_pattern(chord, drop_drums=False, nb=4, keep_pattern=False):
     """
-    Convert a chord to an orchestra
+    Convert a chord to a pattern
     Parameters
     ----------
     chord: Chord
-        The musiclang chord to convert into an orchestra
+        The musiclang chord to convert into an pattern
     drop_drums : bool, optional, default=True
         Drop drums instruments
     nb: int, optional, default=4
         nb arpeggio notes to consider on each side, it will give the acceptable range of the instrument melody
-
+    pattern: bool, optional, default=False
+        If True, the pattern is kept in the pattern
 
     Returns
     -------
@@ -62,11 +63,11 @@ def chord_to_orchestra(chord, drop_drums=True, nb=4, pattern=False):
     Orchestra object, one entry per instrument
 
     """
-    orchestra_raw = chord.get_orchestration()
-    orchestra = []
+    pattern_raw = chord.get_raw_pattern()
+    pattern = []
 
     # chord_tonality =
-    for instrument in orchestra_raw:
+    for instrument in pattern_raw:
         if drop_drums and instrument['instrument'].startswith('drums_0'):
             continue
         else:
@@ -93,8 +94,8 @@ def chord_to_orchestra(chord, drop_drums=True, nb=4, pattern=False):
             instrument['rhythm'] = grid
             instrument['rhythm']['notes'] = notes_grid
             instrument['rhythm']['octave'] = instrument['octave']
-            if not pattern:
+            if not keep_pattern:
                 del instrument['pattern']
-            orchestra.append(instrument)
+            pattern.append(instrument)
 
-    return orchestra
+    return pattern

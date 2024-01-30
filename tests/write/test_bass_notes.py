@@ -17,10 +17,10 @@ def test_extension_notes_basics():
 def test_extension_notes_complicated_chord():
 
     chord = (I % I.M)['2[add2]']
-    assert chord.to_pitch(b0) == -1
-    assert chord.to_pitch(b1) == 0
-    assert chord.to_pitch(b2) == 2
-    assert chord.to_pitch(b3) == 4
+    assert chord.to_pitch(b0) == 2
+    assert chord.to_pitch(b1) == 11
+    assert chord.to_pitch(b2) == 12
+    assert chord.to_pitch(b3) == 16
 
 
 def test_extension_notes_to_scale_pitches_with_octave():

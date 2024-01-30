@@ -65,7 +65,7 @@ def test_patternize_melody():
     (I % I.M)(
         v__0=x0.h.mp + bd1.mp))
 
-    data, pattern = chord.patternize(melody=True)
+    data, pattern = chord.patternize(melody=True, add_metadata=True)
 
     assert pattern == expected_pattern
     assert data['metadata']['melody'] == True
@@ -81,7 +81,7 @@ def test_patternize_melody_with_octave_voicing():
     (I % I.M)(
         v__0=x0.h.mp + bd1.mp))
 
-    data, pattern = chord.patternize(melody=True)
+    data, pattern = chord.patternize(melody=True, add_metadata=True)
 
     assert pattern == expected_pattern
     assert data['metadata']['melody'] == True
@@ -97,7 +97,7 @@ def test_patternize_acc():
     (I % I.M)(
         v__0=x0.h.p + bd1.p))
 
-    data, pattern = chord.patternize(melody=False, nb_excluded_instruments=1)
+    data, pattern = chord.patternize(melody=False, nb_excluded_instruments=1, add_metadata=True)
 
     assert pattern == expected_pattern
     assert data['metadata']['melody'] == False

@@ -94,17 +94,20 @@ def convert_to_items(notes):
 
     """
     # Quantize
+    from fractions import Fraction as frac
+
+
     items = []
-    for note in notes:
-        start = note[0]
-        end = start + note[2]
-        vel = int(note[3])
-        pitch = int(note[1])
-        track = int(note[4])
-        channel = int(note[5])
-        voice = int(note[6])
+    for idx, note in notes.iterrows():
+        start = frac(note['onset_quarter'])
+        end = frac(start + note['duration_quarter'])
+        vel = int(note['velocity'])
+        pitch = int(note['pitch'])
+        track = int(note['track'])
+        channel = int(note['channel'])
+        voice = int(note['voice'])
         items.append(Item("name", start, end, vel=vel, pitch=pitch, track=track, channel=channel, voice=voice))
 
     # Quantize notes in integer
-    items = quantize_notes_raw(items)
+    #items = quantize_notes_raw(items)
     return items

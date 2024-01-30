@@ -71,25 +71,30 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
         beat_res={(0, 8): quantization, (8, 16): quantization},
         use_tempos=True,
         use_time_signatures=True,
+        time_signature_range={8: [3, 12, 5, 6, 7, 9, 10, 11],
+                              4: [5, 6, 7, 3, 2, 1, 4],
+                              16: [3, 6, 5, 7, 9, 12, 14, 15, 17],
+                              2: [1, 2, 3, 4],
+                              1: [1, 2, 3, 4]
+                              },
         one_token_stream_for_programs=True,
         use_programs=True)
-
 
     tokenizer = REMI(
         tokenizer_config=config,
     )
     #tokenizer.one_token_stream = True
 
-    #[tokenizer.add_to_vocab(f'Position_{idx}') for idx in range(64, 256)]
-
     tokens = tokenizer.midi_to_tokens(MidiFile(input_file))
+    # Clear all tempo tokens
+    #tokens.events = [event for event in tokens.events if event.type != 'Tempo']
 
     if chord_range is not None:
         tokens = get_chord_range(tokens, tokenizer, *chord_range)
 
-
     midi = tokenizer.tokens_to_midi(tokens)
 
+    #midi.dump('tester.mid')
     # Reload for test
     midi.dump(output_file)
 
@@ -433,11 +438,11 @@ def parse_musiclang_sequence_and_chords(midi_file):
     from .chord_inference import fast_chord_inference
 
     pprint('1/4 : Performing voice separation (This may takes a while)')
-    notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
+    notes_df, instruments, tempo, time_signature, bars = parse_midi(midi_file)
 
     pprint('2/4 : Now infering chords with fast inference')
-    chords = fast_chord_inference(notes, bars)
-    sequence = convert_to_items(notes)
+    chords = fast_chord_inference(notes_df, bars)
+    sequence = convert_to_items(notes_df)
     pprint('3/4 : Create the score')
     import time
     start = time.time()
@@ -472,8 +477,8 @@ def parse_musiclang_sequence(midi_file, chords):
 
 
     pprint('2/4 : Performing voice separation (This may takes a while)')
-    notes, instruments, tempo, time_signature, bars = parse_midi(midi_file)
-    sequence = convert_to_items(notes)
+    notes_df, instruments, tempo, time_signature, bars = parse_midi(midi_file)
+    sequence = convert_to_items(notes_df)
     pprint('3/4 : Create the score')
     score = infer_score_with_chords_durations(sequence, chords, instruments)
     pprint('Finished creating score')

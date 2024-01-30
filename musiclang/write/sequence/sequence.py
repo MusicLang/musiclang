@@ -8,9 +8,9 @@ LICENSE file in the root directory of this source tree.
 
 # Groupby
 from fractions import Fraction as frac
+from musiclang import Score, Melody
 
-
-def sequence_to_score(sequence, sort_by_time=True, **kwargs):
+def sequence_to_score(sequence, sort_by_time=False, **kwargs):
     """Convert a dataframe (called a sequence) to a MusicLang score
 
     Parameters
@@ -18,7 +18,7 @@ def sequence_to_score(sequence, sort_by_time=True, **kwargs):
     sequence :
         pandas.DataFrame with required columns
     sort_by_time :
-        boolean, default=True, If true sort by 'start' column before reconverting to score
+        boolean, default=False, If true sort by 'start' column before reconverting to score
     **kwargs :
         
 
@@ -34,16 +34,19 @@ def sequence_to_score(sequence, sort_by_time=True, **kwargs):
     if sort_by_time:
         sequence = sequence.sort_values(by='start', ascending=True)
     groups_chord = sequence.groupby('chord_idx')
-    score = None
+    score = []
     for chord_idx, group_chord in groups_chord:
         chord_row = group_chord.iloc[0]
         tonality = Tonality(int(chord_row['tonality_degree']), mode=chord_row['tonality_mode'],
                             octave=int(chord_row['tonality_octave']))
-        chord = Chord(int(chord_row['chord_degree']), extension=chord_row['chord_extension'], tonality=tonality)
+        chord = Chord(int(chord_row['chord_degree']), extension=chord_row['chord_extension'],
+                      octave=chord_row['chord_octave'],
+                      tonality=tonality)
         parts = {}
-        groups_instrument = group_chord.groupby('instrument')
+        groups_instrument = group_chord.groupby('instrument', sort=False)
+
         for instrument, row in groups_instrument:
-            part = None
+            part = []
             for idx_note, note in row.iterrows():
                 if note['silence']:
                     new_note = Silence(note['note_duration'])
@@ -55,10 +58,10 @@ def sequence_to_score(sequence, sort_by_time=True, **kwargs):
                                 octave=int(note['note_octave']),
                                 duration=frac(note['note_duration']).limit_denominator(8),
                                 amp=int(note['note_amp']))
-                part += new_note
-            parts[instrument] = part
-        score += chord(**parts)
-    return score
+                part.append( new_note)
+            parts[instrument] = Melody(part)
+        score.append(chord(**parts))
+    return Score(score)
 
 
 def score_to_sequence(score, **kwargs):

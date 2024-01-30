@@ -47,7 +47,7 @@ Examples
 ```python
 from musiclang.library import *
 
-# Write A C major chord
+# Write a C major chord (First degree of C major scale)
 score = (I % I.M)(piano=[s0, s2, s4])
 
 # Store it to midi
@@ -95,7 +95,7 @@ See [MusicLang Predict](https://github.com/MusicLang/musiclang_predict) for more
 Contact us
 ----------
 
-If you want to help shape the future of open source music generation,
+If you want to help shape the future of open source music generation / language modeling,
 please contact [us](mailto:fgardin.pro@gmail.com)
 
 License

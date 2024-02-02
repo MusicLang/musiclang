@@ -11,7 +11,7 @@ from musiclang.write.note import Silence, Continuation
 from musiclang.write.constants import OCTAVES
 from musiclang import Score
 
-def infer_score_with_chords_durations(sequence, chords, instruments):
+def infer_score_with_chords_durations(sequence, chords, instruments, bars):
     """Get the score from a note sequence, the chords with durations and the instruments assigned to each tracks
 
     Parameters
@@ -44,7 +44,9 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
                 offsets_voices_raw[channel] = max(voices) + 1
             else:
                 offsets_voices_raw[channel] += max(voices) + 1
-    for idx, chord in enumerate(chords):
+    for idx, (chord, bar) in enumerate(zip(chords, bars)):
+        is_last_bar = idx == len(bars) - 1
+        chord_duration = bar[1] - bar[0]
         time_start = 0 if idx == 0 else time_start + chords[idx - 1].duration
         time_end += chord.duration
         chord_notes = [n for n in sequence if time_start <= n.start < time_end]
@@ -62,7 +64,18 @@ def infer_score_with_chords_durations(sequence, chords, instruments):
                     if cont is not None:
                         continuations[voice_name] = cont
 
-        score.append(chord(**chord_dict))
+        final_chord = chord(**chord_dict)
+        if len(chord_dict) == 0:
+            if idx > 0:
+                note = Silence(chord_duration).to_melody()
+                ins = list(score[-1].score.keys())[0]
+                final_chord = score[-1].to_chord()(**{ins: note})
+            else:
+                final_chord = final_chord.set_duration(chord_duration)
+
+        # Don't add chord if it is last bar and it is empty
+        if not (is_last_bar and len(chord_dict) == 0):
+            score.append(final_chord)
 
     return Score(score)
 

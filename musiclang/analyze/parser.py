@@ -446,7 +446,7 @@ def parse_musiclang_sequence_and_chords(midi_file):
     pprint('3/4 : Create the score')
     import time
     start = time.time()
-    score = infer_score_with_chords_durations(sequence, chords, instruments)
+    score = infer_score_with_chords_durations(sequence, chords, instruments, bars)
     pprint('Finished creating score in {} seconds'.format(time.time() - start))
     pprint('Finished creating score')
     pprint('4/4 Normalize the score...')
@@ -480,7 +480,7 @@ def parse_musiclang_sequence(midi_file, chords):
     notes_df, instruments, tempo, time_signature, bars = parse_midi(midi_file)
     sequence = convert_to_items(notes_df)
     pprint('3/4 : Create the score')
-    score = infer_score_with_chords_durations(sequence, chords, instruments)
+    score = infer_score_with_chords_durations(sequence, chords, instruments, bars)
     pprint('Finished creating score')
     pprint('4/4 Normalize the score...')
     score = score.normalize()

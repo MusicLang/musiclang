@@ -1124,6 +1124,15 @@ class Score:
 
         return result_score
 
+    @classmethod
+    def from_chord_repr(cls, chord_repr):
+        from musiclang.analyze.chord_repr_to_chord import chord_repr_list_to_chords
+        tokens = [tok for tok in chord_repr.split() if tok not in {"START", "END"}]
+        return chord_repr_list_to_chords(tokens)
+
+    def to_chord_repr(self, bass=True):
+        return " ".join([chord.to_chord_repr(bass=bass) for chord in self.chords])
+
     def project_on_rhythm(self, rhythm, **kwargs):
         return Score([chord.project_on_rhythm(rhythm, **kwargs) for chord in self.chords], tags=self.tags)
 

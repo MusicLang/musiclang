@@ -73,7 +73,7 @@ def _load_midi(filename, ignore_file_with_bar_change=False, **kwargs):
     -------
 
     """
-    notes_df, config, bars = _parse(filename)
+    notes_df, config, bars = _parse(filename, **kwargs)
     if len(config['bar_durations']) > 1 and ignore_file_with_bar_change:
         raise MusicLangIgnoreException('Bar duration change events in midifile, MusicLang cannot parse that')
     elif len(config['bar_durations']) == 1:
@@ -103,7 +103,7 @@ def _parse(filename, **kwargs):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        notes_score_df, bars, instruments, config = load_score(filename)
+        notes_score_df, bars, instruments, config = load_score(filename, **kwargs)
 
     # Start time, pitch, duration, velocity, track, channel, voice
     notes = notes_score_df[['onset_quarter', 'pitch', 'duration_quarter', 'velocity', 'track', 'channel', 'voice']]

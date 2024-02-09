@@ -17,7 +17,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from musiclang_predict import predict_chords
 
 # Load the tokenizer and the model
-tokenizer = AutoTokenizer.from_pretrained("musiclang/musiclang-chord-v2-4k")
+tokenizer = MusicLangTokenizer("musiclang/musiclang-chord-v2-4k")
 model = AutoModelForCausalLM.from_pretrained("musiclang/musiclang-chord-v2-4k")
 
 

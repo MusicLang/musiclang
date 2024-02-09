@@ -298,22 +298,20 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     -------
 
     """
+
+    import time
+
     if instrument_names is None:
         instrument_names = []
-
 
 
     df = pd.DataFrame(matrix, columns=['PITCH', 'OFFSET', 'DURATION',
                                        'VELOCITY', 'TRACK', 'SILENCE', 'CONTINUATION',
                                        'TEMPO', 'PEDAL'
                                        ])
-    df_old = df.copy()
-
     df = merge_continuation_to_previous_note(df.copy())
+    start = time.time()
     matrix = df.values
-
-
-    #matrix = np.asarray(matrix)
 
     if one_track_per_instrument:
         instrument_names, matrix, instruments = setup_instruments(matrix, instrument_names, instruments)
@@ -324,11 +322,12 @@ def matrix_to_mid(matrix, output_file=None, ticks_per_beat=480, tempo=120, instr
     df_events = prepare_df_for_events(df)
 
 
-
     mid, nb_tracks, channels, matrix = init_midi_file(matrix, instruments, ticks_per_beat=480, time_signature=(4, 4), anachrusis_time=0)
     mid, channels = set_tracks(mid, nb_tracks, instruments, instrument_names, channels, tempo, time_signature, output_file=None)
 
     mid = apply_events(df_events, mid, channels, tempo)
+
+
     # sort_events = []
     # last_silence = True
     #

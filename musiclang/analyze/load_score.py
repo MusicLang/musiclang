@@ -6,14 +6,18 @@ from musiclang.write.out.constants import REVERSE_INSTRUMENT_DICT
 
 
 
-def load_score(filename, merge_tracks=True):
+def load_score(filename, merge_tracks=True, quantization=(4, 3), **kwargs):
     """
     Load a score from a midi file and assign voices to each note
 
     Parameters
     ----------
-    filename
-    merge_tracks
+    filename: str
+        Path to the midi file
+    merge_tracks: bool
+        If True, merge tracks to estimate voices
+    quantization: tuple
+        Quantization figures to apply to the score
 
     Returns
     -------
@@ -106,7 +110,7 @@ def load_score(filename, merge_tracks=True):
             n.quarterLength = row['duration_quarter']
             s.repeatInsert(n, [row['onset_quarter']])
 
-        s.quantize((4,3), processOffsets=True, processDurations=True, inPlace=True)
+        s.quantize(quantization, processOffsets=True, processDurations=True, inPlace=True)
         onsets = [e.offset for e in s]
         durations = [e.quarterLength for e in s]
 

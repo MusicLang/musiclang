@@ -1,8 +1,9 @@
 Musiclang
 =========
 
-![MusicLang logo](https://github.com/MusicLang/musiclang/blob/main/documentation/images/MusicLang.png?raw=true "MusicLang")
-
+<p align="center">
+  <img src="(https://github.com/MusicLang/musiclang/blob/main/documentation/images/MusicLang.png?raw=true" alt="MusicLang logo"/>
+</p>
 
 [![Documentation Status](https://readthedocs.org/projects/musiclang/badge/?version=latest)](https://musiclang.readthedocs.io/en/latest/?badge=latest)
 

@@ -5,7 +5,8 @@ from scipy.spatial.distance import cdist
 from musiclang.analyze.chord_inference_utils import TEMPLATES, COEFFS, CHROMA_VECTORS_MATRIX, PITCH_CLASSES_DICT, \
     CHORD_TYPE_TO_PITCHES, CHORD_TYPES
 
-
+EXTENSION_DICT = {(0, 3): '', (1, 3): '6', (2, 3): '64', (0, 4): '7', (1, 4): '65', (2, 4): '43',
+                  (3, 4): '2'}
 def max_correlation_index(input_matrix, template_matrix, bass_notes, use_first_max=False):
 
     # Add a small bonus to the bass note
@@ -168,21 +169,25 @@ def optimal_chord_inference(candidates, bass_notes=None, bars=None):
             chord = chord.set_duration(bar[1] - bar[0])
 
         if bass_note is not None:
-            chord_pitches = [pitch % 12 for pitch in chord.chord_pitches]
-            nb_notes = len(chord_pitches)
-            if bass_note in chord_pitches:
-                bass_idx = chord_pitches.index(bass_note)
-                EXTENSION_DICT = {(0, 3): '', (1, 3): '6', (2, 3): '64', (0, 4): '7', (1, 4): '65', (2, 4): '43',
-                                  (3, 4): '2'}
-                extension = EXTENSION_DICT[(bass_idx, nb_notes)]
-                new_extension = extension + (
-                    chord.extension[1:] if chord.extension.startswith('7') else chord.extension)
-                chord.extension = new_extension
-
+                chord = get_chord_extended_from_bass_note(bass_note, chord)
         chords.append(chord)
 
     return chords
 
+
+def get_chord_extended_from_bass_note(bass_note, chord):
+    extension = chord.extension
+    chord_pitches = [pitch % 12 for pitch in chord.chord_pitches]
+    nb_notes = len(chord_pitches)
+    if bass_note in chord_pitches:
+        bass_idx = chord_pitches.index(bass_note)
+        extension = EXTENSION_DICT[(bass_idx, nb_notes)]
+
+    new_extension = extension + (
+        chord.extension[1:] if chord.extension.startswith('7') else chord.extension)
+    chord.extension = new_extension
+
+    return chord.copy()
 
 def fast_chord_inference(notes, bars):
     """

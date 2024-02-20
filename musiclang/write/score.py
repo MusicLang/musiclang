@@ -1174,6 +1174,9 @@ class Score:
         drums = self.get_instrument_names(['drums_0'])
         score_without_drums = self.remove_drums()
         score = create_counterpoint_on_score(score_without_drums, fixed_parts=fixed_parts)
+        # Reproject drums
+        if drums is not None and len(drums.instruments) > 0:
+            score = drums.project_on_score(score, voice_leading=False, keep_score=True)
         return score
 
 
@@ -1278,6 +1281,16 @@ class Score:
             statistics[instrument] = (min(pitches), max(pitches), float(np.mean(pitches)), float(np.std(pitches)))
 
         return statistics
+
+    def get_bass_instrument(self):
+        """
+        Get the bass instrument
+        Returns
+        -------
+        instrument: instrument part with the lowest pitch
+        """
+        statistics = self.get_pitch_statistics()
+        return min(statistics, key=lambda x: statistics[x][0])
 
     def get_pitch_most_comparable_instrument(self, mean_pitch):
         """

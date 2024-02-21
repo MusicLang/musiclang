@@ -32,7 +32,7 @@ def parse_to_musiclang(input_file: str, **kwargs):
     extension = input_file.split('.')[-1]
     if extension.lower() in ['mid', 'midi']:
         return parse_midi_to_musiclang(input_file, **kwargs)
-    elif extension.lower() in ['mxl', 'xml', 'musicxml', 'krn']:
+    elif extension.lower() in ['mxl', 'xml', 'mscx', 'musicxml', 'krn']:
         return parse_mxl_to_musiclang(input_file, **kwargs)
     else:
         raise Exception('Unknown extension {}'.format(extension))
@@ -168,7 +168,7 @@ def parse_mxl_to_musiclang(input_file: str, **kwargs):
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         mxl_file = os.path.join(di, 'data.mxl')
-        obj = _m21Parse(input_file)
+        obj = _m21Parse(input_file, remove_perc=False)
         obj.write('midi', fp=os.path.join(midi_file))
         shutil.copy(input_file, mxl_file)
         result = parse_directory_to_musiclang(di, **kwargs)

@@ -1574,7 +1574,7 @@ class Score:
 
 
     @classmethod
-    def from_xml(cls, filename, fast_chord_inference=False, quantization=(4, 3)):
+    def from_xml(cls, filename, fast_chord_inference=True, quantization=(4, 3)):
         """
         Load a musicxml score into musiclang
 

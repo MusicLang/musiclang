@@ -59,7 +59,144 @@ SCALES = {
     'mm': SCALES_MELODIC_MINOR,
     'M': SCALES_MAJOR
 }
+QUALITIES = {
+    (0, 3, 6): 'dim',
+    (0, 4, 7, 11): 'M7',
+    (0, 4, 8): 'aug',
+    (0, 4, 8, 11): 'aug7',
+    (0, 3, 7, 10): 'm7',
+    (0, 3, 7, 11): 'mM7',
+    (0, 3, 6, 10): 'm7b5',
+    (0, 2, 7, 10): '7sus2',
+    (0, 5, 7, 10): '7sus4',
+    (0, 4, 7, 10): '7',
+    (0, 2, 7): 'sus2',
+    (0, 5, 7): 'sus4',
+    (0, 3, 6, 9): 'o',
+    (0, 4, 7): 'M',
+    (0, 3, 7): 'm',
+    (0, 4, 7, 10, 2): '9',
+}
 
+QUALITIES_TO_CHORDS = {(0, 4, 7): [(0, 0, 'M', ''),
+  (3, 7, 'M', ''),
+  (4, 5, 'm', ''),
+  (4, 5, 'M', ''),
+  (5, 4, 'm', '')],
+ (0, 4, 7, 11): [(0, 0, 'M', '7'), (3, 7, 'M', '7'), (5, 4, 'm', '7')],
+ (0, 4, 7, 10): [(4, 5, 'm', '7'), (4, 5, 'M', '7')],
+ (0, 4, 8): [(2, 9, 'm', '')],
+ (0, 4, 8, 11): [(2, 9, 'm', '7')],
+ (0, 3, 7): [(0, 0, 'm', ''),
+  (1, 10, 'M', ''),
+  (2, 8, 'M', ''),
+  (3, 7, 'm', ''),
+  (5, 3, 'M', ''),
+  (5, 4, 'm', '(sus2)')],
+ (0, 3, 7, 10): [(1, 10, 'M', '7'),
+  (2, 8, 'M', '7'),
+  (3, 7, 'm', '7'),
+  (5, 3, 'M', '7')],
+ (0, 3, 7, 11): [(0, 0, 'm', '7'), (5, 4, 'm', '7(sus2)')],
+ (0, 3, 6): [(1, 10, 'm', ''), (6, 1, 'm', ''), (6, 1, 'M', '')],
+ (0, 3, 6, 10): [(1, 10, 'm', '7'), (6, 1, 'M', '7')],
+ (0, 3, 6, 9): [(6, 1, 'm', '7')],
+ (0, 2, 7, 10): [(1, 10, 'M', '7(sus2)'),
+  (3, 7, 'm', '7(sus2)'),
+  (4, 5, 'M', '7(sus2)'),
+  (5, 3, 'M', '7(sus2)')],
+ (0, 5, 7, 10): [(1, 10, 'M', '7(sus4)'),
+  (2, 8, 'M', '7(sus4)'),
+  (4, 5, 'm', '7(sus4)'),
+  (4, 5, 'M', '7(sus4)'),
+  (5, 3, 'M', '7(sus4)')],
+ (0, 2, 7): [(0, 0, 'm', '(sus2)'),
+  (0, 0, 'M', '(sus2)'),
+  (1, 10, 'M', '(sus2)'),
+  (3, 7, 'm', '(sus2)'),
+  (3, 7, 'M', '(sus2)'),
+  (4, 5, 'M', '(sus2)'),
+  (5, 3, 'M', '(sus2)')],
+ (0, 5, 7): [(0, 0, 'm', '(sus4)'),
+  (0, 0, 'M', '(sus4)'),
+  (1, 10, 'M', '(sus4)'),
+  (2, 8, 'M', '(sus4)'),
+  (4, 5, 'm', '(sus4)'),
+  (4, 5, 'M', '(sus4)'),
+  (5, 3, 'M', '(sus4)')],
+ (0, 4, 7, 10, 2): [(4, 5, 'M', '9')]}
+
+
+NOTES_TO_ROOT = {
+    'C': 0,
+    'D': 2,
+    'E': 4,
+    'F': 5,
+    'G': 7,
+    'A': 9,
+    'B': 11,
+
+    'C#': 1,
+    'D#': 3,
+    'E#': 5,
+    'F#': 6,
+    'G#': 8,
+    'A#': 10,
+    'B#': 0,
+
+    'C##': 2,
+    'D##': 4,
+    'E##': 6,
+    'F##': 7,
+    'G##': 9,
+    'A##': 11,
+    'B##': 1,
+
+    'Cb': 11,
+    'Db': 1,
+    'Eb': 3,
+    'Fb': 4,
+    'Gb': 6,
+    'Ab': 8,
+    'Bb': 10,
+
+    'Cbb': 10,
+    'Dbb': 0,
+    'Ebb': 2,
+    'Fbb': 3,
+    'Gbb': 5,
+    'Abb': 7,
+    'Bbb': 9,
+}
+
+
+QUALITIES_INV = {val: key for key, val in QUALITIES.items()}
+
+
+
+def product_all_qualities():
+    """
+    Returns all possible deg tone, mode, extension for all given chord qualities
+    Returns
+    -------
+    dict
+
+    """
+    D = {}
+    from musiclang import Chord, Tonality
+
+    for chord_quality in QUALITIES.keys():
+        D[chord_quality] = []
+        for deg in range(7):
+            for tone in range(12):
+                for mode in ['m', 'M']:
+                    for ext in ['', '7', '(sus2)', '(sus4)', '7(sus2)', '7(sus4)', '9']:
+                        chord = Chord(deg, extension=ext, tonality=Tonality(tone, mode))
+                        chord_pitches = tuple([c % 12 for c in chord.chord_pitches])
+                        if chord_pitches == chord_quality:
+                            D[chord_quality].append((deg, tone, mode, ext))
+
+    return D
 
 def get_note_spelling(note, chord, last_pitch=None):
     from .to_midi import note_to_pitch_result

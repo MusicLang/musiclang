@@ -1564,6 +1564,26 @@ class Chord:
 
         return self(**new_chord_dict)
 
+    def to_chord_repr(self, bass=True):
+        """
+        Transform note to a chord string representation in a standard pop song format
+
+        """
+        from musiclang.write.out.to_mxl import QUALITIES, SCALES
+        note = SCALES[self.tonality.mode][self.tonality.degree][self.degree]
+        chord_notes = [p for p in self.chord_pitches]
+        chord_notes = [p - chord_notes[0] for p in chord_notes]
+
+        quality = QUALITIES[tuple(chord_notes)]
+
+        bass_note_val = self.extension_notes[0].val
+        if bass_note_val == 0 or not bass:
+            bass_note = ""
+        else:
+            bass_note = "/" + SCALES[self.tonality.mode][self.tonality.degree][(bass_note_val + self.degree) % 7]
+
+        return note + quality + bass_note
+
 
     def normalize_extension(self):
         extension, replacements, additions, removals = self.get_extension_properties()

@@ -32,7 +32,7 @@ def parse_to_musiclang(input_file: str, **kwargs):
     extension = input_file.split('.')[-1]
     if extension.lower() in ['mid', 'midi']:
         return parse_midi_to_musiclang(input_file, **kwargs)
-    elif extension.lower() in ['mxl', 'xml', 'musicxml', 'krn']:
+    elif extension.lower() in ['mxl', 'xml', 'mscx', 'musicxml', 'krn']:
         return parse_mxl_to_musiclang(input_file, **kwargs)
     else:
         raise Exception('Unknown extension {}'.format(extension))
@@ -98,7 +98,7 @@ def tokenize_midi_file(input_file, output_file, chord_range=None, quantization=1
     # Reload for test
     midi.dump(output_file)
 
-def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=True, quantization=16, fast_chord_inference=True, **kwargs):
+def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=True, quantization=(4, 3), fast_chord_inference=True, **kwargs):
     """Parse a midi input file into a musiclang Score
     - Get chords with dynamic programming
     - Get voice separation and parsing
@@ -122,10 +122,12 @@ def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=T
     import os
     import shutil
     # First tokenize the midi file
+
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         if tokenize_before:
-            tokenize_midi_file(input_file, midi_file, chord_range=chord_range, quantization=quantization)
+            quantization_for_tokenize = 8
+            tokenize_midi_file(input_file, midi_file, chord_range=chord_range, quantization=quantization_for_tokenize)
         elif chord_range is None:
             shutil.copy(input_file, midi_file)
         else:
@@ -136,7 +138,7 @@ def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=T
             obj = _m21Parse(midi_file)
             obj.write('mxl', fp=os.path.join(mxl_file))
 
-        result = parse_directory_to_musiclang(di, fast_chord_inference=fast_chord_inference, **kwargs)
+        result = parse_directory_to_musiclang(di, fast_chord_inference=fast_chord_inference, quantization=quantization, **kwargs)
     return result
 
 
@@ -166,7 +168,7 @@ def parse_mxl_to_musiclang(input_file: str, **kwargs):
     with tempfile.TemporaryDirectory() as di:
         midi_file = os.path.join(di, 'data.mid')
         mxl_file = os.path.join(di, 'data.mxl')
-        obj = _m21Parse(input_file)
+        obj = _m21Parse(input_file, remove_perc=False)
         obj.write('midi', fp=os.path.join(midi_file))
         shutil.copy(input_file, mxl_file)
         result = parse_directory_to_musiclang(di, **kwargs)
@@ -197,17 +199,17 @@ def parse_directory_to_musiclang(directory: str, fast_chord_inference=True, **kw
         pprint('1/4 : Analyze the score (This may takes a while)')
         annotation_file = os.path.join(directory, 'data_annotated.rntxt')
         infer_chords(mxl_file)
-        score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file)
+        score, config = parse_midi_to_musiclang_with_annotation(midi_file, annotation_file, **kwargs)
 
     else:
-        score, config = parse_midi_to_musiclang_without_annotation(midi_file)
+        score, config = parse_midi_to_musiclang_without_annotation(midi_file, **kwargs)
 
     score = score.to_drum()
     return score, config
 
 
 
-def parse_midi_to_musiclang_without_annotation(midi_file: str):
+def parse_midi_to_musiclang_without_annotation(midi_file: str, **kwargs):
     """
 
     Parameters
@@ -229,12 +231,12 @@ def parse_midi_to_musiclang_without_annotation(midi_file: str):
 
     """
     config = {}
-    score, tempo = parse_musiclang_sequence_and_chords(midi_file)
+    score, tempo = parse_musiclang_sequence_and_chords(midi_file, **kwargs)
 
     config.update({'tempo': tempo, 'time_signature': score.config['time_signature']})
     return score, config
 
-def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str):
+def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str, **kwargs):
     """
 
     Parameters
@@ -259,7 +261,7 @@ def parse_midi_to_musiclang_with_annotation(midi_file: str, annotation_file: str
 
     chords = get_chords_from_analysis(annotation_file)
     config = chords.config
-    score, tempo = parse_musiclang_sequence(midi_file, chords)
+    score, tempo = parse_musiclang_sequence(midi_file, chords, **kwargs)
     config.update({'tempo': tempo})
     return score, config
 
@@ -423,7 +425,7 @@ def pprint(text):
     if verbose:
         print(text)
 
-def parse_musiclang_sequence_and_chords(midi_file):
+def parse_musiclang_sequence_and_chords(midi_file, **kwargs):
     """Parse a midi file into MusicLang and chords
 
     Parameters
@@ -438,7 +440,7 @@ def parse_musiclang_sequence_and_chords(midi_file):
     from .chord_inference import fast_chord_inference
 
     pprint('1/4 : Performing voice separation (This may takes a while)')
-    notes_df, instruments, tempo, time_signature, bars = parse_midi(midi_file)
+    notes_df, instruments, tempo, time_signature, bars = parse_midi(midi_file, **kwargs)
 
     pprint('2/4 : Now infering chords with fast inference')
     chords = fast_chord_inference(notes_df, bars)
@@ -446,7 +448,7 @@ def parse_musiclang_sequence_and_chords(midi_file):
     pprint('3/4 : Create the score')
     import time
     start = time.time()
-    score = infer_score_with_chords_durations(sequence, chords, instruments)
+    score = infer_score_with_chords_durations(sequence, chords, instruments, bars)
     pprint('Finished creating score in {} seconds'.format(time.time() - start))
     pprint('Finished creating score')
     pprint('4/4 Normalize the score...')
@@ -456,7 +458,7 @@ def parse_musiclang_sequence_and_chords(midi_file):
     return score, tempo
 
 
-def parse_musiclang_sequence(midi_file, chords):
+def parse_musiclang_sequence(midi_file, chords, **kwargs):
     """Parse a midi file into MusicLang and chords with chords duration
 
     Parameters
@@ -477,10 +479,10 @@ def parse_musiclang_sequence(midi_file, chords):
 
 
     pprint('2/4 : Performing voice separation (This may takes a while)')
-    notes_df, instruments, tempo, time_signature, bars = parse_midi(midi_file)
+    notes_df, instruments, tempo, time_signature, bars = parse_midi(midi_file, **kwargs)
     sequence = convert_to_items(notes_df)
     pprint('3/4 : Create the score')
-    score = infer_score_with_chords_durations(sequence, chords, instruments)
+    score = infer_score_with_chords_durations(sequence, chords, instruments, bars)
     pprint('Finished creating score')
     pprint('4/4 Normalize the score...')
     score = score.normalize()

@@ -1,6 +1,8 @@
 import numpy as np
 
 """
+Deprecated
+This module is deprecated and will be removed in the future
 The algorithm is based on this paper :
 HMM-Based Voice Separation of MIDI
 Performance

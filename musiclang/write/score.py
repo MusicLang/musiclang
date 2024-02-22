@@ -1124,6 +1124,15 @@ class Score:
 
         return result_score
 
+    @classmethod
+    def from_chord_repr(cls, chord_repr):
+        from musiclang.analyze.chord_repr_to_chord import chord_repr_list_to_chords
+        tokens = [tok for tok in chord_repr.split() if tok not in {"START", "END"}]
+        return chord_repr_list_to_chords(tokens)
+
+    def to_chord_repr(self, bass=True):
+        return " ".join([chord.to_chord_repr(bass=bass) for chord in self.chords])
+
     def project_on_rhythm(self, rhythm, **kwargs):
         return Score([chord.project_on_rhythm(rhythm, **kwargs) for chord in self.chords], tags=self.tags)
 
@@ -1165,6 +1174,9 @@ class Score:
         drums = self.get_instrument_names(['drums_0'])
         score_without_drums = self.remove_drums()
         score = create_counterpoint_on_score(score_without_drums, fixed_parts=fixed_parts)
+        # Reproject drums
+        if drums is not None and len(drums.instruments) > 0:
+            score = drums.project_on_score(score, voice_leading=False, keep_score=True)
         return score
 
 
@@ -1193,7 +1205,7 @@ class Score:
                     ins_score = chord.score[instrument]
                     notes = ins_score.notes
                     for note in notes:
-                        if note.is_note:
+                        if note.is_note or note.type == 'd':
                             densities[instrument] += 1
 
         return {k: v / total_duration for k, v in densities.items()}
@@ -1210,7 +1222,7 @@ class Score:
                     ins_score = chord.score[instrument]
                     notes = ins_score.notes
                     for note in notes:
-                        if note.is_note:
+                        if note.is_note or note.type == 'd':
                             octaves[instrument] += note.octave
                             nb[instrument] += 1
         return {k: round(v / nb[k] if nb[k] > 0 else 0) for k, v in octaves.items()}
@@ -1228,7 +1240,7 @@ class Score:
                     ins_score = chord.score[instrument]
                     notes = ins_score.notes
                     for note in notes:
-                        if note.is_note:
+                        if note.is_note or note.type == 'd':
                             amp[instrument] += note.amp
                             nb[instrument] += 1
 
@@ -1269,6 +1281,16 @@ class Score:
             statistics[instrument] = (min(pitches), max(pitches), float(np.mean(pitches)), float(np.std(pitches)))
 
         return statistics
+
+    def get_bass_instrument(self):
+        """
+        Get the bass instrument
+        Returns
+        -------
+        instrument: instrument part with the lowest pitch
+        """
+        statistics = self.get_pitch_statistics()
+        return min(statistics, key=lambda x: statistics[x][0])
 
     def get_pitch_most_comparable_instrument(self, mean_pitch):
         """
@@ -1435,7 +1457,7 @@ class Score:
         return grid
 
     @classmethod
-    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None, tokenize_before=True, quantization=8):
+    def from_midi(cls, filename, fast_chord_inference=True, chord_range=None, tokenize_before=True, quantization=(4, 3)):
         """
         Load a midi score into musiclang
 
@@ -1444,17 +1466,23 @@ class Score:
         ----------
         filename : str
                    Filepath of the file
+        fast_chord_inference: bool (Default value = True)
+            If True, the chord scales inference will be faster but less accurate
+             (we use a markov optimisation to infer the chords instead of a ML model)
+        chord_range: tuple (Default value = None)
+            Range of the bars (also chords because one chord per bar in musiclang) to consider
+        tokenize_before: bool (Default value = True)
+            If True, tokenize the score before the inference with miditok, used for stability
+        quantization: tuple (Default value = (4, 3))
+            Quantization of the score in possible fractions of quarters, we use music21 quantization in the backend
+
+
         Returns
         -------
         score: Score
                The loaded score
         """
         from musiclang.analyze import parse_to_musiclang
-
-        import time
-
-        start = time.time()
-
         score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference,
                                            chord_range=chord_range, tokenize_before=tokenize_before, quantization=quantization)
 
@@ -1546,7 +1574,7 @@ class Score:
 
 
     @classmethod
-    def from_xml(cls, filename, fast_chord_inference=False):
+    def from_xml(cls, filename, fast_chord_inference=True, quantization=(4, 3)):
         """
         Load a musicxml score into musiclang
 
@@ -1567,7 +1595,7 @@ class Score:
 
         """
         from musiclang.analyze import parse_to_musiclang
-        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference)
+        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference, quantization=quantization)
         score.config.update(config)
         return score
 

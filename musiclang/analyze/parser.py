@@ -144,7 +144,7 @@ def parse_midi_to_musiclang(input_file: str, chord_range=None, tokenize_before=T
 
 def parse_mxl_to_musiclang(input_file: str, **kwargs):
     """Parse a music xml input file into a musiclang Score
-    - Get chords with the AugmentedNet (https://github.com/napulen/AugmentedNet)
+    - Either get chord with dynamic programming (fast_inference=True), or with the AugmentedNet (https://github.com/napulen/AugmentedNet)
     - Separate into monophonic voice with the proper instrument
 
     Parameters
@@ -158,7 +158,6 @@ def parse_mxl_to_musiclang(input_file: str, **kwargs):
 
     config: dict
         Dict of score configuration
-
     """
 
     import tempfile

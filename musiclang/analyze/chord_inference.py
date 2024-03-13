@@ -182,9 +182,12 @@ def get_chord_extended_from_bass_note(bass_note, chord):
     if bass_note in chord_pitches:
         bass_idx = chord_pitches.index(bass_note)
         extension = EXTENSION_DICT[(bass_idx, nb_notes)]
+    else:
+        extension = ''
 
     new_extension = extension + (
         chord.extension[1:] if chord.extension.startswith('7') else chord.extension)
+
     chord.extension = new_extension
 
     return chord.copy()

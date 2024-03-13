@@ -419,7 +419,6 @@ class Chord:
             return self(**{part: melody.to_absolute_note(self, last_pitch=last_pitch.get(part, None),
                                                      return_last_pitch=False) for part, melody in self.score.items()})
 
-
     @cached_property
     def bass_pitch(self):
         """
@@ -1716,6 +1715,7 @@ class Chord:
     @cached_property
     def extension_notes(self):
         # Try a composite with a match
+
         extension, replacements, additions, removals = self.get_extension_properties()
         return self._chord_notes_calc(extension, replacements, additions, removals)
 

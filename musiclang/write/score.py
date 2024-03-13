@@ -1574,7 +1574,7 @@ class Score:
 
 
     @classmethod
-    def from_xml(cls, filename, fast_chord_inference=True, quantization=(4, 3)):
+    def from_xml(cls, filename, fast_chord_inference=True, quantization=(4, 3), chord_range=None):
         """
         Load a musicxml score into musiclang
 
@@ -1595,7 +1595,7 @@ class Score:
 
         """
         from musiclang.analyze import parse_to_musiclang
-        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference, quantization=quantization)
+        score, config = parse_to_musiclang(filename, fast_chord_inference=fast_chord_inference, quantization=quantization, chord_range=chord_range)
         score.config.update(config)
         return score
 

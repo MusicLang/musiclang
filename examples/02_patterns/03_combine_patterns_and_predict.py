@@ -3,11 +3,9 @@
 ==================================
 
 In this example we are going to combine the previous examples to :
-- generate a new idea with MusicLang language model using a template to tell the model what we want to generate (prompt)
+- generate a new idea with MusicLang language model
 - extract a pattern from this idea
 - Project the pattern on a chord progression
-
-
 """
 
 from musiclang.library import *

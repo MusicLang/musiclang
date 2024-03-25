@@ -1,6 +1,7 @@
 """
 2.3. Combine patterns and predict
 ==================================
+Warning : You need to install musiclang-predict library to run this example
 
 In this example we are going to combine the previous examples to :
 - generate a new idea with MusicLang language model

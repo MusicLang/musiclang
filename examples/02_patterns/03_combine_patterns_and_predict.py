@@ -10,31 +10,24 @@ In this example we are going to combine the previous examples to :
 
 """
 
-from musiclang_predict import predict_with_template, MusicLangTokenizer, score_to_template
-from transformers import GPT2LMHeadModel
 from musiclang.library import *
 from musiclang import Score
+from musiclang_predict import MusicLangPredictor
 
-# Load model and tokenizer
-model = GPT2LMHeadModel.from_pretrained('musiclang/musiclang-4k')
-tokenizer = MusicLangTokenizer('musiclang/musiclang-4k')
-
-n_bars_pattern = 2  # Number of bars of the pattern we want to generate
-
-# Define the prompt of your idea here, the model will generate an idea that "look" like this (in terms of density, instruments and ranges)
-
-original_idea = (I % I.M)(
-                          contrabass__0=(s0 + s2 + s4 + s2).o(-2),
-                          viola__0=(s0 + s2 + s4 + s2).o(-1),
-                          oboe__0=(s0 + s2 + h3 + s2 + s4 + h6 + s4.h).e
-) * n_bars_pattern
-
-# Let's predict an idea that looks like the prompt with MusicLang language model
-template = score_to_template(original_idea)
-generated_idea = predict_with_template(template, model, tokenizer, temperature=1.0)
+temperature = 0.9  # Don't go over 1.0, at your own risks !
+top_p = 1.0 # <=1.0, Usually 1 best to get not too much repetitive music
+seed = 0  # change here to change result, or set to 0 to unset seed
+time_signature=(4, 4)
+ml = MusicLangPredictor('musiclang/musiclang-v2')
+generated_idea = ml.predict(
+    nb_chords=3,
+    temperature=temperature,
+    topp=top_p,
+    rng_seed=seed # set to 0 to unset seed
+)
 
 # We need to transform our generated idea into a one chord pattern (that lasts n_bars_pattern)
-generated_idea = generated_idea.project_on_one_chord()
+generated_idea = generated_idea[-1:].project_on_one_chord()  # For example take last bar of the idea
 
 # Apply the same process than in 01_pattern extraction
 

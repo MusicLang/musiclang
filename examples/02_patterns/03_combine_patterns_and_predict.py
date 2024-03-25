@@ -33,13 +33,13 @@ pattern = generated_idea.chords[0].to_pattern(drop_drums=False)
 # Let project this pattern in an ascending chord progression with chord inversions :
 # A musical chord progression is applied
 chord_progression = [
-        (I % II.M).h,
+        (I % II.M).h,  # h is half note duration, w is whole note duration
         (V % II.M).h['6'].o(-1),
         (I % II.M).w,
         (I % II.M).w['6'],
         (I % II.M).h['64'],
         (I % II.M).h.o(1),
-        (V % II.M).set_duration(8),
+        (V % II.M).set_duration(8),  # Duration in number of quarters
         (I % II.M).h.o(1),
         (I % II.M).q['64'],
         (I % II.M).q['6'],
@@ -60,4 +60,4 @@ chord_progression = [
 score = Score.from_pattern(pattern, chord_progression,
                            chord_rhythm=True)  # this forces the pattern to continue on chord change (instead of restarting)
 
-score.to_midi('pattern.mid')
+score.to_midi('pattern.mid', time_signature=time_signature)

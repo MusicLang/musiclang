@@ -2,7 +2,7 @@
 5. Generate music from a chord progression
 =================================
 
-/!\ You need to install musiclang-predict library to run this example !
+Warning :  You need to install musiclang-predict library to run this example !
 ```
 pip install musiclang-predict
 ```

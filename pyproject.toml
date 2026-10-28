@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "musiclang"
-version = "0.26.0"
+version = "0.26.1"
 description = "A python package for music notation and generation"
 readme = "README.md"
 authors = [{ name = "Florian GARDIN", email = "fgardin.pro@gmail.com" }]
@@ -15,21 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 keywords = ["music", "ai", "notation"]
-dependencies = [
-        "lxml",
-        "mido==1.2.10",
-        "music21==8.1.0",
-        "numpy",
-        "pandas==1.5.3",
-        "scipy",
-        "tensorflow",
-        "toml==0.10.2",
-        "tomli==2.0.1",
-        "xmlschema==2.1.1",
-        "partitura==1.3.1",
-        "music21",
-        "miditok==2.1.8"
-]
+dynamic = ["dependencies"]
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
@@ -37,3 +23,5 @@ dev = ["pip-tools", "pytest"]
 
 [project.urls]
 Homepage = "https://github.com/MusicLang/musiclang"
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

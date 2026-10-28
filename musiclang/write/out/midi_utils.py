@@ -218,10 +218,6 @@ def prepare_df_for_events(df):
     df = df.copy()
     df = df.sort_values(['TRACK', 'OFFSET'])
 
-    def add_delta(df):
-        df['DELTA'] = df['OFFSET'].diff().fillna(df['OFFSET'].iloc[0])
-        return df
-
     df['EVENT_TYPE'] = 'NOTE_ON'
     df['INDEX'] = np.arange(len(df))
     df_copy = df.copy()
@@ -230,7 +226,8 @@ def prepare_df_for_events(df):
 
     df_events = pd.concat([df, df_copy], axis=0)
     df_events = df_events.sort_values(['TRACK', 'OFFSET', 'EVENT_TYPE'])
-    df_events = df_events.groupby('TRACK', group_keys=False).apply(add_delta)
+    # Time since the previous event of the same track (the first event keeps its own offset)
+    df_events['DELTA'] = df_events.groupby('TRACK')['OFFSET'].diff().fillna(df_events['OFFSET'])
     df_events['PITCH'] = df_events['PITCH'] + 60
 
     return df_events[['EVENT_TYPE', 'OFFSET', 'PITCH', 'VELOCITY', 'DURATION', 'DELTA', 'TRACK', 'TEMPO', 'PEDAL']]

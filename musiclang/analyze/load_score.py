@@ -123,14 +123,14 @@ def load_score(filename, merge_tracks=True, quantization=(4, 3), **kwargs):
         return df
 
     df = df.sort_values(by=['onset_beat', 'pitch', 'duration_beat'])
-    df = df.groupby('channel').apply(quantize_channel).reset_index(level=0, drop=True)
+    df = pd.concat([quantize_channel(group.copy()) for _, group in df.groupby('channel')])
     df['offset_beat'] = df['onset_beat'] + df['duration_beat']
     df = df.sort_values(by=['onset_beat', 'pitch', 'duration_beat'])
 
     if merge_tracks:
         df['old_track'] = df['track']
         df['track'] = 0
-        gpb = df.groupby('channel').apply(estimate_voices_with_index).reset_index(level=0, drop=True)
+        gpb = pd.concat([estimate_voices_with_index(group) for _, group in df.groupby('channel')])
         try:
             df['voice'] = gpb
         except:
